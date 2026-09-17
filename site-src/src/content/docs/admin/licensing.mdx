@@ -11,10 +11,17 @@ RedScribe is **source-available**, not OSI-approved open source: the source
 is public and modifiable, but the license restricts commercial use.
 
 - **Free** for personal and community/noncommercial use, under the PolyForm
-  Noncommercial License 1.0.0 (`LICENSE` in the repo).
+  Noncommercial License 1.0.0 (`LICENSE` in the repo), permanently.
 - **Commercial use** (including running it at a for-profit consultancy)
-  requires a paid commercial license (`COMMERCIAL-LICENSE.md` in the repo),
-  a flat price with no per-seat charges.
+  requires a commercial license (`COMMERCIAL-LICENSE.md` in the repo).
+
+<Aside type="tip" title="Commercial use is free right now">
+As a kickstart for the community, a commercial license key is free for the
+first year, no payment required. Email `redscribe.maintainer@proton.me` for
+one. Priced tiers begin once RedScribe has been proven at the scale real
+enterprise engagements demand, and nothing about a key already issued
+during the free period changes retroactively once pricing starts.
+</Aside>
 
 <Aside type="tip" title="Nothing is feature-gated, either way">
 Every RedScribe instance has every feature, whether or not anyone paid. A
@@ -24,10 +31,10 @@ app's own footer, purely as attribution and never a technical restriction.
 
 ## Activating a license key
 
-If your organization has purchased a commercial license, you'll be given a
-license key, a signed, tamper-evident text string. Activate it from
-**Licensing** in the sidebar (`/licensing/`, Superadmin-only,
-`licensing.manage`): paste the key into the field and save.
+If your organization has a commercial license, you'll be given a license
+key, a signed, tamper-evident text string. Activate it from **Licensing**
+in the sidebar (`/licensing/`, Superadmin-only, `licensing.manage`): paste
+the key into the field and save.
 
 Pasting an invalid, tampered, or expired-in-the-past key doesn't error or
 break anything. It's checked instantly, and the footer simply falls back to
