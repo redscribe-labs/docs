@@ -6,15 +6,16 @@ import starlight from '@astrojs/starlight';
 // committed and served straight from GitHub Pages ("Deploy from a branch",
 // /docs folder on main) without a CI build step.
 //
-// Hosted as a GitHub *project* page (redscribe-labs.github.io/redscribe-docs/,
-// not a custom domain or a user/org page at the repo root), so `base` and
-// `site` are set accordingly below — every internal link and the sitemap
-// depend on this being correct. If this ever moves to a custom domain or a
-// redscribe-labs.github.io *user* page instead, drop `base` back to '/' and
-// update `site` to match.
+// Hosted on the custom domain docs.redscribe.app (GitHub Pages custom
+// domain, via public/CNAME) at the site root — not the
+// redscribe-labs.github.io/redscribe-docs/ project-page path — so `base`
+// is '/' and `site` points at the custom domain below; every internal
+// link and the sitemap depend on this being correct. If this ever moves
+// back to the github.io project-page path, restore
+// base: '/redscribe-docs' and update `site` to match.
 export default defineConfig({
-	site: 'https://redscribe-labs.github.io/redscribe-docs/',
-	base: '/redscribe-docs',
+	site: 'https://docs.redscribe.app/',
+	base: '/',
 	outDir: '../docs',
 	integrations: [
 		starlight({

@@ -92,6 +92,25 @@
 	--sl-color-text-invert: #ffffff;
 }
 
+/*
+ * The header and sidebar stay pinned to the dark surface above even in
+ * light mode, so their text/border tokens need to stay on the dark-mode
+ * ramp too (mirrors the dark-mode `:root` block up top) — otherwise
+ * light mode's dark-on-white neutrals render as dark text on that same
+ * dark chrome and the sidebar becomes unreadable.
+ */
+:root[data-theme='light'] .header,
+:root[data-theme='light'] .sidebar-pane {
+	--sl-color-white: #f2f2f3; /* twilight-50 */
+	--sl-color-gray-1: #e4e6e7; /* twilight-100 */
+	--sl-color-gray-2: #afb3b6; /* twilight-300 — sidebar link text */
+	--sl-color-gray-3: #959a9d; /* twilight-400 */
+	--sl-color-gray-4: #62676a; /* twilight-600 */
+	--sl-color-gray-5: #313435; /* twilight-800 — hairlines/borders */
+	--sl-color-gray-6: #181a1b; /* twilight-900 */
+	--sl-color-black: #111213; /* twilight-950 — search box fill */
+}
+
 /* Inline code / code blocks read from the mono stack; keep a hint of `mist` in blockquote/aside borders. */
 code {
 	font-feature-settings: 'liga' 0;
