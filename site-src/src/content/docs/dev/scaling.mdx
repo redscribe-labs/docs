@@ -1,0 +1,176 @@
+---
+title: Scaling & concurrency model
+description: How RedScribe's single box deployment handles concurrency, what is and isn't safe across multiple processes, and what changes as usage grows toward around 100 users.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Requirements & sizing](/getting-started/requirements/) gives you a sizing
+table to pick a box from. This page explains why those numbers are what they
+are, what's actually holding a request or a worker at any given moment, and
+what would need to change in the code to scale past a single host. It's
+written for whoever is planning a deployment for a real firm, or thinking
+about extending the concurrency model itself.
+
+## The shipped deployment model, in one paragraph
+
+`docker-compose.yml` runs exactly one `web` container, one `db` (Postgres)
+container, and one `nginx` container, all on one host. See [Docker Compose
+deep dive](/deployment/docker-compose/) for the full service breakdown. Every
+official installation method assumes this single box shape. There is no
+built-in support for running multiple `web` replicas behind a load balancer,
+no task queue, and no separate cache tier. That's a deliberate scope
+decision for an early alpha product aimed at a single consultancy, not an
+oversight, but it does mean "scaling" today mostly means picking a bigger
+box, not adding more boxes.
+
+## What's actually concurrency limited, and how
+
+Four different things in this codebase gate concurrent access. Three of them
+are enforced at the database level and would stay correct even if you ran
+multiple `web` processes across multiple hosts. One of them wouldn't.
+
+**Gunicorn worker count.** `entrypoint.sh` auto sizes `--workers` to
+`(2 × cpu cores) + 1` unless `GUNICORN_WORKERS` is set explicitly. Each
+worker is a separate OS process handling one request at a time (gunicorn's
+default sync worker class), so worker count is your real ceiling on
+simultaneously in flight requests on a single box. This is a purely vertical
+knob: more cores on the one box, more workers.
+
+**Report export job slots.** `apps/reports/job_limiter.py`'s
+`report_job_slot()` wraps every PDF, HTML, Markdown, or DOCX export. It takes
+a `select_for_update()` row lock on the singleton `ReportSettings` row in
+Postgres, sweeps any stale job older than `STALE_JOB_TIMEOUT_SECONDS` (600
+seconds, so a crashed worker's job row doesn't permanently eat a slot),
+counts active `ReportJob` rows, and only creates a new one if the count is
+under `max_concurrent_report_jobs`. Because this lock lives in Postgres, not
+in a single process's memory, it stays correct no matter how many `web`
+processes or hosts are calling it at once. See [Report rendering
+pipeline](/dev/report-pipeline/) for the full mechanism.
+
+**The audit log hash chain.** Every request writes one row to the audit log,
+each row's hash chained onto the previous row's hash. Appending to a hash
+chain from multiple concurrent writers needs its own serialization or two
+requests could both read the same "previous hash" and produce two entries
+that both claim to follow it. This is also enforced with a Postgres level
+lock, not an in-process one, so it too stays correct across multiple `web`
+processes or hosts. See [Audit trail & tamper evidence](/security/audit-trail/).
+
+**The login attempt lock.** This is the one that doesn't generalize past a
+single process. `apps/accounts/security.py`'s `_LoginAttemptLock` serializes
+concurrent login attempts for the same username using Django's cache
+framework, `cache.add()` to acquire, `cache.delete()` to release. RedScribe's
+`CACHES` setting in `config/settings/base.py` is hardcoded to
+`django.core.cache.backends.locmem.LocMemCache`, an in-process memory cache
+with nothing shared between gunicorn worker processes, let alone between
+hosts. `prod.py` doesn't override it.
+
+<Aside type="note" title="This is a narrowed race window, not a broken lockout">
+The actual lockout and rate limit thresholds (`LOCKOUT_THRESHOLD`,
+`SUPERADMIN_RATE_LIMIT_MAX_ATTEMPTS`) are never read from the cache. They're
+recomputed on every request by counting real `LoginAttempt` rows in Postgres
+within the configured time window (`_recent_failed_count()`). The lock only
+narrows the window in which two near simultaneous requests for the same
+username could both pass the check before either's `LoginAttempt` row is
+written. With one gunicorn worker, that window is closed almost completely.
+With several workers or several hosts, the lock still closes it for whichever
+requests happen to land on the same worker, and the underlying threshold
+enforcement is unaffected either way, since it was never relying on the lock
+for correctness in the first place. Worth knowing about, not worth losing
+sleep over.
+</Aside>
+
+There is also a documented, purely structural cap that has nothing to do
+with any lock: at most two people are expected to actively contend for one
+engagement's data at a time, by design (engagement membership plus the
+review or QA assignment model already assumes small per-engagement teams).
+Total account count and concurrent load scale independently of that, which
+is part of why the sizing table separates "concurrently active users" from
+"registered accounts."
+
+## Is horizontal scaling possible
+
+Nothing in the request handling path is pinned to a specific host in a way
+that would obviously break if you ran two `web` containers instead of one,
+with two caveats.
+
+Sessions use Django's own database backed session engine, the framework
+default, unmodified by RedScribe. A session created by one `web` process is
+just a row in Postgres, so the next request for that same session can land
+on a different process or host with no sticky session requirement.
+
+Encrypted engagement content (finding fields, checklist results, and so on)
+is stored as `_ciphertext` binary columns directly in Postgres, not as files
+on local disk. See [Encryption model](/security/encryption/). So the data a
+`web` process needs to serve a request is already centralized in the
+database, not scattered across per host local storage.
+
+The login attempt lock caveat above is the one piece of actual in-process
+state, and as covered, it degrades gracefully rather than breaking anything.
+
+What you'd actually need to do to run more than one `web` host today: point
+every `web` container at the same Postgres instance and the same mounted
+`REDSCRIBE_ROOT_KEY` secret, and put something in front of them (a load
+balancer, or an nginx upstream block with multiple servers) instead of the
+single backend the shipped `nginx/templates/default.conf.template` assumes.
+This is architecturally reasonable, but it isn't a packaged install method,
+you'd be extending the Compose setup yourself.
+
+## The real bottleneck: report export has no queue
+
+There is no Celery, no RQ, no Redis, and no background worker process
+anywhere in this codebase (check `requirements.txt`, there's nothing there).
+Every PDF or DOCX export runs synchronously inside the request that asked
+for it, occupying one full gunicorn worker (and, per WeasyPrint's
+characteristics, a meaningful chunk of RAM on image heavy reports) for
+however long rendering takes. `max_concurrent_report_jobs` caps how many of
+those can happen at once, it doesn't queue the rest, a caller past the cap
+just waits and retries. On a box sized for ordinary browsing plus a couple
+of exports, this is fine. It's the first thing that stops being fine as
+usage grows, which is exactly why the sizing table treats "report job slots"
+as its own scaling axis separate from gunicorn worker count.
+
+## Concrete guidance for around 100 users
+
+A firm with a bit under 100 registered accounts sits right at the boundary
+between the "Mid-size firm" and "Larger firm" rows in [Requirements &
+sizing](/getting-started/requirements/#sizing). Depending on how many of
+those 100 are actively working at once:
+
+- If concurrently active load stays in the 25 to 40 range, you're solidly in
+  the Mid-size firm tier: 4 to 8 vCPU, 8 to 16 GB RAM, 17 gunicorn workers,
+  2 to 4 report job slots.
+- If concurrently active load pushes past 40, or you're regularly seeing
+  report exports queue up against the job slot cap, you're in Larger firm
+  territory: 8 to 16 vCPU, 16 to 32 GB RAM, 33 gunicorn workers, and 4 to 6
+  report job slots used with caution given how much RAM each concurrent
+  WeasyPrint render can consume on an image heavy report.
+
+Past that tier, the guidance is to stop scaling the single box vertically:
+move Postgres onto its own host (freeing up headroom on both sides
+independently), and add a real task queue so report exports stop competing
+with ordinary page loads for a gunicorn worker. Neither of those exists in
+the current codebase. They're the natural next architectural step, not
+something you can just turn on with an environment variable today.
+
+## What would actually need to change in the code
+
+If you're the one building the "past Larger firm" story:
+
+1. **A real task queue for exports.** Move `export_download`'s work
+   (`apps/reports/export_views.py`) into a Celery or RQ task, have the view
+   return immediately with a job reference, and poll or push the result back
+   to the browser instead of blocking a gunicorn worker for the render's
+   entire duration. `job_limiter.py`'s slot accounting logic could mostly
+   move as is, it's already DB row locked, just called from a task instead
+   of inline in the request.
+2. **A shared cache backend**, Postgres backed or Redis, if you want the
+   login attempt lock's race narrowing to hold across every process instead
+   of just the process that happens to handle a given request. Not required
+   for correctness (see the note above), just for tightening that specific
+   window further once you're running more than one `web` process.
+3. **Multiple `web` upstream support in the nginx config and Compose file**,
+   since the shipped template assumes exactly one backend.
+
+None of this is large in scope individually. It just hasn't been needed yet
+at the scale RedScribe has shipped for so far.

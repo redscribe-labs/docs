@@ -1,0 +1,69 @@
+---
+title: Checklists
+description: Checklist templates and per-engagement checklist runs, with sequential navigation and JSON/CSV import/export.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+RedScribe separates **templates** (reusable test lists, managed once) from
+**runs** (one instantiation of a template against a specific engagement).
+
+## Templates
+
+`/checklist-templates/` needs `checklist_templates.manage` to create, edit,
+or manage items. Viewing is open to everyone.
+
+- **Create** a template from scratch and add items one at a time (category,
+  code, title, reference info), with per-item **CRUD**, reordering
+  (**move**), and a **default** flag (marks a template as the one
+  pre-selected when starting a new run).
+- **Upload** a template via **JSON or CSV bulk import** instead of entering
+  items by hand.
+- **Export** any template back to JSON.
+
+<Aside type="tip">
+A fresh instance ships with **zero templates**. Nothing is seeded by
+default, so pick your own via import. `docs/checklist-templates/owasp-wstg.json`
+in the repo is a ready-to-import template covering the full official OWASP
+WSTG test list (each item's objectives plus a link back to the official
+page), if you want that as a starting point. See the [checklist template
+JSON format](/reference/checklist-template-format/) reference to build your
+own.
+</Aside>
+
+## Runs
+
+From an engagement → **Checklist** (`/engagements/<id>/checklist/`). An
+engagement can have **multiple independent runs** at once, for example
+OWASP WSTG against a web app alongside OWASP API Top 10 against its API, on
+the same engagement.
+
+Each item's status is one of:
+
+| Status | Meaning |
+|---|---|
+| Not Tested | Default, not yet worked |
+| Tested — No Finding | Tested, nothing to report |
+| Tested — Finding Raised | Tested, and linked to one or more findings |
+| Not Applicable | Out of scope for this engagement |
+
+Working an item:
+
+<Steps>
+1. Open the item. **Sequential next/previous navigation** moves through the
+   run in order without returning to the list each time.
+2. Record test results (encrypted at rest, like other sensitive engagement
+   content, see [Encryption model](/security/encryption/)) and set its
+   status.
+3. **Link findings** raised by this item. This is what backs
+   `{{p checklist_coverage }}` / `{{ checklist_coverage }}` in the report,
+   grouping runs by category and cross-referencing linked findings.
+4. Leave a comment on the item if useful context doesn't belong in the
+   result itself (per-item comment threads).
+</Steps>
+
+## Exporting a run
+
+**Export** on a checklist run produces a JSON export of its full testing
+data, including objectives, results, linked findings, and comments,
+independent of the report itself.

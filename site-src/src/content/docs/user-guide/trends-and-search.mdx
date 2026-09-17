@@ -1,0 +1,118 @@
+---
+title: Trends & search
+description: Exactly how severity trends, mean time to remediate, repeat findings, and global search are computed, including their edge cases and blind spots.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Trends
+
+`/trends/` needs both the `recurrence_and_trends` feature flag turned on and
+the `reports.trends` permission. It reports across a scope of engagements
+that depends on your role: a Superadmin sees every engagement on the
+instance, including archived ones, while everyone else sees exactly the same
+set `visible_engagements()` would give them anywhere else in the app
+(membership based access, or every non-archived engagement if you hold
+`engagements.view_all`). Archived engagements never show up in trends for a
+non-Superadmin, even if the numbers already exist in the database.
+
+### Severity over time
+
+This is a rolling monthly bar chart, but "rolling" only in the sense that it
+looks back a fixed 12 month window from whatever months actually have data.
+Findings are grouped by the calendar month they were created in, not by any
+notion of when the vulnerability was discovered versus logged. A month with
+zero findings created in it doesn't get a zero filled bar. It's simply
+absent from the chart entirely, so a firm with sparse or bursty engagement
+activity will see gaps rather than flat zero months. If your instance has no
+findings at all in scope, the chart renders empty rather than showing an
+all-zero grid.
+
+Each bar's height is scaled relative to the single busiest month in the
+window, not to any fixed axis. That means the chart's shape changes as new
+months roll into the 12 month window, an old peak month scrolling out of
+range can make every remaining bar look taller than it used to, even though
+none of the underlying numbers changed.
+
+### Mean time to remediate (MTTR)
+
+MTTR only counts findings that have at least one retest record with a
+`Fixed` status. A finding that's still open, or that was only ever retested
+as `Not Fixed`, `Partially Fixed`, or `Risk Accepted`, never contributes a
+data point here, no matter how old it is. If a finding was fixed, regressed,
+and fixed again, only the *first* `Fixed` retest counts. Its "days to fix"
+is the calendar day difference between the finding's creation date and that
+first fix record's creation date, using dates only, not timestamps, so a
+finding created and fixed on the same calendar day counts as zero days
+regardless of how many hours actually passed.
+
+The overall mean is a simple average across every qualifying finding in
+scope, not weighted by severity or engagement size. The per severity
+breakdown only lists a severity level at all if at least one fixed finding
+of that severity exists, and each mean is rounded to one decimal place. If
+nothing in scope has ever been marked `Fixed`, the whole MTTR panel reports
+a sample size of zero and no overall figure, rather than showing a
+misleading zero days.
+
+<Aside type="caution" title="Small sample sizes are easy to misread here">
+With only one or two fixed findings of a given severity, the "mean" is just
+that one or two data points, not a statistically meaningful average. The
+page doesn't hide or flag low sample sizes differently from large ones, so
+treat any severity row with a small `sample_size` as anecdotal rather than a
+trend.
+</Aside>
+
+### Repeat findings by client
+
+This groups findings by the pair of client name and classification tag, and
+only surfaces a pair once it appears across at least two distinct
+engagements for that client (this threshold is a fixed value in the code,
+not something you can adjust from the UI). A finding tagged with multiple
+classifications, for example both an OWASP Top 10 entry and a CWE entry,
+counts toward the repeat detection for each of those tags independently, so
+the same finding can contribute to more than one row in this list.
+
+Results are sorted by how many distinct engagements a pair spans first, then
+by total finding count, then alphabetically by client name. There's no
+severity weighting here either. A client with the same low severity
+observation recurring across five engagements will outrank a client with a
+single critical finding that never repeated, which is intentional for
+spotting systemic process gaps rather than acute risk.
+
+## Search
+
+`/search/` needs the `global_search` feature flag turned on. Type a query
+and it searches exactly two things, nothing else:
+
+- **Engagements**, matched by client name or reference number, case
+  insensitive substring match on either field.
+- **Findings**, matched by title or CVE ID, same case insensitive substring
+  matching.
+
+<Aside type="danger" title="Search does not look inside finding content">
+This is the single most important thing to know about search. It does not
+match against a finding's rich text sections (vulnerability description,
+technical details, business impact, and so on), checklist item content, or
+catalogue entries. If you're trying to find "every finding that mentions
+SQL injection in its technical details," a title or CVE search won't find
+it unless SQL injection happens to be in the title. Use the [Vulnerability
+catalogue](/user-guide/catalogue/) or browse findings directly for anything
+that depends on body content.
+</Aside>
+
+Results are capped at 25 per category, but the page still tells you the
+true total count and prompts you to narrow your search if more exist.
+Results aren't ranked by relevance. They come back in each model's own
+default ordering, which is newest first for both engagements and findings,
+so a broad query returns your most recently created matches, not your best
+matches.
+
+Search results are scoped through the same `visible_engagements()` function
+used everywhere else, so what you can search is always a subset of what you
+could already browse to manually. One detail worth knowing: within a
+visible engagement, archived findings are still included in search results
+(shown with an "Archived" badge), even though they're excluded from that
+engagement's default findings list. Archived engagements themselves are
+still excluded from a non-Superadmin's search entirely, since they never
+enter the underlying `visible_engagements()` queryset in the first place
+unless you're a Superadmin.

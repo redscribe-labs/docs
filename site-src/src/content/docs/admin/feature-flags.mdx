@@ -1,0 +1,98 @@
+---
+title: Feature flags
+description: The instance-wide toggles that turn optional RedScribe features on or off, and exactly what happens in the UI and the code when each one is off.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`/feature-flags/` (Superadmin-only, `feature_flags.manage`) is a single
+instance-wide settings row. There's exactly one `FeatureFlags` object per
+instance, a singleton model fetched with `get_solo()` (a plain
+`get_or_create(pk=1)` under the hood, so every fetch is a real read from
+Postgres, not a cached value). It's not a per-user or per-engagement
+setting.
+
+| Flag | Controls | Default |
+|---|---|---|
+| `retest_workflow` | Retest and remediation tracking on findings (Fixed, Not Fixed, Partially Fixed, Risk Accepted, plus history) | On |
+| `notifications` | Reviewer and QA assignment notifications, both in-app and email. Per-user email opt-out (see [Notifications & profile](/user-guide/notifications-and-profile/)) still applies on top of this | On |
+| `recurrence_and_trends` | Recurring-vulnerability detection on the finding page, and the cross-engagement [Trends](/user-guide/trends-and-search/) page | On |
+| `cvss_calculator` | The CVSS v3.1/v4.0 calculator widget on the finding and catalogue create/edit forms | On |
+| `global_search` | Global [search](/user-guide/trends-and-search/#search) across every engagement and finding the user has access to | On |
+| `scan_import` | [Scanner import](/user-guide/scanner-import/) (Nmap, Burp Suite, Nuclei) from the findings list | On |
+| `mfa_required` | Requires TOTP MFA for every local account, not just Superadmin, which always requires it regardless of this flag | Off |
+| `client_portal_enabled` | Allows client-role accounts to log in and use the [Client Portal](/client-portal/for-clients/). Managing client companies and accounts stays available to Superadmin and Team Lead either way | Off |
+
+## What actually happens when a flag is off
+
+Every one of these is enforced in two places at once, not just hidden in
+the UI: the relevant nav link or button disappears from the template, and
+the underlying view independently checks the flag itself and refuses to
+serve the page even if someone requests the URL directly. Turning a flag
+off is a real access control, not just a cosmetic hide.
+
+- **`scan_import` off**: the Import link disappears from the findings list,
+  and `POST`ing to `/engagements/<id>/findings/import/` directly raises a
+  `PermissionDenied` with the message "Scan import is currently disabled,"
+  which Django renders as a 403 page.
+- **`global_search` off**: the search box disappears from the sidebar and
+  dashboard, and `/search/` itself raises the same kind of `PermissionDenied`
+  ("Global search is currently disabled"), a 403 either way you'd try to
+  reach it.
+- **`retest_workflow` off**: `can_log_retest_result()` returns `False`
+  unconditionally, so the retest logging UI never renders on a finding's
+  page, and `log_retest_result()` independently raises `PermissionDenied`
+  ("Retest tracking is currently disabled") if something tries to log one
+  anyway. Existing retest history already on a finding is unaffected either
+  way, this only blocks logging new results.
+- **`recurrence_and_trends` off**: the recurring-vulnerability panel
+  disappears from the finding page, the Trends link disappears from the
+  sidebar and dashboard (gated together with the `reports.trends`
+  permission, both have to be true), and `/trends/` redirects away rather
+  than rendering.
+- **`notifications` off**: no in-app or email notifications are generated
+  for review and QA assignment at all. This is a stronger switch than a
+  user's own per-account notification preferences, which only ever narrow
+  what one person receives, never re-enable something this flag has turned
+  off instance-wide.
+- **`cvss_calculator` off**: the CVSS calculator's supporting JavaScript is
+  simply never included on the finding or catalogue create and edit pages.
+  The CVSS score and vector fields themselves stay on the form either way,
+  since they're plain text fields underneath, you'd just be typing the
+  vector by hand instead of using the calculator widget.
+- **`mfa_required` off**: only changes whether non-Superadmin roles are
+  *forced* into MFA enrollment. It never disables MFA for accounts that
+  already enrolled voluntarily or that belong to a role with its own
+  `requires_mfa` set (see [Roles & permissions](/admin/roles-and-permissions/)),
+  and it never touches the Superadmin role, which requires MFA
+  unconditionally regardless of this flag.
+- **`client_portal_enabled` off**: enforced at two separate points. A
+  client account with completely correct credentials is rejected at login
+  with the same generic invalid-login message a wrong password would
+  produce, not a distinct "portal disabled" message, so the flag being off
+  isn't distinguishable from a bad password by someone probing the login
+  form. If the flag is turned off while a client is already logged in, the
+  very next request they make is caught by
+  `ClientPortalAccessMiddleware`, which logs them out immediately and
+  redirects to the login page with an explicit "The client portal is
+  currently unavailable" message. Either way, managing client companies
+  and accounts from the staff side is unaffected, this flag only gates the
+  client-facing login and portal itself.
+
+<Aside type="danger" title="Turn mfa_required on before a real deployment">
+This is the one flag that ships off by default but shouldn't stay that way.
+See [Alpha status & versioning](/start/alpha-status/#known-limitations). The
+built-in Superadmin role always requires MFA regardless of this toggle, but
+every other role only requires it once you flip this on, unless you'd
+rather set it individually per role instead (see [Roles &
+permissions](/admin/roles-and-permissions/)). Leave it off only for a
+local or disposable dev and test instance.
+</Aside>
+
+## Changes take effect immediately
+
+Because `get_solo()` reads straight from Postgres on every call rather than
+from any in-process or shared cache, and the request middleware fetches
+`request.feature_flags` fresh at the start of every request, toggling any
+of these takes effect on the very next request, instance wide, with no
+restart, no cache to clear, and no per-user override to worry about.

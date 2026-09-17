@@ -1,0 +1,545 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>DOCX template guide | RedScribe Docs</title><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.3"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="DOCX template guide"/><meta property="og:type" content="article"/><meta property="og:locale" content="en"/><meta property="og:description" content="Building an uploaded Word (.docx) template for a Report Profile, covering tags, the finding loop, style mapping, and validation."/><meta property="og:site_name" content="RedScribe Docs"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Building an uploaded Word (.docx) template for a Report Profile, covering tags, the finding loop, style mapping, and validation."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.NeWYqKmO.css"><style>@layer starlight.components{:root{--sl-badge-default-border:var(--sl-color-accent);--sl-badge-default-bg:var(--sl-color-accent-low);--sl-badge-default-text:#fff;--sl-badge-note-border:var(--sl-color-blue);--sl-badge-note-bg:var(--sl-color-blue-low);--sl-badge-note-text:#fff;--sl-badge-danger-border:var(--sl-color-red);--sl-badge-danger-bg:var(--sl-color-red-low);--sl-badge-danger-text:#fff;--sl-badge-success-border:var(--sl-color-green);--sl-badge-success-bg:var(--sl-color-green-low);--sl-badge-success-text:#fff;--sl-badge-caution-border:var(--sl-color-orange);--sl-badge-caution-bg:var(--sl-color-orange-low);--sl-badge-caution-text:#fff;--sl-badge-tip-border:var(--sl-color-purple);--sl-badge-tip-bg:var(--sl-color-purple-low);--sl-badge-tip-text:#fff}[data-theme=light]:root{--sl-badge-default-bg:var(--sl-color-accent-high);--sl-badge-note-bg:var(--sl-color-blue-high);--sl-badge-danger-bg:var(--sl-color-red-high);--sl-badge-success-bg:var(--sl-color-green-high);--sl-badge-caution-bg:var(--sl-color-orange-high);--sl-badge-tip-bg:var(--sl-color-purple-high)}.sl-badge:where(.astro-f4zorn72){border:1px solid var(--sl-color-border-badge);font-family:var(--sl-font-system-mono);color:var(--sl-color-text-badge);background-color:var(--sl-color-bg-badge);overflow-wrap:anywhere;border-radius:.25rem;line-height:normal;display:inline-block}.sidebar-content .sl-badge:where(.astro-f4zorn72){line-height:1;font-size:var(--sl-text-xs);padding:.125rem .375rem}.sidebar-content a[aria-current=page]>.sl-badge:where(.astro-f4zorn72){--sl-color-bg-badge:transparent;--sl-color-border-badge:currentColor;color:inherit}.default:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-default-bg);--sl-color-border-badge:var(--sl-badge-default-border);--sl-color-text-badge:var(--sl-badge-default-text)}.note:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-note-bg);--sl-color-border-badge:var(--sl-badge-note-border);--sl-color-text-badge:var(--sl-badge-note-text)}.danger:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-danger-bg);--sl-color-border-badge:var(--sl-badge-danger-border);--sl-color-text-badge:var(--sl-badge-danger-text)}.success:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-success-bg);--sl-color-border-badge:var(--sl-badge-success-border);--sl-color-text-badge:var(--sl-badge-success-text)}.tip:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-tip-bg);--sl-color-border-badge:var(--sl-badge-tip-border);--sl-color-text-badge:var(--sl-badge-tip-text)}.caution:where(.astro-f4zorn72){--sl-color-bg-badge:var(--sl-badge-caution-bg);--sl-color-border-badge:var(--sl-badge-caution-border);--sl-color-text-badge:var(--sl-badge-caution-text)}.small:where(.astro-f4zorn72){font-size:var(--sl-text-xs);padding:.125rem .25rem}.medium:where(.astro-f4zorn72){font-size:var(--sl-text-sm);padding:.175rem .35rem}.large:where(.astro-f4zorn72){font-size:var(--sl-text-base);padding:.225rem .45rem}.sl-markdown-content :is(h1,h2,h3,h4,h5,h6) .sl-badge:where(.astro-f4zorn72){vertical-align:middle}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">RedScribe Docs</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="1a79f99" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Start here</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">What is RedScribe?</span></a></li><li class="astro-rmhv4bp6"><a href="/start/alpha-status/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Alpha status &amp; versioning</span></a></li><li class="astro-rmhv4bp6"><a href="/start/concepts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Concepts &amp; terminology</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting Started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/getting-started/requirements/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Requirements &amp; sizing</span></a></li><li class="astro-rmhv4bp6"><a href="/getting-started/installation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Installation</span></a></li><li class="astro-rmhv4bp6"><a href="/getting-started/first-run/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">First run</span></a></li><li class="astro-rmhv4bp6"><a href="/getting-started/configuration/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Configuration reference</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">User Guide</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/user-guide/login-and-mfa/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Logging in &amp; MFA</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/dashboard/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Dashboard &amp; navigation</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/engagements/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Engagements</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/findings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Findings</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/catalogue/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Vulnerability catalogue</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/checklists/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Checklists</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/scanner-import/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Scanner import</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/reports/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Reports &amp; exports</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/trends-and-search/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Trends &amp; search</span></a></li><li class="astro-rmhv4bp6"><a href="/user-guide/notifications-and-profile/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Notifications &amp; profile</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Client Portal</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/client-portal/for-clients/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">For clients</span></a></li><li class="astro-rmhv4bp6"><a href="/client-portal/managing-clients/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Managing client access</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Administration</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/admin/roles-and-permissions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Roles &amp; permissions</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/user-management/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">User management</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/finding-structure/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Finding structure</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/report-profiles/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Report profiles</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/feature-flags/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Feature flags</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/branding/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Branding</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/licensing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Licensing</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/audit-log/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Audit log</span></a></li><li class="astro-rmhv4bp6"><a href="/admin/backup-and-restore/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Backup &amp; restore</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Security</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/security/encryption/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Encryption model</span></a></li><li class="astro-rmhv4bp6"><a href="/security/authentication/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Authentication &amp; sessions</span></a></li><li class="astro-rmhv4bp6"><a href="/security/audit-trail/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Audit trail &amp; tamper evidence</span></a></li><li class="astro-rmhv4bp6"><a href="/security/network-and-tls/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Network &amp; TLS</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Deployment &amp; Operations</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/deployment/docker-compose/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Docker Compose deep dive</span></a></li><li class="astro-rmhv4bp6"><a href="/deployment/upgrading/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Upgrading &amp; rolling back</span></a></li><li class="astro-rmhv4bp6"><a href="/deployment/moving-hosts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Moving to a new machine</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Developer Guide</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/dev/architecture/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Architecture overview</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/local-development/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Local development</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/frontend-builds/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Frontend asset builds</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/testing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Testing</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/contributing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Contributing</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/report-pipeline/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Report rendering pipeline</span></a></li><li class="astro-rmhv4bp6"><a href="/dev/scaling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Scaling &amp; concurrency model</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/reference/environment-variables/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Environment variables</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/management-commands/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Management commands</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/report-template-tags/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Report template tags</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/docx-template-guide/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DOCX template guide</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/checklist-template-format/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Checklist template format</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/data-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Data model &amp; status reference</span></a></li><li class="astro-rmhv4bp6"><a href="/reference/permissions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Permissions reference</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Changelog</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/changelog/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Changelog</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-it-works-in-short" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How it works, in short</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#two-kinds-of-tag" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Two kinds of tag</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-finding-loop" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The finding loop</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tag-reference" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tag reference</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#anywhere-in-the-document--plain-values" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Anywhere in the document — plain values</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#anywhere-in-the-document--rich-content" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Anywhere in the document — rich content</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#this-profiles-own-text-blocks" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">This profile’s own text blocks</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#loops-you-write-yourself-observations-and-testing-phases" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Loops you write yourself: observations and testing phases</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#inside-the-finding-loop--plain-values" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Inside the finding loop — plain values</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#inside-the-finding-loop--rich-content" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Inside the finding loop — rich content</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mapping-your-styles" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mapping your styles</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#formatting-notes-and-limitations" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Formatting notes and limitations</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#validation-what-gets-caught-and-when" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Validation: what gets caught and when</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#a-starter-template" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">A starter template</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#worked-example" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Worked example</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#see-also" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">See also</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-it-works-in-short" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How it works, in short</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#two-kinds-of-tag" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Two kinds of tag</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-finding-loop" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The finding loop</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tag-reference" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tag reference</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#anywhere-in-the-document--plain-values" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Anywhere in the document — plain values</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#anywhere-in-the-document--rich-content" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Anywhere in the document — rich content</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#this-profiles-own-text-blocks" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">This profile’s own text blocks</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#loops-you-write-yourself-observations-and-testing-phases" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Loops you write yourself: observations and testing phases</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#inside-the-finding-loop--plain-values" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Inside the finding loop — plain values</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#inside-the-finding-loop--rich-content" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Inside the finding loop — rich content</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mapping-your-styles" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mapping your styles</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#formatting-notes-and-limitations" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Formatting notes and limitations</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#validation-what-gets-caught-and-when" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Validation: what gets caught and when</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#a-starter-template" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">A starter template</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#worked-example" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Worked example</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#see-also" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">See also</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">DOCX template guide</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content">
+<p>This is for whoever designs the <code dir="auto">.docx</code> file uploaded to a <a href="/user-guide/reports/">Report
+Profile’s</a> <strong>Word (.docx)</strong> tab. Unlike the Document
+tab’s own free-form template (see <a href="/reference/report-template-tags/">Report template
+tags</a>), a DOCX template is a real Word
+document you build yourself, with your own layout, page setup,
+headers/footers, and named styles. RedScribe fills it in, it doesn’t
+generate one from scratch.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="how-it-works-in-short">How it works, in short</h2><a class="sl-anchor-link" href="#how-it-works-in-short"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How it works, in short”</span></a></div>
+<ol>
+<li>Design your report layout in Word, however you like.</li>
+<li>Define named paragraph/character/table <strong>styles</strong> for anything content
+needs to look a particular way, such as a code block, an image caption, a
+quote, or a table. Give them whatever names you want.</li>
+<li>Drop placeholder <strong>tags</strong> where dynamic content should appear (see the
+reference below).</li>
+<li>Upload the <code dir="auto">.docx</code> on the profile’s Word (.docx) tab.</li>
+<li>On the style-mapping page that follows, tell RedScribe which of <em>your</em>
+styles is “the code block style,” “the image caption style,” etc.</li>
+<li>Generate a test export against a real engagement, open it in Word, and
+iterate.</li>
+</ol>
+<p>A profile with no <code dir="auto">.docx</code> uploaded simply has no Word export option.
+Nothing breaks, it’s just not offered.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="two-kinds-of-tag">Two kinds of tag</h2><a class="sl-anchor-link" href="#two-kinds-of-tag"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Two kinds of tag”</span></a></div>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Syntax</th>
+<th>Use for</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain</td>
+<td><code dir="auto">{{ tag }}</code></td>
+<td>Single values, such as names, dates, numbers, and labels</td>
+<td>Replaces just the tag’s text, keeping whatever formatting (bold, font, color) the tag’s own run already has in your document</td>
+</tr>
+<tr>
+<td>Rich</td>
+<td><code dir="auto">{{p tag }}</code></td>
+<td>Multi-paragraph content, such as descriptions, technical details, tables, or anything with images or code</td>
+<td>Splices in real Word content built from the underlying data, styled using your mapped styles (see below)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The <code dir="auto">{{p ...}}</code> form is mandatory for anything rich.</strong> A plain <code dir="auto">{{ tag }}</code>
+can only ever hold a single run of text; it cannot contain a new paragraph,
+an image, or a table. Using plain <code dir="auto">{{ }}</code> on a rich tag by mistake won’t
+error, but the tag will render literally instead of the content you expect.</p>
+<p>Put a <code dir="auto">{{p tag }}</code> tag alone on its own paragraph/line. It gets replaced by
+that whole paragraph’s worth of content, and you don’t need to add extra
+blank paragraphs around it.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-finding-loop">The finding loop</h2><a class="sl-anchor-link" href="#the-finding-loop"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The finding loop”</span></a></div>
+<p>Everything belonging to a finding, its title, severity, and rich-text
+sections, lives inside a repeating block. Wrap it in:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.w36nc.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p for finding in findings %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">... your per-finding layout, using finding.* tags below ...</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{%p for finding in findings %}... your per-finding layout, using finding.* tags below ...{%p endfor %}"><div></div></button></div></figure></div>
+<p><code dir="auto">{%p for %}</code> repeats a run of <strong>paragraphs</strong> once per finding. Use this for
+the normal case (a finding with a heading, metadata line, and several rich
+sections). If your layout instead repeats a single <strong>table row</strong> per
+finding, use the table-row form instead:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%tr for finding in findings %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">| {{ finding.id }} | {{ finding.title }} | {{ finding.severity }} |</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%tr endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{%tr for finding in findings %}| {{ finding.id }} | {{ finding.title }} | {{ finding.severity }} |{%tr endfor %}"><div></div></button></div></figure></div>
+<p>(as an actual Word table row, not literal pipe characters. Put the loop
+tags in the first and last cells of the row you want repeated.)</p>
+<p>Both loop forms need their matching <code dir="auto">endfor</code>. A missing one is the single
+most common template mistake, and is caught automatically when you upload
+(see <a href="#validation-what-gets-caught-and-when">Validation</a> below).</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="tag-reference">Tag reference</h2><a class="sl-anchor-link" href="#tag-reference"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Tag reference”</span></a></div>
+<p>Everything below is also shown live on the profile’s Word (.docx) tab, since
+the finding-loop rich-tag list depends on which content sections your
+deployment currently has active (see <a href="#content-sections-are-dynamic">Content sections are
+dynamic</a> below).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="anywhere-in-the-document--plain-values">Anywhere in the document — plain values</h3><a class="sl-anchor-link" href="#anywhere-in-the-document--plain-values"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Anywhere in the document — plain values”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">{{ client_name }}</code></td>
+<td>Engagement’s client name</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ reference_number }}</code></td>
+<td>Engagement’s reference/project number</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ scope }}</code></td>
+<td>Engagement’s recorded scope (free text)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ start_date }}</code></td>
+<td>Engagement start date (ISO format), blank if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ end_date }}</code></td>
+<td>Engagement end date (ISO format), blank if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ report_date }}</code></td>
+<td>Today’s date, computed at render time</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ prepared_by }}</code></td>
+<td>The user generating the report</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ cover_title }}</code></td>
+<td>The profile’s configured cover title</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ classification_label }}</code></td>
+<td>The profile’s configured classification label (e.g. “Strictly Confidential”)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ firm_name }}</code></td>
+<td>Firm name, from Report Settings</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ test_type_label }}</code></td>
+<td>The engagement’s test type (e.g. “Web Application Penetration Test”), blank if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ reviewed_by }}</code></td>
+<td>The engagement’s configured default reviewer, blank if none set</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ qa_by }}</code></td>
+<td>The engagement’s configured default QA approver, blank if none set</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ approved_by }}</code></td>
+<td>The engagement’s configured default approver, blank if none set</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">reviewed_by</code>/<code dir="auto">qa_by</code>/<code dir="auto">approved_by</code> reflect the engagement’s <em>configured</em>
+role assignment, not necessarily whoever actually clicked the button for a
+given finding. Review and QA happen per finding and can, in principle,
+involve someone other than the configured default (e.g. a Superadmin acting
+on someone else’s behalf). For a full, factual record of who did what and
+when, use <code dir="auto">{{p document_control }}</code> instead, which is built from the
+engagement’s real status-change history.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="anywhere-in-the-document--rich-content">Anywhere in the document — rich content</h3><a class="sl-anchor-link" href="#anywhere-in-the-document--rich-content"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Anywhere in the document — rich content”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Renders</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">{{p firm_logo }}</code></td>
+<td>The firm logo (Report Settings), as an embedded picture. Omit it if you don’t want it, or place it yourself in a header instead</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p document_control }}</code></td>
+<td>A table of the engagement’s status history (stage / date / changed by)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p assessment_team }}</code></td>
+<td>One heading + bio + qualifications list per engagement member with access</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p checklist_coverage }}</code></td>
+<td>The engagement’s checklist run(s), grouped by run then category, as headings + tables</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p scan_imports }}</code></td>
+<td>A table documenting each scanner import on this engagement (tool, filename, date, imported by, findings produced). Metadata only, the original uploaded file itself isn’t stored</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p breakdown_table }}</code></td>
+<td>A severity/status bar chart, followed by the same counts as a table with each cell shaded using the profile’s configured severity colors</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="this-profiles-own-text-blocks">This profile’s own text blocks</h3><a class="sl-anchor-link" href="#this-profiles-own-text-blocks"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “This profile’s own text blocks”</span></a></div>
+<p>Every custom text block you’ve defined on this profile’s <strong>Text blocks</strong> tab
+(e.g. <code dir="auto">information_gathering</code>, <code dir="auto">disclaimers</code>, <code dir="auto">executive_summary</code>, or
+whatever slugs you’ve created) is available as a <code dir="auto">{{p &lt;slug&gt; }}</code> rich-content
+tag, using <strong>this profile’s own default content</strong> for that block (or a
+per-engagement override, if the report’s Configure page has one set). The
+current list of valid slugs for this profile is always shown live on this
+tab.</p>
+<aside aria-label="Caution" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Caution</p><div class="starlight-aside__content"><p><strong>Use <code dir="auto">{{p slug }}</code>, not <code dir="auto">{{ slug }}</code>.</strong> This is the same rule as everywhere
+else: these are rich text (can contain paragraphs, code blocks, images), so
+the plain-tag form can’t hold them. A plain <code dir="auto">{{ information_gathering }}</code>
+won’t error. Jinja just silently renders it as nothing, which looks exactly
+like
+“the block is empty” even when it has real content. If your export has an
+unexpectedly blank section where a text block should be, this is the first
+thing to check.</p></div></aside>
+<p><code dir="auto">{{p breakdown_table }}</code> renders a bar chart image (drawn to match the
+PDF/HTML/preview bars, same colors, same bars) followed by the counts
+table, since Word has no native charting object python-docx can build
+directly; the chart is a raster image, not an editable Word chart.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="loops-you-write-yourself-observations-and-testing-phases">Loops you write yourself: observations and testing phases</h3><a class="sl-anchor-link" href="#loops-you-write-yourself-observations-and-testing-phases"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Loops you write yourself: observations and testing phases”</span></a></div>
+<p><code dir="auto">observations</code> and <code dir="auto">testing_phases</code> (free-form per-engagement entries
+configured on the report’s Configure page) aren’t single tags. They’re
+<strong>lists</strong> you loop over yourself, the same pattern as the finding loop, so
+you control the layout entirely (heading level, a table row, whatever you
+want):</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p for o in observations %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{{ o.title }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{{p o.content }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{%p for o in observations %}{{ o.title }}{{p o.content }}{%p endfor %}"><div></div></button></div></figure></div>
+<p>Each item has a plain <code dir="auto">title</code> and rich <code dir="auto">content</code> (paragraphs, code blocks,
+images, whatever the observation’s own rich text contains). <code dir="auto">testing_phases</code>
+works identically. Just loop over <code dir="auto">testing_phases</code> instead, with the same
+<code dir="auto">x.title</code> / <code dir="auto">x.content</code> shape. If no entries are configured, the loop body
+simply never runs, so nothing renders and there’s no error.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="inside-the-finding-loop--plain-values">Inside the finding loop — plain values</h3><a class="sl-anchor-link" href="#inside-the-finding-loop--plain-values"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Inside the finding loop — plain values”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">{{ finding.id }}</code></td>
+<td>The finding’s display ID (e.g. <code dir="auto">F001</code>)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.title }}</code></td>
+<td>Finding title</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.severity }}</code></td>
+<td>Severity label (Critical / High / Medium / Low / Informational)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.status }}</code></td>
+<td>Status label (Open / Closed)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.cvss_score }}</code></td>
+<td>CVSS score, or <code dir="auto">—</code> if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.cvss_vector }}</code></td>
+<td>CVSS vector string, or <code dir="auto">—</code> if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.cve_id }}</code></td>
+<td>CVE ID (e.g. <code dir="auto">CVE-2024-12345</code>), or <code dir="auto">—</code> if unset</td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.classifications }}</code></td>
+<td>A list of classification tags, e.g. <code dir="auto">[OWASP Top 10 2021] A01:2021-Broken Access Control</code></td>
+</tr>
+<tr>
+<td><code dir="auto">{{ finding.affects }}</code></td>
+<td>A list of affected assets</td>
+</tr>
+</tbody>
+</table>
+<p><code dir="auto">classifications</code> and <code dir="auto">affects</code> are <strong>lists</strong>, not single strings. Used as a
+plain <code dir="auto">{{ tag }}</code> on its own, Jinja prints Python’s list representation
+(<code dir="auto">['a', 'b']</code>), not what you want. Loop over them inline instead, either
+joined in one paragraph:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Affects: {% for a in finding.affects %}{{ a }}{% if not loop.last %}, {% endif %}{% endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Affects: {% for a in finding.affects %}{{ a }}{% if not loop.last %}, {% endif %}{% endfor %}"><div></div></button></div></figure></div>
+<p>or as separate bulleted paragraphs, the same way the finding loop itself
+works:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p for a in finding.affects %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{{ a }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{%p for a in finding.affects %}{{ a }}{%p endfor %}"><div></div></button></div></figure></div>
+<p>(style that inner paragraph with whatever bullet-list style you’re using,
+the same as any other paragraph.)</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="inside-the-finding-loop--rich-content">Inside the finding loop — rich content</h3><a class="sl-anchor-link" href="#inside-the-finding-loop--rich-content"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Inside the finding loop — rich content”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Renders</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">{{p finding['&lt;slug&gt;'] }}</code></td>
+<td>One finding’s content for that content section (see below)</td>
+</tr>
+<tr>
+<td><code dir="auto">{{p finding.retest_history }}</code></td>
+<td>A date/tested-by/result table of retest records, remediation reports only, empty otherwise</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h4"><h4 id="content-sections-are-dynamic">Content sections are dynamic</h4><a class="sl-anchor-link" href="#content-sections-are-dynamic"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Content sections are dynamic”</span></a></div>
+<p>A finding’s rich-text fields (vulnerability description, technical details,
+business impact, etc.) are admin-configured per deployment via <a href="/admin/finding-structure/">Finding
+structure</a>, so they are not fixed. The exact set,
+and each one’s slug, can change at any time. <strong>Always check the live list on
+the profile’s Word (.docx) tab before authoring</strong>, since it’s generated
+fresh from whatever’s currently active, not from this document.</p>
+<p>As of this writing, a typical deployment’s slugs look like:</p>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">vulnerability-description</code></td>
+<td>Vulnerability description</td>
+</tr>
+<tr>
+<td><code dir="auto">business-impact</code></td>
+<td>Business impact</td>
+</tr>
+<tr>
+<td><code dir="auto">testing-summary</code></td>
+<td>Testing summary</td>
+</tr>
+<tr>
+<td><code dir="auto">technical-details</code></td>
+<td>Technical details</td>
+</tr>
+<tr>
+<td><code dir="auto">remediation-testing</code></td>
+<td>Remediation testing</td>
+</tr>
+<tr>
+<td><code dir="auto">recommendations</code></td>
+<td>Recommendations</td>
+</tr>
+<tr>
+<td><code dir="auto">references</code></td>
+<td>References</td>
+</tr>
+</tbody>
+</table>
+<aside aria-label="Use bracket notation, not dot notation, for these" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Use bracket notation, not dot notation, for these</p><div class="starlight-aside__content"><div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{{p finding['technical-details'] }}         ✓ correct</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">{{p finding.technical-details }}            ✗ wrong — silently breaks</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="{{p finding[&#x27;technical-details&#x27;] }}         ✓ correct{{p finding.technical-details }}            ✗ wrong — silently breaks"><div></div></button></div></figure></div><p>This is a hard Jinja rule, not a RedScribe quirk: a slug like
+<code dir="auto">technical-details</code> contains a hyphen, and <code dir="auto">finding.technical-details</code>
+parses as <em>subtraction</em> (<code dir="auto">finding.technical</code> minus <code dir="auto">details</code>), not as one
+attribute name. Bracket notation with the slug as a quoted string always
+works, regardless of what characters the slug contains, so use it for every
+content-section tag, even ones that happen to only contain underscores.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="mapping-your-styles">Mapping your styles</h2><a class="sl-anchor-link" href="#mapping-your-styles"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Mapping your styles”</span></a></div>
+<p>After uploading, you’re taken to a page listing content <strong>roles</strong>.
+RedScribe fills content into each role, but the actual look comes from a
+style you choose from your own document’s style catalog:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Body paragraph</td>
+<td>Default paragraph style for ordinary rich-text content</td>
+</tr>
+<tr>
+<td>Heading 1 – 6</td>
+<td>Headings that appear inside rich content (rare in practice)</td>
+</tr>
+<tr>
+<td>Bulleted list item</td>
+<td>Bullet-list paragraphs</td>
+</tr>
+<tr>
+<td>Numbered list item</td>
+<td>Numbered-list paragraphs</td>
+</tr>
+<tr>
+<td>Code block</td>
+<td>Each line of a code block, the fix for the classic problem of code blocks having nowhere to pick up your template’s monospace/shaded formatting</td>
+</tr>
+<tr>
+<td>Block quote</td>
+<td>Quoted paragraphs</td>
+</tr>
+<tr>
+<td>Image caption</td>
+<td>The caption paragraph placed under an embedded image, if the source content has alt text</td>
+</tr>
+<tr>
+<td>Table (breakdown/checklist/etc.)</td>
+<td>The Word table style applied to every generated table</td>
+</tr>
+<tr>
+<td>Table header cell text</td>
+<td>Header-row cell paragraphs in generated tables</td>
+</tr>
+<tr>
+<td>Inline code</td>
+<td>A <strong>character</strong> style for inline code spans within a paragraph</td>
+</tr>
+</tbody>
+</table>
+<p>Leave any role unmapped to fall back to Word’s default paragraph style.
+It’s still readable, just unstyled. There’s no requirement to map every
+role; map the ones you actually use.</p>
+<p>Re-uploading a template clears the previous mapping (a new file’s styles may
+not match the old names), so re-map after every re-upload.</p>
+<aside aria-label="Tip" class="starlight-aside starlight-aside--tip"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M1.44 8.855v-.001l3.527-3.516c.34-.344.802-.541 1.285-.548h6.649l.947-.947c3.07-3.07 6.207-3.072 7.62-2.868a1.821 1.821 0 0 1 1.557 1.557c.204 1.413.203 4.55-2.868 7.62l-.946.946v6.649a1.845 1.845 0 0 1-.549 1.286l-3.516 3.528a1.844 1.844 0 0 1-3.11-.944l-.858-4.275-4.52-4.52-2.31-.463-1.964-.394A1.847 1.847 0 0 1 .98 10.693a1.843 1.843 0 0 1 .46-1.838Zm5.379 2.017-3.873-.776L6.32 6.733h4.638l-4.14 4.14Zm8.403-5.655c2.459-2.46 4.856-2.463 5.89-2.33.134 1.035.13 3.432-2.329 5.891l-6.71 6.71-3.561-3.56 6.71-6.711Zm-1.318 15.837-.776-3.873 4.14-4.14v4.639l-3.364 3.374Z" clip-rule="evenodd"/><path d="M9.318 18.345a.972.972 0 0 0-1.86-.561c-.482 1.435-1.687 2.204-2.934 2.619a8.22 8.22 0 0 1-1.23.302c.062-.365.157-.79.303-1.229.415-1.247 1.184-2.452 2.62-2.935a.971.971 0 1 0-.62-1.842c-.12.04-.236.084-.35.13-2.02.828-3.012 2.588-3.493 4.033a10.383 10.383 0 0 0-.51 2.845l-.001.016v.063c0 .536.434.972.97.972H2.24a7.21 7.21 0 0 0 .878-.065c.527-.063 1.248-.19 2.02-.447 1.445-.48 3.205-1.472 4.033-3.494a5.828 5.828 0 0 0 .147-.407Z"/></svg>Tip</p><div class="starlight-aside__content"><p>Define your styles in Word first (Home tab → Styles pane → New Style), then
+place your tags. The style-mapping dropdowns are populated straight from
+your file’s style catalog, so whatever you name them there is exactly what
+you’ll see to pick from.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="formatting-notes-and-limitations">Formatting notes and limitations</h2><a class="sl-anchor-link" href="#formatting-notes-and-limitations"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Formatting notes and limitations”</span></a></div>
+<ul>
+<li><strong>Marks</strong> (bold/italic/underline/strikethrough) on text within a rich
+section carry through automatically. <strong>Inline code</strong> uses your mapped
+“Inline code” character style if set, else falls back to the profile’s
+configured monospace font. <strong>Highlighted</strong> text maps to Word’s built-in
+yellow highlight. Arbitrary highlight colors aren’t supported.
+<strong>Links</strong> render using Word’s built-in “Hyperlink” character style
+automatically; only <code dir="auto">http://</code>, <code dir="auto">https://</code>, and <code dir="auto">mailto:</code> links are ever
+embedded (anything else is dropped as a precaution).</li>
+<li><strong>Nested bulleted/numbered lists</strong> (a sub-bullet under a bullet) are
+flattened to one indent level, since Word’s per-level list numbering needs
+more than a named style can carry.</li>
+<li><strong>Tables</strong> support merged cells (column/row spans) from the source
+content, and use whichever “Table” style you mapped. Column widths are
+Word’s own auto-sizing, and the original editor’s column-width hints
+aren’t carried over.</li>
+<li><strong>Images</strong> are sized to fit your page’s content width if they’d otherwise
+overflow it, else shown at their natural size.</li>
+<li>No DOCX password protection yet (<a href="/user-guide/reports/#pdf-password-protection">PDF export</a>
+has this; DOCX doesn’t).</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="validation-what-gets-caught-and-when">Validation: what gets caught and when</h2><a class="sl-anchor-link" href="#validation-what-gets-caught-and-when"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Validation: what gets caught and when”</span></a></div>
+<p>Uploading a template runs it through a <strong>dry-run render</strong> immediately,
+against dummy data, so a broken template is rejected with an error message
+right away, not discovered later against a real engagement. This catches:</p>
+<ul>
+<li>The file isn’t a real <code dir="auto">.docx</code> at all.</li>
+<li>A missing <code dir="auto">{%p endfor %}</code> / <code dir="auto">{%tr endfor %}</code>, or other malformed loop
+syntax.</li>
+<li>Any other Jinja/template syntax error.</li>
+</ul>
+<p>It does <strong>not</strong> catch: a typo’d tag name that happens to be valid Jinja
+syntax (it’ll just render blank or literally), or a style name you mapped
+that gets renamed/deleted from a later re-upload of the <em>same</em> filename.
+Re-check your mapping after any re-upload.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="a-starter-template">A starter template</h2><a class="sl-anchor-link" href="#a-starter-template"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “A starter template”</span></a></div>
+<p>The Word (.docx) tab has a <strong>Download starter template</strong> link, a working
+example with a finding loop, a pre-defined code-block style, and the tag
+patterns described above already in place. Downloading and adapting it is
+the fastest way to get something working, rather than starting from a blank
+document.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="worked-example">Worked example</h2><a class="sl-anchor-link" href="#worked-example"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Worked example”</span></a></div>
+<p>A minimal but complete layout:</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[Title, centered, large]           {{ cover_title }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[Subtitle, centered]               {{ client_name }} — {{ reference_number }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[centered]                         {{ test_type_label }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[centered]                         {{ classification_label }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p firm_logo }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[page break]</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Document Control</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p document_control }}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Assessment Team</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p assessment_team }}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Breakdown of Findings</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p breakdown_table }}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Testing Methodology / Coverage</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p checklist_coverage }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p for p in testing_phases %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2:                         {{ p.title }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p p.content }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Observations</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p for o in observations %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2:                         {{ o.title }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p o.content }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 1: Detailed Findings</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p for finding in findings %}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">[bold]                             {{ finding.id }} — {{ finding.title }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">Severity: {{ finding.severity }}   Status: {{ finding.status }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">CVSS: {{ finding.cvss_score }} ({{ finding.cvss_vector }})   CVE: {{ finding.cve_id }}</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2: Description</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p finding['vulnerability-description'] }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2: Technical Details</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p finding['technical-details'] }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2: Business Impact</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p finding['business-impact'] }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2: Recommendations</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p finding['recommendations'] }}</span></div></div><div class="ec-line"><div class="code"><span style="--0:#d6deeb;--1:#403f53">Heading 2: Retest History</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{{p finding.retest_history }}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#d6deeb;--1:#403f53">                                    </span></span><span style="--0:#d6deeb;--1:#403f53">{%p endfor %}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Title, centered, large]           {{ cover_title }}[Subtitle, centered]               {{ client_name }} — {{ reference_number }}[centered]                         {{ test_type_label }}[centered]                         {{ classification_label }}                                    {{p firm_logo }}[page break]Heading 1: Document Control                                    {{p document_control }}Heading 1: Assessment Team                                    {{p assessment_team }}Heading 1: Breakdown of Findings                                    {{p breakdown_table }}Heading 1: Testing Methodology / Coverage                                    {{p checklist_coverage }}                                    {%p for p in testing_phases %}Heading 2:                         {{ p.title }}                                    {{p p.content }}                                    {%p endfor %}Heading 1: Observations                                    {%p for o in observations %}Heading 2:                         {{ o.title }}                                    {{p o.content }}                                    {%p endfor %}Heading 1: Detailed Findings                                    {%p for finding in findings %}[bold]                             {{ finding.id }} — {{ finding.title }}                                    Severity: {{ finding.severity }}   Status: {{ finding.status }}                                    CVSS: {{ finding.cvss_score }} ({{ finding.cvss_vector }})   CVE: {{ finding.cve_id }}Heading 2: Description                                    {{p finding[&#x27;vulnerability-description&#x27;] }}Heading 2: Technical Details                                    {{p finding[&#x27;technical-details&#x27;] }}Heading 2: Business Impact                                    {{p finding[&#x27;business-impact&#x27;] }}Heading 2: Recommendations                                    {{p finding[&#x27;recommendations&#x27;] }}Heading 2: Retest History                                    {{p finding.retest_history }}                                    {%p endfor %}"><div></div></button></div></figure></div>
+<p>Give the document real “Heading 1”/“Heading 2” styles (Word’s built-ins work
+fine, or your own) so Word’s native Table of Contents feature (insert one
+yourself via References → Table of Contents) can pick them up and update on
+open, the same way it would in any other Word document.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="see-also">See also</h2><a class="sl-anchor-link" href="#see-also"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “See also”</span></a></div>
+<ul>
+<li><a href="/reference/report-template-tags/">Report template tags</a>: the parallel
+tag system for the Document tab (Markdown/PDF/HTML export).</li>
+<li><a href="/user-guide/reports/">Reports &amp; exports</a>: the end-to-end generation
+workflow this page’s tags plug into.</li>
+</ul></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/reference/report-template-tags/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Report template tags</span></span></a><a href="/reference/checklist-template-format/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Checklist template format</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

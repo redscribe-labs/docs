@@ -1,0 +1,4 @@
+# Local standalone Node.js toolchain (this machine's system Node was too old
+# for Astro/Starlight — see site-src/README.md). Never commit this; it's a
+# multi-hundred-MB binary runtime, not project content.
+.tools/

@@ -1,0 +1,86 @@
+---
+title: Permissions reference
+description: Fast lookup for every permission slug, its category, and which built-in role holds it by default.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Fast-lookup companion to [Roles & permissions](/admin/roles-and-permissions/),
+which has the narrative explanation. This page is just the tables.
+
+## Every permission
+
+| Permission | Category | What it grants |
+|---|---|---|
+| `engagements.create` | Engagements | Create engagements |
+| `engagements.manage` | Engagements | Manage engagement membership, metadata, and scope-change approval (non-archived engagements) |
+| `engagements.view_all` | Engagements | View every non-archived engagement without needing explicit membership |
+| `engagements.release_to_client` | Engagements | Approve releasing an engagement's findings to the client portal |
+| `catalogue.manage` | Catalogue | Create, edit, and delete vulnerability catalogue templates |
+| `catalogue.approve` | Catalogue | Approve draft vulnerability catalogue entries |
+| `catalogue.delete_any` | Catalogue | Delete any catalogue entry, including ones created by someone else |
+| `catalogue.bulk_manage` | Catalogue | Export/import the whole vulnerability catalogue at once |
+| `checklist_templates.manage` | Checklist | Manage checklist templates |
+| `report_settings.manage` | Reports | Manage report profiles and export settings |
+| `reports.trends` | Reports | View cross-engagement trend reporting |
+| `findings.review` | Finding Review | Review findings (eligible to be assigned as reviewer) |
+| `findings.review_own` | Finding Review | Review findings authored by yourself |
+| `findings.qa` | Finding Review | QA findings (eligible to be assigned as QA reviewer) |
+| `findings.qa_own` | Finding Review | QA findings authored by yourself |
+| `findings.act_any_assignment` | Finding Review | Submit any finding's review/QA decision, regardless of who it's assigned to |
+| `clients.manage` | Client Portal | Manage client-portal companies and accounts |
+| `users.manage` | Administration | ⚠️ Manage user accounts (create, deactivate, change roles) |
+| `roles.manage` | Administration | ⚠️ Manage roles and permissions, including this list |
+| `feature_flags.manage` | Administration | Manage feature flags |
+| `licensing.manage` | Administration | Manage the license key |
+| `audit_log.manage` | Administration | View and purge the audit log |
+| `field_visibility.manage` | Administration | Manage which finding/catalogue fields are visible |
+| `branding.manage` | Administration | Manage firm branding (name, logo) shown on the login page, sidebar, and reports |
+
+<Aside type="danger" title="users.manage / roles.manage are Superadmin-equivalent">
+Either permission lets its holder eventually grant themselves every
+permission in this table. See [Roles &
+permissions](/admin/roles-and-permissions/#every-permission)
+for why. Grant them only to someone you'd trust with full Superadmin access.
+</Aside>
+
+## Default permissions by built-in role
+
+<Aside type="note">
+Superadmin isn't shown as a column, since it implicitly holds every
+permission, always, and isn't editable. The matrix below covers the three
+built-in roles whose permission sets you actually configure. A blank cell
+means the role doesn't hold that permission by default.
+</Aside>
+
+| Permission | Team Lead | Senior | Consultant |
+|---|:---:|:---:|:---:|
+| `engagements.create` | ✅ | | |
+| `engagements.manage` | ✅ | | |
+| `engagements.view_all` | ✅ | | |
+| `engagements.release_to_client` | ✅ | | |
+| `catalogue.manage` | ✅ | | |
+| `catalogue.approve` | ✅ | ✅ | |
+| `catalogue.delete_any` | ✅ | | |
+| `catalogue.bulk_manage` | | | |
+| `checklist_templates.manage` | ✅ | | |
+| `report_settings.manage` | | | |
+| `reports.trends` | ✅ | | |
+| `findings.review` | ✅ | ✅ | |
+| `findings.review_own` | ✅ | | |
+| `findings.qa` | ✅ | ✅ | |
+| `findings.qa_own` | ✅ | | |
+| `findings.act_any_assignment` | | | |
+| `clients.manage` | ✅ | | |
+| `users.manage` | | | |
+| `roles.manage` | | | |
+| `feature_flags.manage` | | | |
+| `licensing.manage` | | | |
+| `audit_log.manage` | | | |
+| `field_visibility.manage` | | | |
+| `branding.manage` | | | |
+
+These are starting defaults, not a fixed hierarchy. Every non-Superadmin
+role's permission set is editable from [Role
+Management](/admin/roles-and-permissions/), and custom roles can combine any
+permissions from the table above.

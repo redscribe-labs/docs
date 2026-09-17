@@ -1,0 +1,106 @@
+---
+title: User management
+description: Creating and managing staff accounts, and recovering a lost password or MFA device.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+`/user-management/` (needs `users.manage`) manages **staff** accounts:
+Superadmin, Team Lead, Senior, Consultant, and any custom role. Client-portal
+accounts are separate; see [Managing client access](/client-portal/managing-clients/).
+
+## Creating a user
+
+**User Management** → **New user** (`/user-management/create/`). Set a
+username, email, and [role](/admin/roles-and-permissions/). The account is
+provisioned via the same single-use, 24-hour emailed setup link used
+everywhere else in RedScribe. You never choose a new user's password
+yourself; they set their own from the link, then enroll in TOTP MFA on first
+login.
+
+## Managing an existing user
+
+From a user's detail page (`/user-management/<uuid>/`):
+
+- **Edit** changes email, name, or role. You can't change your **own** role
+  from here (the field is disabled when editing yourself), so get another
+  Superadmin to do it.
+- **Deactivate** signs the account out of every active session immediately
+  and blocks further login. Two guardrails prevent locking yourself out of
+  the instance:
+  - You can't deactivate your own account.
+  - You can't deactivate the **last active Superadmin**.
+
+  <Aside type="caution" title="Orphaned review/QA assignments">
+  Deactivating a user who still has findings assigned to them for review or
+  QA doesn't reassign those findings automatically. You'll see a warning
+  listing up to 5 affected findings (by title and client) plus a count of any
+  more, so you know to reassign them to someone else. The assignments
+  themselves are left as they are until you do.
+  </Aside>
+
+- **Reactivate** restores login access without touching role or
+  assignments.
+- **Send password reset** triggers the same emailed reset link a
+  self-service "Forgot password" would, on the user's behalf. It's only
+  available for local accounts, not OAuth.
+- **Clear MFA** deletes the account's confirmed TOTP device, forcing
+  re-enrollment at next login. Also local accounts only.
+
+The same last-active-Superadmin protection applies when changing a role away
+from Superadmin: RedScribe refuses the change with "This is the last active
+Superadmin — change another account's role to Superadmin first" rather than
+letting an instance end up with zero Superadmins.
+
+## Account recovery (lost password / lost MFA device)
+
+If a Superadmin (or any local account) loses their password, their TOTP
+device, or both, there's **no self-service recovery**. Fix it directly via
+the CLI on the `web` container. This is the escape hatch for when the
+in-app tools above aren't usable (e.g. the only Superadmin is themselves
+locked out).
+
+<Steps>
+
+1. **Find the username**, if you don't already know it:
+
+   ```sh
+   docker compose exec web python manage.py shell -c "
+   from apps.accounts.models import User
+   for u in User.objects.filter(role__is_superadmin=True):
+       print(u.username, u.email)
+   "
+   ```
+
+2. **Reset the password** (interactive, prompts twice, input hidden):
+
+   ```sh
+   docker compose exec web python manage.py changepassword <username>
+   ```
+
+3. **If MFA access is also lost**, delete the confirmed TOTP device so the
+   account is forced back through enrollment on next login:
+
+   ```sh
+   docker compose exec web python manage.py shell -c "
+   from apps.accounts.models import User
+   from django_otp.plugins.otp_totp.models import TOTPDevice
+   u = User.objects.get(username='<username>')
+   TOTPDevice.objects.filter(user=u).delete()
+   "
+   ```
+
+</Steps>
+
+Log in with the new password. With no confirmed TOTP device, the account is
+routed straight to MFA enrollment (per `apps.accounts.middleware`) to set up
+a fresh authenticator.
+
+<Aside type="danger">
+Never resort to wiping the database over a lost credential, since that
+destroys every engagement, finding, and report along with it. These
+commands touch only the affected user's row. If you do need to restore
+from a backup for some other reason, see [Backup &
+restore](/admin/backup-and-restore/), which has its own, separate
+safeguards around account state.
+</Aside>

@@ -1,0 +1,88 @@
+---
+title: Checklist template format
+description: The JSON and CSV formats accepted when bulk-importing a checklist template.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Reference for building your own [checklist template](/user-guide/checklists/)
+file to bulk-import, instead of entering items one at a time in the UI.
+
+## JSON format
+
+The top-level value must be a **list** of item objects.
+
+| Field | Required | Type | Notes |
+|---|---|---|---|
+| `category` | Yes | string | Groups items in the run UI and in report output (`{{ checklist_coverage }}`) |
+| `title` | Yes | string | The item's short name |
+| `code` | No | string | A short reference code (e.g. `WSTG-INFO-01`). This is free text and isn't validated against any external scheme |
+| `reference_info` | No | string | The item's objectives/description. Plain text is auto-wrapped into a single paragraph; you can also pass a full Tiptap `{"type":"doc","content":[...]}` JSON string directly if you need richer formatting (multiple paragraphs, links) |
+
+```json
+[
+  {
+    "category": "Information Gathering",
+    "code": "WSTG-INFO-01",
+    "title": "Conduct Search Engine Reconnaissance for Information Leakage",
+    "reference_info": "Identify what sensitive design and configuration information of the application, system, or organization is exposed directly or indirectly via third-party services."
+  },
+  {
+    "category": "Information Gathering",
+    "code": "WSTG-INFO-02",
+    "title": "Fingerprint Web Server",
+    "reference_info": "Determine the version and type of a running web server to enable further discovery of any known vulnerabilities."
+  }
+]
+```
+
+Item order in the run follows the array's order. There's no separate
+`order` field to set, so reorder items by reordering the array (or
+afterward in the UI via **move**).
+
+<Aside type="tip">
+`docs/checklist-templates/owasp-wstg.json` in the repo is a complete,
+ready-to-import worked example covering the full OWASP WSTG test list. The
+JSON snippet above is drawn directly from it.
+</Aside>
+
+## CSV format
+
+A header row plus one row per item. At minimum, **`category` and `title`
+columns are required**, and import is rejected outright if either is
+missing from the header. `code` and `reference_info` columns are optional.
+
+```csv
+category,code,title,reference_info
+Information Gathering,WSTG-INFO-01,Conduct Search Engine Reconnaissance for Information Leakage,Identify what sensitive design and configuration information is exposed.
+Information Gathering,WSTG-INFO-02,Fingerprint Web Server,Determine the version and type of a running web server.
+```
+
+## What happens on import
+
+Both formats go through the same underlying logic: the named template is
+created if it doesn't already exist (matched by name), its description and
+uploader are updated, and **every existing item on that template is deleted
+and replaced** by the imported rows. A bulk import is a full replace, not a
+merge. `reference_info` content is sanitized (embedded image references
+stripped) the same way any other rich-text input is, regardless of import
+format.
+
+<Aside type="caution">
+Re-importing into an existing template name discards its current items
+first. If you've hand-edited items in the UI since the last import and want
+to keep those edits, export the template first (JSON, same shape as the
+import format above) to capture its current state before re-importing.
+</Aside>
+
+## Export format
+
+**Export** on a template produces JSON in exactly the import shape above
+(`category`, `code`, `title`, `reference_info` per item, in the template's
+current order), so a round-trip export followed by import is lossless, and
+an exported template from one instance can be imported into another.
+
+## See also
+
+- [Checklists](/user-guide/checklists/): the template/run workflow this
+  format feeds into.

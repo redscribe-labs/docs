@@ -1,0 +1,67 @@
+---
+title: Upgrading & rolling back
+description: Upgrading a running instance safely, and rolling back a bad deploy or migration.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+<Aside type="danger" title="entrypoint.sh runs migrations unconditionally">
+`entrypoint.sh` runs `python manage.py migrate --noinput` on **every**
+container start, with no dry-run step and no automatic snapshot before it
+touches the schema. If a new migration (or the code that shipped alongside
+it) turns out to be broken once it's live, the only way back is the
+backup/restore tooling below, and only if you took a snapshot **before**
+upgrading. Make that step part of the upgrade, not something you reach for
+after it's already gone wrong.
+</Aside>
+
+## The upgrade procedure
+
+<Steps>
+1. **Snapshot the current, known-good state before pulling anything new:**
+
+   ```sh
+   docker compose exec -T web python manage.py create_backup
+   ```
+
+2. **Pull/build the new version and restart as usual:**
+
+   ```sh
+   git pull
+   docker compose up -d --build
+   ```
+
+3. **If something's broken**, roll the code back first:
+
+   ```sh
+   git checkout <previous-tag-or-commit>
+   docker compose up -d --build
+   ```
+
+4. **Then restore the pre-upgrade snapshot from step 1** (path printed by
+   `create_backup`, or look in `BACKUP_DIR` for the most recent
+   `redscribe-backup-<timestamp>.rsbk`):
+
+   ```sh
+   docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
+   ```
+</Steps>
+
+Rolling the code back alone is sometimes enough, if it's a bad release with
+no migration in it. Restoring the database is only needed once a migration
+has actually changed the schema in a way the old code can't run against.
+Either way, having the pre-upgrade snapshot in hand before you start means
+that decision is never made under pressure with nothing to fall back on.
+
+For the full detail on `create_backup`/`restore_backup`, including
+retention, encryption, the account-reconciliation report `restore_backup`
+prints before touching anything live, and the automatic pre-restore safety
+snapshot it takes on your behalf, see [Backup & restore](/admin/backup-and-restore/).
+
+## Version tags
+
+Releases are tagged `v<version>` (e.g. `v0.1.0-alpha.1`) against the
+`VERSION` file in the repo root. `git checkout <previous-tag-or-commit>` in
+step 3 above means exactly that tag, or any commit you know was working. See
+[Alpha status & versioning](/start/alpha-status/) for how RedScribe's
+pre-1.0 versioning works and what to expect from a minor-version bump.

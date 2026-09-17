@@ -1,0 +1,106 @@
+---
+title: Environment variables
+description: Every environment variable RedScribe reads, grouped by area, with its purpose and default.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+All configuration is via environment variables, normally set in `.env`
+(copied from `.env.example`). This page is the complete, authoritative list.
+For the reasoning behind the encryption, audit, and backup groups
+specifically, see [Encryption model](/security/encryption/), [Audit
+log](/admin/audit-log/), and [Backup & restore](/admin/backup-and-restore/).
+This page is just the "what," and those are the "why."
+
+## Django core
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `DJANGO_SETTINGS_MODULE` | Which settings module to run, `config.settings.dev` or `config.settings.prod`. See [Configuration](/getting-started/configuration/#dev-vs-prod-settings). | `config.settings.dev` |
+| `DJANGO_SECRET_KEY` | Session/CSRF signing key. Generate a random 50-char value; never reuse the placeholder. | `change-me-to-a-random-50-char-value` |
+| `DJANGO_DEBUG` | Django debug mode: verbose error pages, no static file caching. Never enable in a real deployment. | `true` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames Django will serve; must include whatever `NGINX_SERVER_NAME` is set to. | `localhost,127.0.0.1` |
+
+## Reverse proxy / TLS
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `NGINX_SERVER_NAME` | Your domain: the tailnet hostname for [Method 1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended), or your own domain for [Method 2](/getting-started/installation/#method-2-docker-compose--your-own-tls-certificate). Leave unset for nginx's `_` catch-all default ([Method 3](/getting-started/installation/#method-3-docker-compose-plain-http)). | *(unset)* |
+| `GUNICORN_WORKERS` | Gunicorn worker process count. Leave unset to auto-size to `(2 * cpu cores) + 1` at container startup. | *(auto-sized)* |
+
+## Database
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `POSTGRES_DB` | Database name. | `redscribe` |
+| `POSTGRES_USER` | Database user. | `redscribe` |
+| `POSTGRES_PASSWORD` | Database password. Set this to something of your own choosing. | `change-me` |
+| `POSTGRES_HOST` | Database hostname: `db` under Docker Compose, `localhost` for [Method 4](/getting-started/installation/#method-4-local-development-without-docker). | `db` |
+| `POSTGRES_PORT` | Database port. | `5432` |
+
+## Encryption
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `REDSCRIBE_ROOT_KEY` | Instance root key wrapping every engagement's own per-project data key. Generate with `python manage.py generate_root_key`. **Required in production**, since `config.settings.prod` refuses to start without it. Under Docker Compose this is mounted as a Docker secret from `secrets/root_key.txt` instead, and this var is left unset; only set it directly for a non-Docker/bare-metal run or CI. Never commit the real value. | *(unset)* |
+
+## Authentication & rate limiting
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `OAUTH_PROVIDER` | `"google"`, `"microsoft"`, or empty for local-auth-only. | *(empty)* |
+| `OAUTH_ALLOWED_DOMAIN` | The single email domain OAuth sign-in is locked to. Required whenever `OAUTH_PROVIDER` is set. RedScribe is single-tenant per instance, so anyone authenticating with a valid provider account outside this domain is rejected before an account is created. | *(unset)* |
+| `SESSION_IDLE_TIMEOUT_SECONDS` | Signs a session out after this many seconds of no requests, automatic-logoff behavior, distinct from the session's fixed 4-hour cap (`SESSION_COOKIE_AGE`, not separately configurable). | `1800` (30 min) |
+| `LOCKOUT_THRESHOLD` | Failed login attempts before an account is locked out. | `5` |
+| `LOCKOUT_DURATION_SECONDS` | How long a lockout lasts, in seconds. | `86400` (24h) |
+| `SUPERADMIN_RATE_LIMIT_WINDOW_SECONDS` | Rate-limit window for Superadmin-sensitive actions. | `60` |
+| `SUPERADMIN_RATE_LIMIT_MAX_ATTEMPTS` | Max attempts allowed within that window. | `10` |
+| `PWNED_PASSWORD_CHECK_ENABLED` | Checks new passwords against Have I Been Pwned's breach corpus (a k-anonymity API, so only a 5-char hash prefix ever leaves the instance). Set to `false` for air-gapped deployments with no outbound internet access. | `true` |
+
+### OAuth provider credentials
+
+Only required when `OAUTH_PROVIDER` selects that provider.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` | Required only when `OAUTH_PROVIDER=google`. Create at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials): an OAuth 2.0 Client ID of type "Web application," with an authorized redirect URI of `https://<your-domain>/accounts/social/google/login/callback/`. | *(unset)* |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Paired secret for the above. | *(unset)* |
+| `MICROSOFT_OAUTH_CLIENT_ID` | Required only when `OAUTH_PROVIDER=microsoft`. Create at [entra.microsoft.com](https://entra.microsoft.com) under App registrations, with a redirect URI of `https://<your-domain>/accounts/social/microsoft/login/callback/`. | *(unset)* |
+| `MICROSOFT_OAUTH_CLIENT_SECRET` | Paired secret for the above. | *(unset)* |
+| `MICROSOFT_OAUTH_TENANT_ID` | Leave as `organizations` unless the consultancy needs a specific Entra ID tenant restricted at the login-screen level too, in which case set it to that tenant's ID. This is a stricter belt-and-braces measure alongside `OAUTH_ALLOWED_DOMAIN`, not a replacement for it. | `organizations` |
+
+<Aside type="caution">
+Set `OAUTH_ALLOWED_DOMAIN` whenever `OAUTH_PROVIDER` is set, since it's the
+primary tenant boundary. `MICROSOFT_OAUTH_TENANT_ID` is an additional
+Microsoft-specific restriction, not a substitute for it.
+</Aside>
+
+## Email
+
+Password reset links and change notifications. Leave `EMAIL_HOST` blank to
+use the console backend (emails printed to the app log), which is fine for
+local/dev, but not for production.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `EMAIL_HOST` | SMTP host. | *(empty, console backend)* |
+| `EMAIL_PORT` | SMTP port. | `587` |
+| `EMAIL_HOST_USER` | SMTP username. | *(empty)* |
+| `EMAIL_HOST_PASSWORD` | SMTP password. | *(empty)* |
+| `EMAIL_USE_TLS` | Use TLS for the SMTP connection. | `true` |
+| `DEFAULT_FROM_EMAIL` | From-address on outgoing mail. | `RedScribe <no-reply@redscribe.local>` |
+| `PASSWORD_RESET_TIMEOUT_SECONDS` | How long a password reset link stays valid. | `3600` (1h) |
+
+## Audit log
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `AUDIT_LOG_RETENTION_DAYS` | How far back Audit Log entries are kept before eligible for purge. See [Audit log](/admin/audit-log/) for details, including how the default compares to PCI DSS/NIST/CIS. | `2190` (6 years, HIPAA's general documentation-retention rule) |
+
+## Backup
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `BACKUP_DIR` | Where `create_backup` writes encrypted backups, server-side. | `/app/backups` |
+| `BACKUP_ENCRYPTION_PASSPHRASE` | Encrypts/decrypts backups. Required for `create_backup` to run unattended (host cron); `restore_backup` prompts interactively if this isn't set. Same trust level as this app's other `.env` secrets, so never commit the real value. | *(empty)* |
+| `BACKUP_RETENTION_DAYS` | How long `create_backup` keeps old backups in `BACKUP_DIR` before pruning them. | `30` |

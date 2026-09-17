@@ -1,0 +1,108 @@
+---
+title: Notifications & profile
+description: Every notification type RedScribe sends, exactly what each one triggers, how the email/in-app split works, and what your own profile page actually controls.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Notifications
+
+`/notifications/` lists every in-app notification addressed to you, newest
+first, paginated 20 at a time. There are nine notification types in total,
+and every one of them is tied to either a finding's review workflow or an
+engagement's scope change process. Nothing else in the app generates an
+in-app notification.
+
+| Trigger | What you see in-app |
+|---|---|
+| You're assigned as reviewer on a finding | "You were assigned as reviewer for..." |
+| You're assigned as QA approver on a finding | "You were assigned as QA approver for..." |
+| A finding you authored was reviewed | "Your finding ... was reviewed by..." |
+| A finding you authored was sent back with review changes requested | "Your finding ... was sent back with changes requested by..." |
+| A finding you reviewed, or authored, was QA approved | "... was QA approved by..." |
+| A finding you reviewed, or authored, was sent back from QA with changes requested | "... was sent back from QA with changes requested by..." |
+| An engagement you're the configured approver for moves to QA status | "... has moved to QA, you're the configured approver for this engagement." |
+| A scope change request you submitted was approved | "Your scope change for ... was approved." |
+| A scope change request you submitted was rejected | "Your scope change for ... was rejected." |
+
+Opening a notification marks it read and redirects you straight to whatever
+it's about (the finding, or the engagement), rather than just marking it
+read in place. **Mark all read** clears the unread count in the sidebar bell
+without navigating anywhere.
+
+<Aside type="note" title="Superadmin lockout/rate limit alerts are not notifications">
+An earlier version of this page said lockout and rate limit alerts showed up
+here for administrators. They don't. Those alerts are sent as a direct email
+to every active Superadmin the moment an account is locked out or rate
+limited (see `apps/accounts/security.py`'s `maybe_alert_lockout`), completely
+outside the notification system described on this page. There's no in-app
+record of them and no bell count involvement. Check the [Audit
+Log](/admin/audit-log/) if you need a historical record of lockout events
+instead.
+</Aside>
+
+### The bulk action exception
+
+Bulk assign and bulk submit actions (assigning a reviewer or QA approver
+across every eligible finding in an engagement at once, or submitting the
+same review or QA outcome across several findings at once) still create one
+individual in-app notification per finding, exactly as if you'd acted on
+each one separately. What changes is email: instead of one email per
+finding, you get a single summary email covering the whole batch ("You've
+been assigned as a reviewer on 12 findings," rather than 12 separate
+emails). The in-app list is never batched, only the email is.
+
+### Email notifications are deliberately generic
+
+Every notification email uses one of nine fixed, generic subject lines
+("You've been assigned as a reviewer on a finding," "A finding you authored
+was reviewed," and so on) or a bulk equivalent with just a count. None of
+them ever include a client name, finding title, or engagement reference in
+the subject or body. This is on purpose: a compromised mailbox shouldn't
+expose which clients or vulnerabilities an account was working on. The
+in-app version of the same notification stays fully detailed, since viewing
+it already requires being logged in.
+
+Emails are sent from a background thread after your request's database
+transaction commits, not synchronously as part of the request. This keeps a
+bulk action from blocking on dozens of SMTP round trips, and it means a
+transient mail server failure is logged rather than surfaced as an error to
+whoever triggered the notification. If email delivery seems to be silently
+failing, check the application log for `Failed to send notification email
+to...` rather than expecting an in-app error.
+
+### Your notification preference
+
+**Profile** → **Notification preferences** (`/notifications/preferences/`)
+is a single all-or-nothing switch, "Also send me an email," not a per
+notification type toggle. In-app notifications are always on and can't be
+turned off. Turning the email switch off stops every one of the nine
+notification types (and their bulk equivalents) from emailing you, while
+still creating the in-app entries as normal. OAuth accounts and local
+accounts both respect this switch equally.
+
+## Your profile
+
+`/profile/` (`accounts:profile`) is deliberately narrow. It edits exactly
+two fields on your account:
+
+- **Qualifications / certifications**, one per line, for example "OSCP" on
+  its own line, then "OSWE" on the next. This renders as a bulleted list.
+- **Background**, a short free text professional bio.
+
+Both feed directly into the `{{p assessment_team }}` tag on generated
+reports (see [Report template tags](/reference/report-template-tags/)),
+shown under your name in a report's Assessment Team section for any
+engagement you're a member of with access. Nothing else about your account,
+not your username, email, display name, or role, can be changed from this
+page.
+
+- **Change password** (`/password/change/`).
+- **MFA**: re-enrollment and device management follow the same TOTP flow as
+  initial setup. See [Logging in & MFA](/user-guide/login-and-mfa/).
+
+<Aside type="note">
+There's no self-service way to change your own username, email, or role.
+That's an administrative action. See [User
+management](/admin/user-management/).
+</Aside>

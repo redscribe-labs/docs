@@ -1,0 +1,200 @@
+---
+title: Docker Compose deep dive
+description: What each service in docker-compose.yml actually does, why nginx runs with host networking, worker sizing, and exposing an instance via Tailscale Funnel.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This page is the authoritative deep dive on the Compose stack's real
+topology. For the step-by-step commands to bring an instance up, see
+[Installation](/getting-started/installation/).
+
+## The services
+
+`docker-compose.yml` defines four services:
+
+| Service | Image | Role |
+|---|---|---|
+| `db` | `postgres:17-alpine` | The database. Bound to `127.0.0.1:5432` on the host only, for local admin access (`psql`, running migrations from the host); never reachable off-box. |
+| `web` | Built from the repo's `Dockerfile` | The Django app under gunicorn. Bound to `127.0.0.1:8000` for direct host-side debugging; `nginx` is the real public entry point. Mounts `./backups:/app/backups` as a plain host directory (not a named volume) so you can point `rsync`/`rclone` at it directly. |
+| `nginx` | `nginx:1.27-alpine` | TLS termination and reverse proxy. Runs with `network_mode: host`, see [below](#why-nginx-uses-host-networking). Its command is overridden to `/watch-certs.sh` (a custom script), while the base image's own `docker-entrypoint.sh` still runs first. |
+| `cert-renew` | `tailscale/tailscale:v1.102.3` | Opt-in (`profiles: ["tailscale"]`) automated TLS cert issuance/renewal via Tailscale. Only starts with `--profile tailscale`. |
+
+`web`'s root key is mounted as a Docker **secret** (`redscribe_root_key`,
+backed by `./secrets/root_key.txt`), not an environment variable. See
+[Encryption model](/security/encryption/) for why. `db` and `web` both use
+Compose healthchecks so dependents (`web` waits on `db`, `nginx` waits on
+`web`) only start once their dependency is actually ready, not just
+running. `web`'s healthcheck hits `config.health`'s DB-ping view at
+`/health/` using a plain `python -c` plus `urllib` one-liner, since
+`curl`/`wget` aren't installed in the image.
+
+### `--profile tailscale`
+
+Bringing your own certificate? Skip `cert-renew` entirely with plain
+`docker compose up -d`, and drop `fullchain.pem`/`privkey.pem` into `./certs`
+yourself; `nginx` doesn't care which path put them there. Using
+[Method 1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended)
+instead, add `--profile tailscale` to start `cert-renew` alongside everything
+else.
+
+`cert-renew` runs as the image's default **root** user, deliberately not
+pinned to a host UID/GID. Root is always trusted by `tailscaled` for
+`tailscale cert` over the bind-mounted socket (the same trust `sudo` would
+give it directly on the host), and root also sidesteps a host-side ownership
+mismatch on a freshly cloned `./certs`: Docker auto-creates bind-mount
+targets as `root:root`, which has been observed to break a non-root
+`cert-renew` with "permission denied" on a brand-new host that had never
+written into `./certs` before.
+
+`cert-renew` also carries a `depends_on: db` it has no functional need for,
+purely to dodge a known Docker Compose race
+([docker/compose#9054](https://github.com/docker/compose/issues/9054)).
+Without some `depends_on`, it would be the only service starting immediately
+alongside `db` on a clean `up`, both racing to attach to the just-created
+default network before the daemon has fully registered it, intermittently
+failing with `failed to set up container networking: network ... not found`.
+Every other service already serializes after something, so this just gives
+`cert-renew` the same protection.
+
+## Why nginx uses host networking
+
+`nginx`'s service runs with `network_mode: host` rather than a
+`ports: - "80:80"` mapping, so it binds the host's ports 80/443 directly
+instead of going through Docker's own port-forwarding.
+
+This matters for RedScribe's login-lockout and audit logging, which both
+record the client IP. On a default Docker install, a published-port mapping
+is relayed through a userspace `docker-proxy` process that substitutes its
+own address as the source for every connection. Without host networking,
+`nginx`, and everything downstream including [audit log
+entries](/security/audit-trail/) and [lockout
+tracking](/security/authentication/), would see a Docker-internal address
+instead of the real client IP for **every** request. That's a host-level
+Docker daemon quirk that would otherwise need re-fixing on every machine this
+gets deployed to. Host networking avoids it entirely, with nothing to
+configure per host. `web`'s own `127.0.0.1:8000` mapping is unaffected:
+`proxy_pass` in the nginx templates targets that address directly, since both
+`nginx` and `web` are now on the host's own network namespace.
+
+<Aside type="note" title="One case this doesn't (and can't) change">
+A request that originates *from the machine running Docker itself*, for
+example testing via `localhost` or that machine's own LAN/Tailscale address
+from a browser or curl running on it, still shows `127.0.0.1` as the
+source, since there's no "real" external client in that case. To verify
+client IPs are being recorded correctly, test from a genuinely different
+device.
+</Aside>
+
+## Certificate reload behavior
+
+`nginx`'s actual startup command is `/watch-certs.sh` (mounted read-only from
+`./nginx/watch-certs.sh`), not bare `nginx`. It:
+
+<Steps>
+1. Re-runs the `${NGINX_SERVER_NAME}` template substitution itself (the same
+   one the base nginx image's own `docker-entrypoint.d` scripts do), as
+   belt-and-braces against an observed race on a fresh `docker compose up -d`
+   where that step sometimes lost the race and left the image's stock
+   `conf.d/default.conf` in place instead.
+2. Waits in a loop for `/etc/nginx/certs/fullchain.pem` and `privkey.pem` to
+   both exist, so `nginx` never fails to start just because `cert-renew`
+   hasn't issued the first certificate yet, or a BYO cert hasn't been dropped
+   into `./certs` yet.
+3. Before even trying to bind, checks the **host's** `/proc/net/tcp` (this
+   container runs with `network_mode: host`, so that file really is the
+   host's socket table) for something already listening on port 80 or 443,
+   and prints a specific diagnostic pointing at Tailscale Funnel/Serve if so.
+   See [the Funnel section](#exposing-it-beyond-your-tailnet-with-tailscale-funnel)
+   below for why that's the most common real cause on a Method 1 deploy.
+4. Starts `nginx -g "daemon off;"` in the background, then polls the cert
+   file's MD5 hash every hour and runs `nginx -s reload` the moment it
+   changes, since nginx caches loaded certificates in its worker process and
+   never picks up a renewed file on its own without a reload.
+</Steps>
+
+That hourly check is also why a manually reissued cert can take up to an
+hour to actually take effect if `nginx` was already running. Force it
+immediately with `docker compose exec nginx nginx -s reload`. See [Moving to
+a new machine](/deployment/moving-hosts/) for the scenario this most
+commonly comes up in.
+
+## CPU / worker count
+
+Gunicorn defaults to a single worker process, which means the app never uses
+more than one CPU core no matter how many the host has. `entrypoint.sh`
+auto-sizes `--workers` to `(2 * nproc) + 1` (the standard
+gunicorn-recommended formula) unless `GUNICORN_WORKERS` is set explicitly in
+`.env`. `nproc` reflects cgroup CPU limits when the container has any (e.g.
+`docker run --cpus`), not just the host's total core count.
+
+`nginx` itself already uses `worker_processes auto;` (the base image's
+default), so it was already using every core. This setting only affects the
+Django app process. See [Requirements &
+sizing](/getting-started/requirements/) for how worker counts map to
+instance tiers.
+
+## Exposing it beyond your tailnet with Tailscale Funnel
+
+By default, [Method 1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended)
+is reachable only from devices on your tailnet. To make it reachable from
+the public internet too, use [Tailscale
+Funnel](https://tailscale.com/kb/1223/funnel), but forward the connection as
+**raw TCP**, not Funnel's default HTTPS-terminating mode. `nginx` already
+terminates TLS itself with the cert `cert-renew` issued; if Funnel also
+terminates TLS and hands `nginx` decrypted HTTP, `nginx`'s `listen 443 ssl;`
+rejects it outright with `400 The plain HTTP request was sent to HTTPS
+port`.
+
+```sh
+tailscale funnel --bg --proxy-protocol=2 --tcp=443 443
+```
+
+<Aside type="caution" title="--tcp, not --tls-terminated-tcp">
+Despite that flag's name reading like the right one, `--tls-terminated-tcp`
+actually means **Tailscale itself** strips the TLS before forwarding, which
+is exactly what you don't want here. `--tcp` passes the encrypted bytes
+through untouched, so `nginx` sees the real handshake. Confirm with
+`tailscale funnel status`; the mapping should say plain `(Funnel on)`, not
+`(TLS-terminated TCP, Funnel on)`.
+</Aside>
+
+Requires Funnel enabled for your tailnet (same admin-console toggle as HTTPS
+certs). See Tailscale's own docs if `tailscale funnel` refuses to start.
+
+`--proxy-protocol=2` matters just as much as `--tcp` itself. Without it,
+Funnel still relays the connection correctly, but `nginx` has no way to
+recover the real visitor's IP, since Funnel forwards over loopback, so every
+request would otherwise show up in the [audit log](/security/audit-trail/)
+and login-lockout checks as `127.0.0.1` instead of the actual client.
+`nginx`'s config already expects this flag: `listen 127.0.0.1:443 ssl
+proxy_protocol;` is bound only to loopback (the direct/tailnet listener on
+the same port is untouched by this) and reads the client IP it conveys.
+
+<Aside type="caution" title="Side effect: localhost/127.0.0.1 stop working directly">
+Once that loopback listener requires every connection to start with a PROXY
+protocol preamble, `https://localhost/` or `https://127.0.0.1/` direct from
+the host itself no longer works, since the request looks like a malformed
+handshake to `nginx`. Use the tailnet hostname instead, same as any other
+visitor would.
+</Aside>
+
+### Turning it back off
+
+```sh
+tailscale serve reset
+```
+
+This state lives entirely in `tailscaled`, not in Docker, so it survives
+`docker compose down`, removing containers/volumes, even wiping every
+container and rebuilding from scratch. None of that touches it.
+
+Left in place, it also causes a real conflict on the **next**
+`docker compose up`: `tailscaled` is still holding port 443 for the Funnel
+forward, so `nginx` (which needs that same port, see [Why nginx uses host
+networking](#why-nginx-uses-host-networking)) fails to bind with
+`bind() to 0.0.0.0:443 failed (98: Address in use)` and crash-loops. If you
+hit that error, `tailscale serve status` on the host is the first thing to
+check. [`watch-certs.sh`'s own startup check](#certificate-reload-behavior)
+also looks for this and prints a hint pointing here before `nginx` even
+tries to bind.

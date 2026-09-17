@@ -1,0 +1,139 @@
+---
+title: Scanner import
+description: Bulk-creating draft findings from Nmap, Burp Suite, and Nuclei output, including exactly what each parser extracts and how to fix a failed import.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+From an engagement, open **Findings** then **Import**
+(`/engagements/<id>/findings/import/`), and upload a scanner's raw output
+file to bulk create draft findings instead of entering them one at a time.
+This screen only appears, and the underlying view only accepts a POST at
+all, when the `scan_import` [feature flag](/admin/feature-flags/) is
+enabled instance wide. If it's off, the view raises a permission error
+rather than silently doing nothing.
+
+The upload form accepts any file up to 75MB. There's no file extension or
+content type check beyond that size limit, so the format you pick from the
+dropdown is what actually decides how the bytes are parsed. Uploading a
+Burp XML file while "Nuclei JSON Lines" is selected will fail with a JSON
+parse error, not a helpful "wrong tool" message, since RedScribe has no way
+to know what you meant to upload.
+
+## What each parser actually extracts
+
+All three parsers turn scanner output into a list of draft findings with a
+title, a severity, an "affects" string, technical details text, and
+optionally a CVE ID and classification tags. None of them read a scope or
+target list from the file. Every open finding, port, or issue the file
+contains becomes a finding, so filter or trim the scan output yourself
+first if you only want a subset imported.
+
+### Nmap (XML, from `nmap -oX`)
+
+The parser walks every `<host>` element and every `<port>` under it whose
+`<state>` is `open`. For each open port:
+
+- If any `<script>` element's output contains the text `State: VULNERABLE`
+  (case insensitive), a finding is created per matching script: title
+  `"<script id> on <port>/<protocol> (<host>)"`, severity **High**,
+  technical details containing the script's raw output, and a CVE ID
+  extracted from that output with the pattern `CVE-YYYY-NNNN` if one
+  appears anywhere in it.
+- If the port is open but no script output contains that marker, a finding
+  is still created, just as an **Informational** severity "Open port"
+  finding recording the service name and product/version banner Nmap
+  detected. Open ports are never silently dropped just because nothing was
+  flagged as vulnerable.
+
+Every finding importer tags results with a fixed classification value so
+you can filter or report on them later: Nmap findings are tagged
+`Vulnerability Script` or `Open Port` under a taxonomy named `Nmap`.
+
+<Aside type="tip" title="Getting VULNERABLE markers to appear at all">
+A plain `nmap -oX scan.xml target` with no NSE scripts run will only ever
+produce "Open port" informational findings, since nothing populates
+`<script>` output. To get actual vulnerability findings out of the import,
+run Nmap with a vulnerability scanning script set first, for example
+`nmap -oX scan.xml --script vuln target`, and only then import the
+resulting XML.
+</Aside>
+
+If the uploaded file's root XML element isn't `<nmaprun>` at all, the
+import is rejected immediately with "Not an Nmap XML report." If the host
+has no open ports anywhere in the file, the import is rejected with "No
+open ports found in this Nmap report," rather than silently creating zero
+findings.
+
+### Burp Suite (XML, from Issues → Report as XML)
+
+The parser reads every `<issue>` element. Burp's own severity words map
+onto RedScribe's scale as High to High, Medium to Medium, Low to Low, and
+both Information and False Positive to Informational (a false positive
+isn't dropped, it comes in as an informational finding you can archive or
+delete after review). The finding's technical details are assembled from
+whichever of Burp's `issueDetail`, `issueBackground`, and
+`remediationBackground` fields are present, each under its own "Detail,"
+"Background," or "Suggested remediation" heading. Burp sometimes
+base64-encodes these fields (`isBase64="true"`); the parser decodes them
+automatically before stripping HTML tags down to plain text. All Burp
+findings are tagged `Web Application Scan` under a taxonomy named `Burp`.
+
+If the file's root element isn't `<issues>`, the import is rejected with
+"Not a Burp Suite XML report." If the file parses but contains zero
+`<issue>` elements, it's rejected with "No issues found in this Burp Suite
+report."
+
+### Nuclei (JSON Lines, from `nuclei -jsonl`)
+
+This format is read one line at a time, each line expected to be a
+complete JSON object (Nuclei's native `-jsonl`/`-json` output shape, one
+result per line, not a single JSON array). Per result: the title comes
+from `info.name`, falling back to the raw `template-id` if `info.name` is
+missing; severity is read from `info.severity` (`critical`/`high`/`medium`/
+`low`/`info`, anything else or missing maps to Informational); the CVE ID
+comes from `info.classification.cve-id` if present; and every tag in
+`info.tags` becomes a classification value under a taxonomy named
+`Nuclei`. Technical details combine the template ID, `info.description`
+if present, and the `matched-at` (or `host`) value.
+
+If any single line fails to parse as JSON, the whole import is rejected
+with an error naming the exact line number and the underlying JSON error,
+for example "Line 42: invalid JSON (Expecting value: line 1 column 1 (char
+0))." One malformed line fails the entire file, nothing partial gets
+imported. If the file parses fully but contains zero non-blank lines, it's
+rejected with "No results found in this Nuclei output."
+
+## Where the description text lands
+
+Every parser's technical details text is written into whichever [Finding
+structure](/admin/finding-structure/) content section currently has
+**Import target** turned on (`is_import_target` on
+`ContentSectionDefinition`), if any section has that flag set at all. If no
+section is marked as the import target, the parsed technical detail text
+is simply discarded, the finding is still created with its title, severity,
+affects, CVE ID, and tags, just with an empty body. If your imports keep
+showing up with no description, this is the first thing to check.
+
+## Every import lands as Draft
+
+Nothing skips the normal [review workflow](/user-guide/findings/#the-review-workflow)
+just because a finding came from a scanner. A hundred findings imported at
+once are still a hundred findings sitting in Draft, waiting to be reviewed
+and QA approved like any other.
+
+## What gets recorded
+
+Each import creates a scan import record regardless of whether the parse
+found one finding or a hundred: tool, filename, date, who imported it, and
+how many findings it produced. This is what `{{p scan_imports }}` /
+`{{ scan_imports }}` renders into the report as an appendix table, and it's
+the only trace of the import that survives past the upload itself.
+
+<Aside type="caution">
+The original uploaded scan file is never stored, only this metadata
+record. If you need the raw scan output later, for example to re-verify a
+result or re-import with different Finding Structure settings, keep your
+own copy outside RedScribe. There's no way to re-download a past import
+from within the app.
+</Aside>

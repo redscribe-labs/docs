@@ -1,0 +1,86 @@
+---
+title: Local development
+description: Running RedScribe locally without a Docker rebuild cycle, and the day-to-day dev loop.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Working on RedScribe itself normally means **Installation Method 4**, so
+there's no container rebuild loop between code changes and seeing them run.
+
+## Setup
+
+<Steps>
+1. Create and activate a virtualenv, then install Python dependencies:
+   ```sh
+   python3 -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Start just the database (the `db` service from `docker-compose.yml`,
+   without the rest of the stack):
+   ```sh
+   docker compose up -d db
+   ```
+3. Copy the env template and fill in secrets (see [Installation → Common
+   setup](/getting-started/installation/#common-setup-all-methods)),
+   setting `POSTGRES_HOST=localhost`:
+   ```sh
+   cp .env.example .env
+   ```
+4. Run migrations, generate a root key, and bootstrap the first Superadmin:
+   ```sh
+   python manage.py migrate
+   python manage.py generate_root_key   # put the output in .env
+   python manage.py bootstrap_superadmin --username admin --email admin@example.com
+   ```
+5. Run the dev server:
+   ```sh
+   python manage.py runserver
+   ```
+</Steps>
+
+That's the whole loop. There's no `docker compose build` and no container
+restart needed to see a template or view change. Visit
+`http://localhost:8000/login/`.
+
+## Day to day
+
+- **Model changes.** After editing a model, generate and apply a migration:
+  ```sh
+  python manage.py makemigrations
+  python manage.py migrate
+  ```
+  CI checks that no migration is missing (`makemigrations --check
+  --dry-run` in `.github/workflows/test.yml`), so commit the generated
+  migration file alongside the model change, in the same PR.
+- **Frontend changes.** Touching the Tiptap editor bundle, the password
+  strength meter, or Tailwind classes needs a separate rebuild step. See
+  [Frontend asset builds](/dev/frontend-builds/).
+- **Running tests.** See [Testing](/dev/testing/).
+
+## Dev vs. prod settings
+
+`.env.example` defaults `DJANGO_SETTINGS_MODULE` to `config.settings.dev`,
+which is literally `from .base import *` plus `DEBUG = True`, and nothing
+else differs. `config.settings.prod` layers on top of the same `base.py` instead:
+it hard-requires `DJANGO_SECRET_KEY`/a root key to already be configured,
+refuses to start with `DEBUG=True` unless you explicitly opt in via
+`REDSCRIBE_ALLOW_DEBUG_IN_PROD=1`, and turns on
+`SECURE_SSL_REDIRECT`/HSTS/secure cookies, trusting `X-Forwarded-Proto` from
+a reverse proxy in front. Local development should always run under `dev`.
+See [Configuration](/getting-started/configuration/#dev-vs-prod-settings)
+for why running `prod` without a real proxy in front causes a redirect loop.
+
+<Aside type="tip">
+Because Method 4 skips `docker compose --build`, it's also the fastest way
+to reproduce and debug an issue reported against a Docker deployment. It's
+the same settings module (`dev`) and the same database engine, just without
+the container layer in the way.
+</Aside>
+
+## What's next
+
+- [Frontend asset builds](/dev/frontend-builds/)
+- [Testing](/dev/testing/)
+- [Architecture overview](/dev/architecture/), to orient yourself in the codebase
+- [Contributing](/dev/contributing/), for expectations before opening a PR

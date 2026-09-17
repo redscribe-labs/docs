@@ -1,0 +1,99 @@
+---
+title: Testing
+description: Running RedScribe's Django test suite locally and in CI, the testing style used throughout the codebase, and what CI does and doesn't check.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Running the suite
+
+```sh
+python manage.py test
+```
+
+Run this from a [Method 4 local dev](/dev/local-development/) environment,
+since it needs the same `DJANGO_SETTINGS_MODULE=config.settings.dev`,
+database connection, and root key as `runserver` does. The suite is
+DB-backed. Django creates and tears down a throwaway test database
+automatically around the run, so it never touches your real development
+data.
+
+### Running a subset
+
+Django's test runner accepts a dotted path, so you can scope a run to
+exactly what you're working on instead of the full suite:
+
+```sh
+python manage.py test apps.findings              # one app
+python manage.py test apps.findings.tests.FindingViewTests            # one test class
+python manage.py test apps.findings.tests.FindingViewTests.test_create_requires_permission  # one test method
+```
+
+This is worth using while iterating. The full suite takes real time to run
+against a real Postgres instance, and there's no need to pay that cost on
+every save while you're working inside a single app.
+
+## Testing style
+
+Every app has exactly one `tests.py` at `apps/<app>/tests.py`, following
+Django's default test discovery convention rather than a separate `tests/`
+package per app. There's no `pytest`, no `factory_boy`, and no fixture
+files. Every test is a plain `django.test.TestCase` subclass grouped by the
+feature it covers (for example `apps/findings/tests.py` has
+`FindingViewTests`, `CommentThreadTests`, `CatalogueTests`,
+`CatalogueVersioningTests`, and so on, each with its own `setUp()` building
+whatever engagement, finding, or user state that group of tests needs from
+scratch). Most tests exercise real views through Django's test `Client`
+rather than calling internal functions directly, so they cover permission
+checks, redirects, and template rendering the same way an actual request
+would. As of this writing the suite has 900+ individual test methods across
+all apps. Run `grep -rc "def test_" apps/*/tests.py` from the repo root for
+an exact current count, since it only grows over time and any number given
+here should be treated as a lower bound rather than the real figure.
+
+<Aside type="note">
+There is no linter or formatter wired into CI, no `ruff`, `black`, `flake8`,
+or `mypy` configuration anywhere in the repo. Code style is enforced by
+convention and review, not by a tool. Don't go looking for a pyproject.toml
+lint section, there isn't one.
+</Aside>
+
+## Continuous integration
+
+`.github/workflows/test.yml` runs on every push to `main` and every pull
+request:
+
+1. Checks out the repo and sets up Python 3.13.
+2. Starts a real `postgres:17-alpine` service container, not SQLite and not
+   a mock. RedScribe's test suite runs against the same database engine
+   production uses, which matters given how much of the app (encryption,
+   the audit hash chain, the report job slot limiter) leans on real
+   Postgres row locking behavior that a lighter-weight substitute wouldn't
+   exercise faithfully.
+3. Installs the same system packages `Dockerfile` installs:
+   `postgresql-client` for `apps.backup`'s tests that shell out to
+   `pg_dump`/`pg_restore`, and the Pango and Cairo stack for the WeasyPrint
+   PDF rendering tests.
+4. Installs Python dependencies from `requirements.txt`.
+5. **Checks for missing migrations** with `python manage.py makemigrations
+   --check --dry-run` before running anything else. A model change without
+   its migration committed fails CI right here, not partway through the
+   test run itself, which keeps the failure message pointing at the actual
+   problem instead of a confusing downstream test error.
+6. Runs `python manage.py test`.
+
+CI's `REDSCRIBE_ROOT_KEY` and `DJANGO_SECRET_KEY` are fixed dummy values
+baked into the workflow file, valid only for that one ephemeral database
+that gets thrown away at the end of the job. They are never real deployment
+secrets and shouldn't be reused anywhere else. The root key value there is
+just 32 random bytes that happen to satisfy the format check in
+`apps/crypto/root_key.py`, nothing more meaningful than that.
+
+## What a PR is expected to include
+
+Per [Contributing](/dev/contributing/), a PR that changes behavior should
+come with tests covering it, written in the existing style of the relevant
+app's `tests.py` rather than introducing a new testing pattern for just
+that one change. Run the suite locally before opening the PR. CI runs it
+again on every push, but catching a failure locally first is faster for
+everyone than waiting on a CI round trip.

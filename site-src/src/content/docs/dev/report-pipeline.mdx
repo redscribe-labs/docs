@@ -1,0 +1,153 @@
+---
+title: Report rendering pipeline
+description: How the shared report IR is built and consumed by the Markdown, HTML, PDF, and Word exporters, for anyone extending the reporting system.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This is the internal architecture behind [Reports &
+exports](/user-guide/reports/) and the [Report template tags](/reference/report-template-tags/)
+reference. Read this before adding a new structural tag, a new exporter, or
+changing how existing content renders.
+
+## Three consumers of one build step, plus a fourth that opts out
+
+`apps/reports/assembly.py`'s `build_report_document()` is the single entry
+point that turns an engagement + a Report Profile + a `ReportConfig` into a
+**`ReportDocument`**, the IR (intermediate representation) defined in
+`apps/reports/report_ir.py`. **Markdown, HTML, and PDF export all consume
+this same `ReportDocument`** via `apps/reports/ir_render.py`
+(`md_export.py`, `html_export.py`, `pdf_export.py` are each a thin wrapper:
+build the IR, hand it to `ir_render`, package the result).
+
+**DOCX export is deliberately not a fourth consumer of the IR.** Per
+`docx_export.py`'s own module docstring: the other three exporters render
+the same generated `Section`/`Block` tree, but DOCX is a free-form Word
+document the profile owner designs themselves with `{{ tag }}` placeholders,
+filled in with [`docxtpl`](https://docxtpl.readthedocs.io/). It reads the
+same underlying engagement/finding data (reusing `assembly.py`/`services.py`
+helpers directly) but builds its own Jinja2 context instead of walking an IR
+tree. This is *why* the DOCX Word-style-mapping system in the [DOCX template
+guide](/reference/docx-template-guide/) exists at all: Word has no CSS, so
+rich content needs to be told which of the *template author's own* Word
+styles to use, per content role.
+
+## The IR data model (`report_ir.py`)
+
+```
+ReportDocument
+├── meta: ReportMeta        (cover title, client name, fonts, colors, ...)
+└── sections: list[Section]
+    Section
+    ├── key, title, number  (number is computed, not authored, see below)
+    ├── blocks: list[Block] (this section's own content)
+    └── children: list[Section]  (nested subsections)
+```
+
+A `Block` is one of: `RichTextBlock` (pre-rendered HTML), `TableBlock`,
+`ListBlock`, `ImageBlock`, `CodeBlock`, `BarGraphBlock` (a severity chart
+with a `TableBlock` fallback for renderers that can't draw it), or the two
+marker blocks `CoverPageBlock`/`TableOfContentsBlock` that tell a renderer
+"draw your own cover/TOC here" rather than carrying content themselves.
+
+`assign_numbers()` walks the finished section tree once to compute each
+section's number (`"1"`, `"1.1"`, `"1.2"`, `"2"`, ...). Sections built with
+`numbered=False` (e.g. a single finding's own subsections, an unheaded
+template wrapper) don't consume a counter slot. Their numbered *children*
+continue the same counter as their siblings, rather than each `numbered=False`
+wrapper silently restarting its own children at 1. This is why per-finding
+subsections don't get their own top-level numbers in the table of contents.
+
+## How a Document template becomes a `ReportDocument`
+
+`assembly.py`'s `_parse_template()` walks a profile's stored Tiptap JSON
+document (the **Document** tab) node by node:
+
+- A `heading` node opens a new `Section`, nested under whatever
+  lower-numbered heading is currently open on an explicit stack (so H3
+  nests under the last-seen H1/H2, same as real document structure).
+- A standalone paragraph whose entire text is `{{ tag }}` is checked against
+  **`BLOCK_REGISTRY`** (`block_registry.py`) first. These are the built-in
+  structural tags (`cover_page`, `document_control`, `table_of_contents`,
+  `breakdown_of_findings`, `finding_details`, `observations`,
+  `testing_phases`, `assessment_team`, `checklist_coverage`, `scan_imports`).
+  Each registry entry is a function `BlockContext -> Fragment | None` that
+  returns the blocks/children to splice in at that point.
+- If the tag isn't in `BLOCK_REGISTRY`, it falls through to
+  `_resolve_custom_tag_nodes()`, a profile-specific `ReportTextBlockDefinition`
+  (a **Text blocks** tab entry), which is spliced in as real nested content
+  (so a heading *inside* an author-written text block still nests correctly
+  under the tag's own position. See the long comment in `_parse_template`
+  about `allow_tags=False` for exactly why a `{{ tag }}`-shaped paragraph
+  *inside* resolved text-block content stays inert rather than being
+  substituted again).
+- Anything else (an ordinary paragraph, a plain `{{ placeholder }}`) is
+  rendered to HTML via `tiptap_render.py`'s `_render_node()` and appended as
+  a `RichTextBlock`.
+
+### Adding a new structural tag
+
+To add a new `{{ my_new_tag }}` structural tag: write a function
+`(context: BlockContext) -> Fragment | None` in `block_registry.py`
+following the existing entries' shape (e.g. `_scan_imports`, the simplest
+one: fetch data via a builder function threaded through `BlockContext`,
+wrap it in a `Fragment`), register it in the `BLOCK_REGISTRY` dict at the
+bottom of that file, and, if it needs data `BlockContext` doesn't already
+carry, add a field to the `BlockContext` dataclass and thread the actual
+value through from `assembly.build_report_document()`. Then document the new
+tag in `docs/report-template-tags.md` (source for the [Report template
+tags](/reference/report-template-tags/) reference page), the same file that
+page is built from.
+
+## Rich text: two renderers for one Tiptap JSON format
+
+Every rich-text field in RedScribe (finding sections, text blocks,
+observations, testing-phase content, checklist item results) is stored as
+Tiptap/ProseMirror JSON. Two independent renderers walk that same JSON
+shape, for two structurally different targets:
+
+- **`tiptap_render.py`** walks Tiptap JSON to HTML, consumed by
+  `ir_render.py` for HTML/PDF, and by `markdown_render.py` for Markdown
+  export. It handles marks (bold/italic/underline/strike/code/highlight/link,
+  with links restricted to `http://`/`https://`/`mailto:`) and node types
+  (paragraph, heading, lists, blockquote, code block, table, image, ...).
+- **`tiptap_docx.py`** walks the *same* Tiptap JSON shape directly into a
+  `docxtpl` subdocument, using **named Word styles from the uploaded
+  template's own style catalog** (via `docx_style_roles.py`/`docx_styles.py`)
+  instead of inventing formatting. Its module docstring is explicit that this
+  is the fix for the failure mode that killed an earlier DOCX export attempt,
+  where rich content like code blocks and images had nowhere to pick up the
+  template's own packaged styling.
+
+<Aside type="caution" title="Keep both renderers in node-type parity">
+`tiptap_docx.py`'s docstring calls this out directly: the node types and
+marks it handles must stay in parity with `tiptap_render.py`'s switch. Adding
+a new Tiptap node type (e.g. a new block type in the editor) means updating
+**both** files, or Word export will silently drop content that HTML/PDF/MD
+render fine.
+</Aside>
+
+## Export concurrency (`job_limiter.py`)
+
+`report_job_slot()` is a context manager wrapping every export request
+(PDF, HTML, Markdown, or DOCX, but not the live preview). Under a DB row
+lock on `ReportSettings`, it sweeps any `ReportJob` row stale for more than
+`STALE_JOB_TIMEOUT_SECONDS` (600 seconds, so a crashed worker's job row
+doesn't permanently eat a slot), counts active jobs, and only creates a new
+`ReportJob` (thereby claiming a slot) if the count is under
+`max_concurrent_report_jobs`. Callers get `False` back, meaning no slot,
+when every slot is busy, and should surface that as "try again shortly"
+rather than queuing (there is no queue; this is a concurrency *cap*, not a
+job queue). See [Requirements & sizing](/getting-started/requirements/) for
+how slot counts scale with instance tier.
+
+## Where to look next
+
+- [Report template tags](/reference/report-template-tags/), the tag
+  reference this architecture backs, from an author's perspective.
+- [DOCX template guide](/reference/docx-template-guide/), the Word-specific
+  template system `docx_export.py`/`tiptap_docx.py` implement.
+- `apps/reports/ir_render.py`, the HTML/PDF-shared renderer that walks a
+  `ReportDocument` into markup (not covered in depth here; read alongside
+  `pdf_export.py`'s print-CSS `@page` rules if you're touching PDF pagination
+  specifically).

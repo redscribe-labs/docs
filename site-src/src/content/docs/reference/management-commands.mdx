@@ -1,0 +1,218 @@
+---
+title: Management commands
+description: Every Django management command RedScribe ships, with its purpose, arguments, and an example invocation.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every command below runs as `docker compose exec web python manage.py <command>`
+under Docker Compose, or `python manage.py <command>` directly inside a
+Method 4 (local dev) virtualenv.
+
+## Setup
+
+### `generate_root_key`
+
+Generates a new instance root key (AES-256, base64-encoded). Run once per
+instance, during [First run](/getting-started/first-run/). It prints the key
+to stdout, and it is never shown again, so capture it immediately.
+
+```sh
+docker compose exec web python manage.py generate_root_key
+```
+
+Store the output in `secrets/root_key.txt` (Docker Compose) or as
+`REDSCRIBE_ROOT_KEY` (bare-metal/CI). Never commit it. Losing this key makes
+every engagement's data permanently unrecoverable; rotating it later requires
+re-wrapping every `ProjectKey`. See [`rotate_root_key`](#rotate_root_key)
+below.
+
+### `bootstrap_superadmin`
+
+Creates the first local Superadmin account for a fresh instance. This is the
+CLI alternative to the `/setup/` web form. Refuses to run if a Superadmin already
+exists (grant the role to a new account from the UI instead, as an existing
+Superadmin).
+
+| Argument | Required | Purpose |
+|---|---|---|
+| `--username` | Yes | The new account's username |
+| `--email` | Yes | The new account's email |
+
+Prompts interactively for a password (14+ characters, validated against
+Django's password validators). It isn't passable as an argument.
+
+```sh
+docker compose exec web python manage.py bootstrap_superadmin --username admin --email admin@example.com
+```
+
+### `seed_pentest_report_format`
+
+Seeds a comprehensive default penetration-test report format into the
+instance: finding content sections (including a "Risk Assessment" section
+explaining the reasoning behind each finding's rating), a demo
+`VulnerabilityTemplate` with richly formatted example content, and a
+fully-built "Default Penetration Test Report" Report Profile, with real
+report-level prose (not placeholder stubs), plus a complete Document
+template wiring every section together in a sensible order.
+
+Set as the instance's default report profile **if and only if** no profile
+is already the instance default, since an admin's own choice of default is
+never overridden. **Idempotent**, so it's safe to re-run; existing content
+is never overwritten. **Not run automatically on fresh installs**, so
+invoke it explicitly if you want a populated starting point instead of an
+empty one.
+
+```sh
+docker compose exec web python manage.py seed_pentest_report_format
+```
+
+## Audit log
+
+See [Audit log](/admin/audit-log/) for the full retention/tamper-evidence
+model these commands operate on.
+
+### `purge_audit_log`
+
+Deletes audit log / login attempt entries older than the retention window.
+
+| Argument | Purpose |
+|---|---|
+| `--days N` | Override `AUDIT_LOG_RETENTION_DAYS` for this run only |
+| `--dry-run` | Report how many rows would be deleted, without deleting them |
+
+```sh
+docker compose exec web python manage.py purge_audit_log --dry-run
+docker compose exec web python manage.py purge_audit_log
+```
+
+### `verify_audit_log`
+
+Walks the entire audit log in primary-key order, recomputing and checking
+each entry's hash against the chain. Reports the oldest surviving row as an
+**anchor** (not a failure: either it's genuinely the first entry ever, or
+everything before it was legitimately removed by `purge_audit_log`), and
+fails loudly on the first row after it whose recomputed hash doesn't match
+what's stored.
+
+```sh
+docker compose exec web python manage.py verify_audit_log
+```
+
+### `create_audit_partition`
+
+Creates the yearly Postgres partition for the audit log table (RedScribe
+partitions `audit_auditlogentry` by year).
+
+| Argument | Purpose | Default |
+|---|---|---|
+| `--year N` | Year to create a partition for | Next calendar year |
+
+```sh
+docker compose exec web python manage.py create_audit_partition
+```
+
+<Aside type="caution">
+This isn't run automatically on any schedule. Wire it into your own cron
+(e.g. annually, well ahead of year-end) alongside `purge_audit_log`, the
+same way the README's [Audit log retention](/admin/audit-log/) example does.
+</Aside>
+
+## Backup & restore
+
+See [Backup & restore](/admin/backup-and-restore/) for the full workflow
+these two commands implement, including the pre-restore safety snapshot and
+account-impact report.
+
+### `create_backup`
+
+Dumps the database (`pg_dump`), encrypts it (password-based AES-256-GCM
+envelope), writes it into `BACKUP_DIR` as
+`redscribe-backup-<timestamp>.rsbk`, and prunes anything older than
+`BACKUP_RETENTION_DAYS`.
+
+| Argument | Purpose |
+|---|---|
+| `--passphrase` | Overrides `BACKUP_ENCRYPTION_PASSPHRASE` for this run only. Prefer the env var for unattended/cron use: a CLI argument is visible to other local users/processes via `ps`/`/proc/<pid>/cmdline` for as long as the process runs, and lands in shell history if typed interactively. |
+
+```sh
+docker compose exec web python manage.py create_backup
+```
+
+### `restore_backup`
+
+Decrypts a `.rsbk` file, loads it into a **throwaway scratch database** to
+compute an account-impact report (reactivated / newly deactivated /
+disappearing / reappearing accounts), prints that report, asks for
+confirmation, takes its own pre-restore safety snapshot of the current live
+database, then runs the actual `pg_restore`.
+
+| Argument | Purpose |
+|---|---|
+| `backup_file` | Path to the `.rsbk` file to restore (positional, required) |
+| `--passphrase` | Backup encryption passphrase. Prompted interactively (not echoed, never in argv) if omitted, the safer default on any shared host, for the same `ps`/shell-history reasons as `create_backup` above. |
+| `--yes` | Skip the interactive confirmation prompt, for scripted disaster recovery. The account-impact report is still computed and printed either way. |
+
+```sh
+docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
+```
+
+## Encryption key management
+
+See [Encryption model](/security/encryption/) for how the root key /
+per-engagement data key hierarchy these commands operate on actually works.
+
+### `rotate_root_key`
+
+Rotates the instance root key: re-wraps every engagement's `ProjectKey`
+under a **new** root key while the app is still configured with the **old**
+one. Per-field ciphertext (findings, checklist items, encrypted blobs, etc.)
+is untouched: it stays protected by its own unchanged per-engagement data
+key, so only the small `ProjectKey` table is rewritten regardless of how
+much encrypted content exists.
+
+| Argument | Required | Purpose |
+|---|---|---|
+| `--new-key` | Yes | Base64-encoded 32-byte AES key, e.g. straight from `generate_root_key`'s output |
+| `--dry-run` | No | Validate and report what would change without writing anything |
+
+```sh
+docker compose exec web python manage.py rotate_root_key --new-key <base64-key> --dry-run
+docker compose exec web python manage.py rotate_root_key --new-key <base64-key>
+```
+
+<Aside type="danger" title="Run this before updating the deployed key, then restart immediately after">
+Run this command **before** updating the deployed root key
+(`secrets/root_key.txt` or `REDSCRIBE_ROOT_KEY`). Once it succeeds, replace
+the deployed key with the exact same value passed to `--new-key` and restart.
+Until you do, the app is still using the old key and will fail to unwrap
+the now-rotated rows. Take a full backup first (see [Backup &
+restore](/admin/backup-and-restore/)) and run during a maintenance window:
+an engagement whose `ProjectKey` is created *during* this command is wrapped
+under whichever key was active at that moment, and this command only
+rotates rows that existed when it started.
+</Aside>
+
+### `reencrypt_with_aad`
+
+A one-time data migration that re-encrypts every `EncryptedBlob` and
+encrypted text field (finding sections, retest notes, comment
+threads/entries, checklist item results/comments) with its correct
+record-bound associated data (AAD). It's idempotent, so it's safe to run
+more than once, and safe to run against a live instance with in-flight
+requests, since each record is re-encrypted in its own transaction.
+
+| Argument | Purpose |
+|---|---|
+| `--dry-run` | Report counts without writing anything |
+
+```sh
+docker compose exec web python manage.py reencrypt_with_aad --dry-run
+```
+
+<Aside type="note">
+This exists for instances upgrading from a version predating record-bound
+AAD. A fresh instance has nothing for it to do. It skips (and clearly
+reports) any engagement whose `ProjectKey` can't currently be unwrapped,
+without touching that engagement's records.
+</Aside>

@@ -1,0 +1,62 @@
+---
+title: Logging in & MFA
+description: Logging into RedScribe, enrolling in TOTP MFA, and account recovery basics.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Logging in
+
+Staff and client-portal users log in through the same page, `/login/`.
+RedScribe tells them apart by account type after authentication, not by a
+separate URL. Enter your username and password; if OAuth is configured for
+your instance (`OAUTH_PROVIDER`), a "Sign in with Google/Microsoft" option
+appears too, restricted to accounts in your firm's configured email domain.
+
+## MFA enrollment
+
+TOTP (Time-based One-Time Password) multi-factor authentication is
+**required for every local account**, and there is no way to skip it. On
+your very first login, you're walked straight into enrollment:
+
+1. Scan the displayed QR code with an authenticator app (Google Authenticator,
+   1Password, Authy, etc.).
+2. Enter the 6-digit code it generates to confirm enrollment.
+
+From then on, every login asks for your password followed by a current TOTP
+code.
+
+<Aside type="tip">
+Whether MFA is *required* for your specific role (beyond the always-on
+Superadmin requirement) is an instance-wide setting a Superadmin controls.
+See [Authentication & sessions](/security/authentication/). Even where it
+isn't required, any account that has enrolled keeps being prompted for it.
+</Aside>
+
+## Session behavior
+
+- **Idle timeout** signs you out automatically after a period of no requests
+  (`SESSION_IDLE_TIMEOUT_SECONDS`, default 30 minutes). This is separate
+  from the session's fixed 4-hour cap.
+- **Single active session.** Logging in from a new device or browser revokes
+  any other active session for your account, timed to land only once MFA is
+  actually satisfied where it's required.
+- Five consecutive failed login attempts locks the account out for 24 hours
+  by default (`LOCKOUT_THRESHOLD` / `LOCKOUT_DURATION_SECONDS`), and every
+  Superadmin gets an active email alert the moment this happens, not just a
+  passive log entry.
+
+## Forgotten password
+
+Use **Forgot password?** on the login page and you'll get a single-use,
+time-limited reset link by email (`PASSWORD_RESET_TIMEOUT_SECONDS`, default 1
+hour). New accounts (staff and client-portal alike) are set up the same way:
+a single-use, 24-hour emailed link lets the new user choose their own
+password, rather than an admin choosing it for them.
+
+<Aside type="note" title="Lost your MFA device too?">
+There's no self-service MFA recovery. An administrator with server access
+has to clear it for you via the CLI. See [Account
+recovery](/admin/user-management/#account-recovery-lost-password--lost-mfa-device)
+in the admin guide.
+</Aside>
