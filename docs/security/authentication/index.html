@@ -78,9 +78,9 @@
 <p>Local accounts (<code dir="auto">User.AuthType.LOCAL</code>) are username + password, authenticated
 by <code dir="auto">apps.accounts.backends.LockoutAwareModelBackend</code>. There is <strong>no open
 self-registration</strong>. <code dir="auto">SingleRoleAccountAdapter.is_open_for_signup</code> always
-returns <code dir="auto">False</code>, so every account is created by an administrator or provisioned
-by first OAuth login (below), then activated via a single-use, 24-hour
-emailed setup link where the user sets their own password.</p>
+returns <code dir="auto">False</code>, so every local account is created by an administrator, then
+activated via a single-use, 24-hour emailed setup link where the user sets
+their own password.</p>
 <div class="sl-heading-wrapper level-h3"><h3 id="password-policy">Password policy</h3><a class="sl-anchor-link" href="#password-policy"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Password policy”</span></a></div>
 <p>Enforced server-side via <code dir="auto">AUTH_PASSWORD_VALIDATORS</code>
 (<code dir="auto">config/settings/base.py</code>) regardless of anything shown client-side:</p>
@@ -109,15 +109,37 @@ adapter level, not just documentation: <code dir="auto">OAUTH_ALLOWED_DOMAIN</co
 to exactly one email domain. <code dir="auto">SingleProviderSocialAdapter.pre_social_login</code>
 (<code dir="auto">apps/accounts/adapters.py</code>) checks every incoming social login’s email
 domain against it and raises an immediate redirect back to <code dir="auto">/login/</code> with an
-error message for anything outside it. This check happens <strong>before</strong> a local
-account is ever created for that identity, so an out-of-domain Google or
-Microsoft account can never provision itself an account by mistake.</p>
-<p>The first time someone from the allowed domain signs in via OAuth,
-<code dir="auto">SingleProviderSocialAdapter.save_user</code> auto-provisions a local <code dir="auto">User</code> row
-with <code dir="auto">auth_type = OAUTH</code> and the <strong>Consultant</strong> role, the lowest-privilege
-built-in role. An admin can change their role afterward the same way as
-any other account. OAuth accounts never set a local password and don’t go
-through the local password validators above.</p>
+error message for anything outside it. This check happens <strong>before</strong> anything
+else in the login flow, so an out-of-domain Google or Microsoft account is
+turned away regardless of any other state.</p>
+<aside aria-label="OAuth provisioning is invite-only, not self-service" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>OAuth provisioning is invite-only, not self-service</p><div class="starlight-aside__content"><p>Unlike some setups, signing in with a matching-domain Google or Microsoft
+account does <strong>not</strong> by itself create an account. <code dir="auto">is_open_for_signup</code>
+always returns <code dir="auto">False</code> for OAuth — there is no path that auto-provisions a
+brand-new <code dir="auto">User</code> from an OAuth login. An administrator must first
+<a href="/admin/user-management/#creating-a-user">create the user</a> from <strong>User
+Management</strong>; when <code dir="auto">OAUTH_PROVIDER</code> is set, that flow creates the account as
+a <strong>pending OAuth invite</strong> (<code dir="auto">auth_type = OAUTH</code>, <code dir="auto">oauth_invite_pending = True</code>) instead of sending a local setup email. The invite has no token or
+expiry — it simply sits pending until claimed. The very first time that
+person signs in via OAuth with the matching email (matched
+case-insensitively), <code dir="auto">pre_social_login</code> finds the pending row, links the new
+<code dir="auto">SocialAccount</code> to it via allauth’s <code dir="auto">sociallogin.connect()</code>, and clears
+<code dir="auto">oauth_invite_pending</code>. Every login after that is an ordinary repeat sign-in.
+An OAuth login with no matching pending invite is simply turned away — no
+account is created.</p></div></aside>
+<p><strong>Superadmin is local-auth only, defense-in-depth.</strong> Even if a pending
+invite’s role were somehow reassigned to Superadmin before being claimed,
+<code dir="auto">pre_social_login</code> explicitly rejects the login (same redirect-with-error
+pattern as the domain check) rather than letting a Superadmin account
+authenticate via an identity provider. <code dir="auto">LocalUserCreateForm</code> and
+<code dir="auto">LocalUserEditForm</code> both refuse to let a Superadmin role be paired with an
+OAuth account in the first place — the CLI’s <code dir="auto">bootstrap_superadmin</code> command
+is the only way to create one, and it’s always <code dir="auto">auth_type = LOCAL</code>.</p>
+<p>If <code dir="auto">OAUTH_PROVIDER</code> is later unset (or a pending invite needs a fallback
+before it’s ever claimed), a Superadmin can convert that account to local
+auth from its detail page (<strong>Convert to local account</strong>), which flips
+<code dir="auto">auth_type</code> back to <code dir="auto">LOCAL</code>, clears the pending flag, and sends the same
+setup email a newly created local account gets. OAuth accounts never set a
+local password and don’t go through the local password validators above.</p>
 <p>Per-provider setup:</p>
 <table>
 <thead>

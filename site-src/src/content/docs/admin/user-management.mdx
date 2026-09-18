@@ -12,11 +12,25 @@ accounts are separate; see [Managing client access](/client-portal/managing-clie
 ## Creating a user
 
 **User Management** → **New user** (`/user-management/create/`). Set a
-username, email, and [role](/admin/roles-and-permissions/). The account is
-provisioned via the same single-use, 24-hour emailed setup link used
-everywhere else in RedScribe. You never choose a new user's password
-yourself; they set their own from the link, then enroll in TOTP MFA on first
-login.
+username, email, and [role](/admin/roles-and-permissions/).
+
+- **`OAUTH_PROVIDER` unset (default):** the account is local, provisioned via
+  the same single-use, 24-hour emailed setup link used everywhere else in
+  RedScribe. You never choose a new user's password yourself; they set their
+  own from the link, then enroll in TOTP MFA on first login.
+- **`OAUTH_PROVIDER` set:** the account is created as a **pending OAuth
+  invite** instead — no email is sent, and there's no LOCAL/OAuth toggle to
+  choose; the tenancy-wide `OAUTH_PROVIDER` setting alone decides. It
+  activates automatically the first time someone signs in with that exact
+  email address through your identity provider. Superadmin can't be created
+  this way — the form rejects that role choice and points you at the CLI's
+  `bootstrap_superadmin` command instead. If `OAUTH_ALLOWED_DOMAIN` is set,
+  the email must match it, since an off-domain invite could never be claimed.
+  See [OAuth provisioning](/security/authentication/#oauth-google--microsoft)
+  for the full claiming mechanics.
+
+A pending invite shows an amber "Invited — awaiting first login" badge on
+both the list and detail pages until it's claimed.
 
 ## Managing an existing user
 
@@ -46,6 +60,12 @@ From a user's detail page (`/user-management/<uuid>/`):
   available for local accounts, not OAuth.
 - **Clear MFA** deletes the account's confirmed TOTP device, forcing
   re-enrollment at next login. Also local accounts only.
+- **Convert to local account** (OAuth accounts only) flips the account back
+  to local auth, clears any pending-invite state, and sends the standard
+  24-hour setup email. This is the safety valve for an OAuth account that
+  needs a local fallback — most commonly, `OAUTH_PROVIDER` being unset after
+  the account was created, which the detail page calls out with a warning
+  since the account otherwise has no way to sign in.
 
 The same last-active-Superadmin protection applies when changing a role away
 from Superadmin: RedScribe refuses the change with "This is the last active

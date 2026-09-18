@@ -77,9 +77,22 @@
 <div class="sl-heading-wrapper level-h2"><h2 id="logging-in">Logging in</h2><a class="sl-anchor-link" href="#logging-in"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Logging in”</span></a></div>
 <p>Staff and client-portal users log in through the same page, <code dir="auto">/login/</code>.
 RedScribe tells them apart by account type after authentication, not by a
-separate URL. Enter your username and password; if OAuth is configured for
-your instance (<code dir="auto">OAUTH_PROVIDER</code>), a “Sign in with Google/Microsoft” option
-appears too, restricted to accounts in your firm’s configured email domain.</p>
+separate URL.</p>
+<p>If OAuth is <strong>not</strong> configured for your instance, the username/password form
+is what you see, with a “Forgot your password?” link below it.</p>
+<p>If OAuth <strong>is</strong> configured (<code dir="auto">OAUTH_PROVIDER</code>), “Sign in with Google” or
+“Sign in with Microsoft” is the prominent, primary option — restricted to
+accounts in your firm’s configured email domain, and only for accounts an
+administrator has already set up (see <a href="/security/authentication/#oauth-google--microsoft">OAuth
+provisioning</a>; it isn’t
+self-service signup). The username/password form is still fully functional
+in this mode, since Superadmin always signs in locally, but it’s tucked
+behind a collapsed “Sign in with a local account instead” disclosure rather
+than shown by default, and “Forgot your password?” is hidden entirely — OAuth
+accounts have no local password to reset, and Superadmin password recovery is
+an admin-assisted CLI process (see <a href="/admin/user-management/#account-recovery-lost-password--lost-mfa-device">Account
+recovery</a>),
+not a self-service one.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="mfa-enrollment">MFA enrollment</h2><a class="sl-anchor-link" href="#mfa-enrollment"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “MFA enrollment”</span></a></div>
 <p>TOTP (Time-based One-Time Password) multi-factor authentication is
 <strong>required for every local account</strong>, and there is no way to skip it. On

@@ -10,9 +10,9 @@ import { Aside } from '@astrojs/starlight/components';
 Local accounts (`User.AuthType.LOCAL`) are username + password, authenticated
 by `apps.accounts.backends.LockoutAwareModelBackend`. There is **no open
 self-registration**. `SingleRoleAccountAdapter.is_open_for_signup` always
-returns `False`, so every account is created by an administrator or provisioned
-by first OAuth login (below), then activated via a single-use, 24-hour
-emailed setup link where the user sets their own password.
+returns `False`, so every local account is created by an administrator, then
+activated via a single-use, 24-hour emailed setup link where the user sets
+their own password.
 
 ### Password policy
 
@@ -46,16 +46,43 @@ adapter level, not just documentation: `OAUTH_ALLOWED_DOMAIN` locks sign-in
 to exactly one email domain. `SingleProviderSocialAdapter.pre_social_login`
 (`apps/accounts/adapters.py`) checks every incoming social login's email
 domain against it and raises an immediate redirect back to `/login/` with an
-error message for anything outside it. This check happens **before** a local
-account is ever created for that identity, so an out-of-domain Google or
-Microsoft account can never provision itself an account by mistake.
+error message for anything outside it. This check happens **before** anything
+else in the login flow, so an out-of-domain Google or Microsoft account is
+turned away regardless of any other state.
 
-The first time someone from the allowed domain signs in via OAuth,
-`SingleProviderSocialAdapter.save_user` auto-provisions a local `User` row
-with `auth_type = OAUTH` and the **Consultant** role, the lowest-privilege
-built-in role. An admin can change their role afterward the same way as
-any other account. OAuth accounts never set a local password and don't go
-through the local password validators above.
+<Aside type="caution" title="OAuth provisioning is invite-only, not self-service">
+Unlike some setups, signing in with a matching-domain Google or Microsoft
+account does **not** by itself create an account. `is_open_for_signup`
+always returns `False` for OAuth — there is no path that auto-provisions a
+brand-new `User` from an OAuth login. An administrator must first
+[create the user](/admin/user-management/#creating-a-user) from **User
+Management**; when `OAUTH_PROVIDER` is set, that flow creates the account as
+a **pending OAuth invite** (`auth_type = OAUTH`, `oauth_invite_pending =
+True`) instead of sending a local setup email. The invite has no token or
+expiry — it simply sits pending until claimed. The very first time that
+person signs in via OAuth with the matching email (matched
+case-insensitively), `pre_social_login` finds the pending row, links the new
+`SocialAccount` to it via allauth's `sociallogin.connect()`, and clears
+`oauth_invite_pending`. Every login after that is an ordinary repeat sign-in.
+An OAuth login with no matching pending invite is simply turned away — no
+account is created.
+</Aside>
+
+**Superadmin is local-auth only, defense-in-depth.** Even if a pending
+invite's role were somehow reassigned to Superadmin before being claimed,
+`pre_social_login` explicitly rejects the login (same redirect-with-error
+pattern as the domain check) rather than letting a Superadmin account
+authenticate via an identity provider. `LocalUserCreateForm` and
+`LocalUserEditForm` both refuse to let a Superadmin role be paired with an
+OAuth account in the first place — the CLI's `bootstrap_superadmin` command
+is the only way to create one, and it's always `auth_type = LOCAL`.
+
+If `OAUTH_PROVIDER` is later unset (or a pending invite needs a fallback
+before it's ever claimed), a Superadmin can convert that account to local
+auth from its detail page (**Convert to local account**), which flips
+`auth_type` back to `LOCAL`, clears the pending flag, and sends the same
+setup email a newly created local account gets. OAuth accounts never set a
+local password and don't go through the local password validators above.
 
 Per-provider setup:
 
