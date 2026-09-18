@@ -14,11 +14,11 @@
  * page's surface area.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-	--sl-font: 'Inter', var(--sl-font-system);
-	--sl-font-mono: 'IBM Plex Mono', var(--sl-font-system-mono);
+	--sl-font: 'Plus Jakarta Sans', var(--sl-font-system);
+	--sl-font-mono: 'JetBrains Mono', var(--sl-font-system-mono);
 }
 
 /* Dark mode (Starlight's default :root) — brand = Onyx, neutrals = Dim Grey read light->dark. */
