@@ -95,6 +95,13 @@ Per-provider setup:
 Entra tenant ID for a stricter, belt-and-braces restriction alongside (not
 instead of) `OAUTH_ALLOWED_DOMAIN`.
 
+Both providers are configured with `prompt=select_account`, so clicking "Sign
+in with Google/Microsoft" always shows the account chooser rather than
+silently reusing whichever account already has an active session in the
+browser — relevant because `OAUTH_ALLOWED_DOMAIN` only rejects the wrong
+account *after* it's been picked, so this avoids that trap for anyone signed
+into more than one Google or Microsoft account at once.
+
 ## TOTP MFA
 
 Every **local** account must enroll in TOTP MFA, a QR code plus confirmation

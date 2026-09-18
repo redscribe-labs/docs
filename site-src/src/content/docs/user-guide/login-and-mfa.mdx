@@ -11,22 +11,14 @@ Staff and client-portal users log in through the same page, `/login/`.
 RedScribe tells them apart by account type after authentication, not by a
 separate URL.
 
-If OAuth is **not** configured for your instance, the username/password form
-is what you see, with a "Forgot your password?" link below it.
-
-If OAuth **is** configured (`OAUTH_PROVIDER`), "Sign in with Google" or
-"Sign in with Microsoft" is the prominent, primary option — restricted to
-accounts in your firm's configured email domain, and only for accounts an
-administrator has already set up (see [OAuth
+The username/password form and "Forgot your password?" link are always
+shown, whether or not OAuth is configured. If OAuth **is** configured
+(`OAUTH_PROVIDER`), "Sign in with Google" or "Sign in with Microsoft" simply
+appears as an additional option below it — restricted to accounts in your
+firm's configured email domain, and only for accounts an administrator has
+already set up (see [OAuth
 provisioning](/security/authentication/#oauth-google--microsoft); it isn't
-self-service signup). The username/password form is still fully functional
-in this mode, since Superadmin always signs in locally, but it's tucked
-behind a collapsed "Sign in with a local account instead" disclosure rather
-than shown by default, and "Forgot your password?" is hidden entirely — OAuth
-accounts have no local password to reset, and Superadmin password recovery is
-an admin-assisted CLI process (see [Account
-recovery](/admin/user-management/#account-recovery-lost-password--lost-mfa-device)),
-not a self-service one.
+self-service signup).
 
 ## MFA enrollment
 

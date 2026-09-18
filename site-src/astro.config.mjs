@@ -22,6 +22,10 @@ export default defineConfig({
 			title: 'RedScribe Docs',
 			description:
 				'Self-hosted engagement, finding, checklist, and report management for penetration testing teams.',
+			logo: {
+				src: './src/assets/logo.svg',
+				alt: 'RedScribe',
+			},
 			favicon: '/favicon.svg',
 			lastUpdated: false,
 			pagination: true,
