@@ -122,7 +122,7 @@ setting.</p>
 <tr>
 <td><code dir="auto">mfa_required</code></td>
 <td>Requires TOTP MFA for every local account, not just Superadmin, which always requires it regardless of this flag</td>
-<td>Off</td>
+<td>On</td>
 </tr>
 <tr>
 <td><code dir="auto">client_portal_enabled</code></td>
@@ -186,13 +186,11 @@ currently unavailable” message. Either way, managing client companies
 and accounts from the staff side is unaffected, this flag only gates the
 client-facing login and portal itself.</li>
 </ul>
-<aside aria-label="Turn mfa_required on before a real deployment" class="starlight-aside starlight-aside--danger"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 7a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V8a1 1 0 0 0-1-1Zm0 8a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm9.71-7.44-5.27-5.27a1.05 1.05 0 0 0-.71-.29H8.27a1.05 1.05 0 0 0-.71.29L2.29 7.56a1.05 1.05 0 0 0-.29.71v7.46c.004.265.107.518.29.71l5.27 5.27c.192.183.445.286.71.29h7.46a1.05 1.05 0 0 0 .71-.29l5.27-5.27a1.05 1.05 0 0 0 .29-.71V8.27a1.05 1.05 0 0 0-.29-.71ZM20 15.31 15.31 20H8.69L4 15.31V8.69L8.69 4h6.62L20 8.69v6.62Z"/></svg>Turn mfa_required on before a real deployment</p><div class="starlight-aside__content"><p>This is the one flag that ships off by default but shouldn’t stay that way.
-See <a href="/start/alpha-status/#known-limitations">Alpha status &amp; versioning</a>. The
-built-in Superadmin role always requires MFA regardless of this toggle, but
-every other role only requires it once you flip this on, unless you’d
-rather set it individually per role instead (see <a href="/admin/roles-and-permissions/">Roles &amp;
-permissions</a>). Leave it off only for a
-local or disposable dev and test instance.</p></div></aside>
+<aside aria-label="Turning mfa_required off is a deliberate opt-out, not a default" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Turning mfa_required off is a deliberate opt-out, not a default</p><div class="starlight-aside__content"><p>This ships <strong>on</strong>, so every local account (not just Superadmin, which
+always requires MFA regardless of this toggle) is enrolled from first
+login. Turn it off only for a local or disposable dev/test instance, or if
+you’d rather require it per role instead (see <a href="/admin/roles-and-permissions/">Roles &amp;
+permissions</a>) than instance-wide.</p></div></aside>
 <div class="sl-heading-wrapper level-h2"><h2 id="changes-take-effect-immediately">Changes take effect immediately</h2><a class="sl-anchor-link" href="#changes-take-effect-immediately"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Changes take effect immediately”</span></a></div>
 <p>Because <code dir="auto">get_solo()</code> reads straight from Postgres on every call rather than
 from any in-process or shared cache, and the request middleware fetches

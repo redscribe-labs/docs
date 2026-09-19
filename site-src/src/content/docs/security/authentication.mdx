@@ -121,9 +121,8 @@ mfa_required_for(user) = (
 - Any other role can independently be marked `requires_mfa` from [Role
   Management](/admin/roles-and-permissions/).
 - The `mfa_required` instance-wide [feature flag](/admin/feature-flags/)
-  (default **off**) applies it to every local account at once when turned
-  on. See the [Alpha status](/start/alpha-status/) note: turning this on is
-  the right call before any real deployment.
+  (default **on**) applies it to every local account at once. Turn it off
+  only for a local or disposable dev/test instance.
 - OAuth accounts are exempt from this check entirely, since MFA there is the
   identity provider's own responsibility.
 

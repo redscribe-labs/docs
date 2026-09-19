@@ -20,7 +20,7 @@ setting.
 | `cvss_calculator` | The CVSS v3.1/v4.0 calculator widget on the finding and catalogue create/edit forms | On |
 | `global_search` | Global [search](/user-guide/trends-and-search/#search) across every engagement and finding the user has access to | On |
 | `scan_import` | [Scanner import](/user-guide/scanner-import/) (Nmap, Burp Suite, Nuclei) from the findings list | On |
-| `mfa_required` | Requires TOTP MFA for every local account, not just Superadmin, which always requires it regardless of this flag | Off |
+| `mfa_required` | Requires TOTP MFA for every local account, not just Superadmin, which always requires it regardless of this flag | On |
 | `client_portal_enabled` | Allows client-role accounts to log in and use the [Client Portal](/client-portal/for-clients/). Managing client companies and accounts stays available to Superadmin and Team Lead either way | Off |
 
 ## What actually happens when a flag is off
@@ -79,14 +79,12 @@ off is a real access control, not just a cosmetic hide.
   and accounts from the staff side is unaffected, this flag only gates the
   client-facing login and portal itself.
 
-<Aside type="danger" title="Turn mfa_required on before a real deployment">
-This is the one flag that ships off by default but shouldn't stay that way.
-See [Alpha status & versioning](/start/alpha-status/#known-limitations). The
-built-in Superadmin role always requires MFA regardless of this toggle, but
-every other role only requires it once you flip this on, unless you'd
-rather set it individually per role instead (see [Roles &
-permissions](/admin/roles-and-permissions/)). Leave it off only for a
-local or disposable dev and test instance.
+<Aside type="caution" title="Turning mfa_required off is a deliberate opt-out, not a default">
+This ships **on**, so every local account (not just Superadmin, which
+always requires MFA regardless of this toggle) is enrolled from first
+login. Turn it off only for a local or disposable dev/test instance, or if
+you'd rather require it per role instead (see [Roles &
+permissions](/admin/roles-and-permissions/)) than instance-wide.
 </Aside>
 
 ## Changes take effect immediately

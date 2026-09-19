@@ -11,13 +11,6 @@ relying on it for a real client engagement.
 
 - **No public API.** Every workflow is web-UI-driven; there is no REST/GraphQL
   API to automate against yet.
-- **Instance-wide MFA enforcement defaults off.** This is a deliberate
-  admin-configurable default, not an oversight. The built-in Superadmin role
-  always requires MFA regardless of this toggle, and any other role can be
-  set to require it individually from [Role Management](/admin/roles-and-permissions/).
-  Flip the instance-wide toggle on too before a real deployment if you want
-  MFA required for everyone. See [Authentication &
-  sessions](/security/authentication/).
 
 ## Versioning
 

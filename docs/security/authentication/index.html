@@ -183,9 +183,8 @@ enforced regardless of the instance-wide toggle.</li>
 <li>Any other role can independently be marked <code dir="auto">requires_mfa</code> from <a href="/admin/roles-and-permissions/">Role
 Management</a>.</li>
 <li>The <code dir="auto">mfa_required</code> instance-wide <a href="/admin/feature-flags/">feature flag</a>
-(default <strong>off</strong>) applies it to every local account at once when turned
-on. See the <a href="/start/alpha-status/">Alpha status</a> note: turning this on is
-the right call before any real deployment.</li>
+(default <strong>on</strong>) applies it to every local account at once. Turn it off
+only for a local or disposable dev/test instance.</li>
 <li>OAuth accounts are exempt from this check entirely, since MFA there is the
 identity provider’s own responsibility.</li>
 </ul>
