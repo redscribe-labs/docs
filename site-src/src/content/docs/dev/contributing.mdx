@@ -1,67 +1,34 @@
 ---
 title: Contributing
-description: What to know before opening a pull request against RedScribe.
+description: How to report a bug, request a change, or report a security issue — and why pull requests aren't accepted.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-Thanks for considering a contribution. A few things to know before you
-start. This page mirrors `CONTRIBUTING.md` in the repo root.
+Thanks for your interest in RedScribe. This page mirrors `CONTRIBUTING.md`
+in the repo root: here's how you can help, and how you can't.
 
-## Licensing of contributions
+## What's welcome
 
-RedScribe is source-available under the PolyForm Noncommercial License 1.0.0,
-paired with a separate commercial license. See [What is
-RedScribe?](/#license) for what that means. **By submitting a pull request,
-you agree your contribution is licensed under the same terms as the rest of
-the project.** There's no formal CLA/sign-off process at this stage. That
-may be introduced before any contribution goes in, so don't be surprised if
-a PR gets held for that conversation first.
+- **Bug reports.** Use the issue templates under `.github/ISSUE_TEMPLATE/`.
+  They ask for the information that's actually useful for reproducing a
+  problem in a self-hosted Django app: version, install method, and
+  whether it reproduces on a clean instance.
+- **Feature requests / change requests.** Same place, a separate template.
+  Describe what you'd like to see and why — a maintainer will pick it up
+  if it's a good fit, on their own timeline.
 
-## Getting a dev environment running
+## What isn't accepted
 
-The fastest loop is [Method 4](/getting-started/installation/#method-4-local-development-without-docker),
-local development with no Docker rebuild cycle. See [Local
-development](/dev/local-development/) for the full setup and day-to-day
-loop.
+**Pull requests aren't accepted.** Every code change to RedScribe — fixes
+included — is made by the RedScribe maintainer(s) directly. This isn't a
+judgment on the quality of any patch someone might put together; it's a
+deliberate choice about how this project is run. If you'd like something
+changed, open an issue describing it instead of a PR. A maintainer will
+implement it themselves if it's a good fit.
 
-If you touch the Tiptap editor bundle, the password strength meter, or
-Tailwind classes, rebuild the frontend assets per [Frontend asset
-builds](/dev/frontend-builds/) **before committing**, since the built output
-in `static/vendor/`/`static/css/` is what actually ships.
-
-## Running the test suite
-
-```sh
-python manage.py test
-```
-
-The project has substantial existing test coverage (900+ test methods as of
-this writing, see [Testing](/dev/testing/)). A PR that changes behavior
-should come with tests covering it, following the existing style in the
-relevant app's `tests.py`.
-
-## Before opening a PR
-
-- **Run the full test suite locally.** CI (`.github/workflows/test.yml`)
-  runs it again on every PR, but catching failures locally first is faster
-  for everyone.
-- **Add a `CHANGELOG.md` entry** under `[Unreleased]` describing the change,
-  following the existing [Keep a Changelog](https://keepachangelog.com/)
-  format already used there.
-- **Keep the change scoped.** This codebase favors small, well-reasoned
-  diffs with docstrings explaining *why* a non-obvious decision was made,
-  rather than sweeping refactors bundled with feature work. You'll see this pattern
-  throughout the existing code: a short comment justifying an unusual choice
-  (an ordering, a fallback, an edge case) rather than restating what the
-  code already says.
-
-## Reporting bugs / requesting features
-
-Use the issue templates under `.github/ISSUE_TEMPLATE/`. They ask for the
-information that's actually useful for reproducing a problem in a
-self-hosted Django app: version, install method, and whether it reproduces
-on a clean instance.
+If a pull request is opened anyway, expect it to be closed unmerged and
+pointed back here, rather than reviewed for a possible merge.
 
 ## Reporting a security vulnerability
 

@@ -60,10 +60,14 @@ cutoff are purged in the same pass.
 
 Separate from the age-based purge above, the Audit Log page also offers
 **Clear all logs**, an unconditional wipe of every audit-log and
-login-attempt row, regardless of age. Because this is destructive and
-irreversible, confirming it requires typing the exact phrase `DELETE ALL
-LOGS` into a confirmation field first; there's no equivalent one-step CLI
-flag for it.
+login-attempt row, regardless of age. Because this is destructive,
+irreversible, and the one action that could undo the hash-chain's own
+tamper-evidence guarantee, it needs two things, not one: the exact phrase
+`DELETE ALL LOGS` typed into a confirmation field, **and** a second,
+currently active Superadmin's own username and password entered on the
+same page. That second Superadmin has to be a genuinely different account
+from whoever is doing the clearing — nothing is deleted otherwise. There's
+no equivalent one-step CLI flag for it.
 
 ## Tamper-evidence
 

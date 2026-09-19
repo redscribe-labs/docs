@@ -58,42 +58,33 @@ convention and review, not by a tool. Don't go looking for a pyproject.toml
 lint section, there isn't one.
 </Aside>
 
-## Continuous integration
+## No CI — run these checks yourself
 
-`.github/workflows/test.yml` runs on every push to `main` and every pull
-request:
+There is currently **no CI**. A `.github/workflows/test.yml` workflow ran
+these checks automatically for a while, but was removed: with no CI runner
+to diagnose failures against, a broken workflow was just producing
+failure-notification emails with no way to see why, and the suite runs
+identically well locally. Run both of these before opening a PR:
 
-1. Checks out the repo and sets up Python 3.13.
-2. Starts a real `postgres:17-alpine` service container, not SQLite and not
-   a mock. RedScribe's test suite runs against the same database engine
-   production uses, which matters given how much of the app (encryption,
-   the audit hash chain, the report job slot limiter) leans on real
-   Postgres row locking behavior that a lighter-weight substitute wouldn't
-   exercise faithfully.
-3. Installs the same system packages `Dockerfile` installs:
-   `postgresql-client` for `apps.backup`'s tests that shell out to
-   `pg_dump`/`pg_restore`, and the Pango and Cairo stack for the WeasyPrint
-   PDF rendering tests.
-4. Installs Python dependencies from `requirements.txt`.
-5. **Checks for missing migrations** with `python manage.py makemigrations
-   --check --dry-run` before running anything else. A model change without
-   its migration committed fails CI right here, not partway through the
-   test run itself, which keeps the failure message pointing at the actual
-   problem instead of a confusing downstream test error.
-6. Runs `python manage.py test`.
+```sh
+python manage.py makemigrations --check --dry-run
+python manage.py test
+```
 
-CI's `REDSCRIBE_ROOT_KEY` and `DJANGO_SECRET_KEY` are fixed dummy values
-baked into the workflow file, valid only for that one ephemeral database
-that gets thrown away at the end of the job. They are never real deployment
-secrets and shouldn't be reused anywhere else. The root key value there is
-just 32 random bytes that happen to satisfy the format check in
-`apps/crypto/root_key.py`, nothing more meaningful than that.
+**The migration check matters on its own.** It catches a model change with
+no migration file committed immediately, rather than as a confusing
+downstream test error partway through the suite.
+
+Test against a real `postgres:17-alpine` database, not SQLite. RedScribe's
+suite leans on real Postgres row-locking behavior in several places
+(encryption, the audit hash chain, the report job slot limiter) that a
+lighter-weight substitute wouldn't exercise faithfully. [Local
+development](/dev/local-development/) already sets this up for you.
 
 ## What a PR is expected to include
 
 Per [Contributing](/dev/contributing/), a PR that changes behavior should
 come with tests covering it, written in the existing style of the relevant
 app's `tests.py` rather than introducing a new testing pattern for just
-that one change. Run the suite locally before opening the PR. CI runs it
-again on every push, but catching a failure locally first is faster for
-everyone than waiting on a CI round trip.
+that one change. Run the suite locally before opening the PR — there's no
+CI running it again for you, so this is the only check a PR gets.

@@ -50,9 +50,10 @@ restart needed to see a template or view change. Visit
   python manage.py makemigrations
   python manage.py migrate
   ```
-  CI checks that no migration is missing (`makemigrations --check
-  --dry-run` in `.github/workflows/test.yml`), so commit the generated
-  migration file alongside the model change, in the same PR.
+  There's no CI to catch a missing migration for you, so run
+  `makemigrations --check --dry-run` yourself (see
+  [Testing](/dev/testing/#no-ci--run-these-checks-yourself)) and commit the
+  generated migration file alongside the model change, in the same PR.
 - **Frontend changes.** Touching the Tiptap editor bundle, the password
   strength meter, or Tailwind classes needs a separate rebuild step. See
   [Frontend asset builds](/dev/frontend-builds/).

@@ -174,6 +174,16 @@ This page is just the “what,” and those are the “why.”</p>
 <td>Database port.</td>
 <td><code dir="auto">5432</code></td>
 </tr>
+<tr>
+<td><code dir="auto">POSTGRES_SSLMODE</code></td>
+<td>TLS mode for the Postgres connection (<code dir="auto">prefer</code>, <code dir="auto">require</code>, <code dir="auto">verify-ca</code>, <code dir="auto">verify-full</code>, …). The shipped default is safe for the same-host Docker Compose topology, where <code dir="auto">db</code> and <code dir="auto">web</code> only ever talk over the Docker-internal network — but <code dir="auto">prefer</code> silently allows a plaintext fallback and never validates the server certificate. Set this to <code dir="auto">verify-full</code> if <code dir="auto">POSTGRES_HOST</code> ever points at a separate host.</td>
+<td><code dir="auto">prefer</code></td>
+</tr>
+<tr>
+<td><code dir="auto">POSTGRES_SSLROOTCERT</code></td>
+<td>Path to a CA certificate file to validate the Postgres server’s certificate against. Only meaningful alongside <code dir="auto">verify-ca</code>/<code dir="auto">verify-full</code>.</td>
+<td><em>(unset)</em></td>
+</tr>
 </tbody>
 </table>
 <div class="sl-heading-wrapper level-h2"><h2 id="encryption">Encryption</h2><a class="sl-anchor-link" href="#encryption"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Encryption”</span></a></div>

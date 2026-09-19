@@ -104,8 +104,10 @@ restart needed to see a template or view change. Visit
 <ul>
 <li><strong>Model changes.</strong> After editing a model, generate and apply a migration:
 <div class="expressive-code"><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="sh"><code><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">manage.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">makemigrations</span></div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">python</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">manage.py</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#ECC48D;--1:#3B61B0">migrate</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="python manage.py makemigrationspython manage.py migrate"><div></div></button></div></figure></div>
-CI checks that no migration is missing (<code dir="auto">makemigrations --check --dry-run</code> in <code dir="auto">.github/workflows/test.yml</code>), so commit the generated
-migration file alongside the model change, in the same PR.</li>
+There’s no CI to catch a missing migration for you, so run
+<code dir="auto">makemigrations --check --dry-run</code> yourself (see
+<a href="/dev/testing/#no-ci--run-these-checks-yourself">Testing</a>) and commit the
+generated migration file alongside the model change, in the same PR.</li>
 <li><strong>Frontend changes.</strong> Touching the Tiptap editor bundle, the password
 strength meter, or Tailwind classes needs a separate rebuild step. See
 <a href="/dev/frontend-builds/">Frontend asset builds</a>.</li>

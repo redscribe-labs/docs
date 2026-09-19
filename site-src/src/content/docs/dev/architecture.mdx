@@ -100,8 +100,8 @@ whatever the earlier middleware decided, like a forced MFA redirect).
 <Aside type="tip">
 Every app also has its own `tests.py`. Reading an app's test file alongside
 its views is often the fastest way to understand its actual behavior, since
-RedScribe's test suite is substantial (500+ tests as of the CI config in
-`.github/workflows/test.yml`). See [Testing](/dev/testing/).
+RedScribe's test suite is substantial (run `grep -rc "def test_" apps/*/tests.py`
+from the repo root for a current count). See [Testing](/dev/testing/).
 </Aside>
 
 ## Deployment and concurrency
