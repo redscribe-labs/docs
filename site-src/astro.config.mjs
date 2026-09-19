@@ -27,20 +27,40 @@ export default defineConfig({
 				alt: 'RedScribe',
 			},
 			favicon: '/favicon.svg',
-			lastUpdated: false,
+			lastUpdated: true,
 			pagination: true,
 			customCss: ['./src/styles/custom.css'],
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/redscribe-labs/redscribe' },
+			],
+			editLink: {
+				baseUrl: 'https://github.com/redscribe-labs/redscribe-docs/edit/main/site-src/',
+			},
+			head: [
+				// Matches the app's own solid `.twilight-surface` (twilight-950, see
+				// COLOR_SCHEME.md) so the browser chrome doesn't clash on mobile.
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#111213' } },
+			],
+			// Only "Start here" is expanded by default, everything else stays
+			// collapsed until opened, since Starlight auto-expands whichever
+			// group contains the page you're currently on regardless of this
+			// setting, so nothing here is ever more than one click away.
 			sidebar: [
 				{
 					label: 'Start here',
 					items: [
 						{ label: 'What is RedScribe?', slug: 'index' },
-						{ label: 'Alpha status & versioning', slug: 'start/alpha-status' },
+						{
+							label: 'Alpha status & versioning',
+							slug: 'start/alpha-status',
+							badge: { text: 'Alpha', variant: 'caution' },
+						},
 						{ label: 'Concepts & terminology', slug: 'start/concepts' },
 					],
 				},
 				{
 					label: 'Getting Started',
+					collapsed: true,
 					items: [
 						{ label: 'Requirements & sizing', slug: 'getting-started/requirements' },
 						{ label: 'Installation', slug: 'getting-started/installation' },
@@ -50,6 +70,7 @@ export default defineConfig({
 				},
 				{
 					label: 'User Guide',
+					collapsed: true,
 					items: [
 						{ label: 'Logging in & MFA', slug: 'user-guide/login-and-mfa' },
 						{ label: 'Dashboard & navigation', slug: 'user-guide/dashboard' },
@@ -65,6 +86,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Client Portal',
+					collapsed: true,
 					items: [
 						{ label: 'For clients', slug: 'client-portal/for-clients' },
 						{ label: 'Managing client access', slug: 'client-portal/managing-clients' },
@@ -72,6 +94,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Administration',
+					collapsed: true,
 					items: [
 						{ label: 'Roles & permissions', slug: 'admin/roles-and-permissions' },
 						{ label: 'User management', slug: 'admin/user-management' },
@@ -86,6 +109,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Security',
+					collapsed: true,
 					items: [
 						{ label: 'Encryption model', slug: 'security/encryption' },
 						{ label: 'Authentication & sessions', slug: 'security/authentication' },
@@ -95,6 +119,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Deployment & Operations',
+					collapsed: true,
 					items: [
 						{ label: 'Docker Compose deep dive', slug: 'deployment/docker-compose' },
 						{ label: 'Upgrading & rolling back', slug: 'deployment/upgrading' },
@@ -103,6 +128,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Developer Guide',
+					collapsed: true,
 					items: [
 						{ label: 'Architecture overview', slug: 'dev/architecture' },
 						{ label: 'Local development', slug: 'dev/local-development' },
@@ -115,6 +141,7 @@ export default defineConfig({
 				},
 				{
 					label: 'Reference',
+					collapsed: true,
 					items: [
 						{ label: 'Environment variables', slug: 'reference/environment-variables' },
 						{ label: 'Management commands', slug: 'reference/management-commands' },
@@ -125,10 +152,7 @@ export default defineConfig({
 						{ label: 'Permissions reference', slug: 'reference/permissions' },
 					],
 				},
-				{
-					label: 'Changelog',
-					items: [{ label: 'Changelog', slug: 'changelog' }],
-				},
+				{ label: 'Changelog', slug: 'changelog' },
 			],
 		}),
 	],

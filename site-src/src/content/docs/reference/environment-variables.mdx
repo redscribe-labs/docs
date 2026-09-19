@@ -20,6 +20,7 @@ This page is just the "what," and those are the "why."
 | `DJANGO_SECRET_KEY` | Session/CSRF signing key. Generate a random 50-char value; never reuse the placeholder. | `change-me-to-a-random-50-char-value` |
 | `DJANGO_DEBUG` | Django debug mode: verbose error pages, no static file caching. Never enable in a real deployment. | `true` |
 | `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames Django will serve; must include whatever `NGINX_SERVER_NAME` is set to. | `localhost,127.0.0.1` |
+| `REDSCRIBE_ALLOW_DEBUG_IN_PROD` | Explicit opt-in escape hatch: `config.settings.prod` normally refuses to start at all with `DJANGO_DEBUG=true`. Set to `1` only for a specific debugging session, never leave it set. See [Local development](/dev/local-development/#dev-vs-prod-settings). | *(unset)* |
 
 ## Reverse proxy / TLS
 
@@ -55,6 +56,8 @@ This page is just the "what," and those are the "why."
 | `LOCKOUT_DURATION_SECONDS` | How long a lockout lasts, in seconds. | `86400` (24h) |
 | `SUPERADMIN_RATE_LIMIT_WINDOW_SECONDS` | Rate-limit window for Superadmin-sensitive actions. | `60` |
 | `SUPERADMIN_RATE_LIMIT_MAX_ATTEMPTS` | Max attempts allowed within that window. | `10` |
+| `MFA_THROTTLE_MAX_ATTEMPTS` | Wrong TOTP codes allowed within the throttle window, separate from login lockout above. Not listed in `.env.example`, since the default rarely needs changing. See [Authentication & sessions](/security/authentication/#mfa-verification-throttling). | `5` |
+| `MFA_THROTTLE_WINDOW_SECONDS` | Throttle window `MFA_THROTTLE_MAX_ATTEMPTS` applies within. | `30` |
 | `PWNED_PASSWORD_CHECK_ENABLED` | Checks new passwords against Have I Been Pwned's breach corpus (a k-anonymity API, so only a 5-char hash prefix ever leaves the instance). Set to `false` for air-gapped deployments with no outbound internet access. | `true` |
 
 ### OAuth provider credentials

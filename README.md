@@ -1,6 +1,6 @@
 # RedScribe Docs
 
-**Live at [redscribe-labs.github.io/redscribe-docs](https://redscribe-labs.github.io/redscribe-docs/).**
+**Live at [docs.redscribe.app](https://docs.redscribe.app/).**
 
 The documentation site for [RedScribe](https://github.com/redscribe-labs/redscribe), self-hosted
 engagement, finding, checklist, and report management for penetration
@@ -78,13 +78,15 @@ Already live. This repo is public, and `Settings → Pages` is set to
 Two gotchas already bit this exact setup once each, worth knowing if you're
 repeating this elsewhere:
 
-- **`base` and `site` in `astro.config.mjs` must match the real Pages URL.**
-  This is hosted as a project page
-  (`https://redscribe-labs.github.io/redscribe-docs/`, not a custom domain
-  and not a `redscribe-labs.github.io` user repo), so `base: '/redscribe-docs'`
-  and the matching `site:` are already set there. Skipping this makes every
-  internal link 404 on the live site while still working fine in local
-  preview, since local preview serves from the domain root instead.
+- **`base` and `site` in `astro.config.mjs` must match the real hosting URL.**
+  This is hosted at the custom domain `docs.redscribe.app` (via
+  `site-src/public/CNAME`), at the domain root rather than the
+  `redscribe-labs.github.io/redscribe-docs/` project-page path, so
+  `base: '/'` and `site: 'https://docs.redscribe.app/'` are already set
+  there. If this ever moves back to the github.io project-page path, both
+  need to change together, or every internal link 404s on the live site
+  while still working fine in local preview, since local preview serves
+  from the domain root either way.
 - **`docs/.nojekyll` must exist**, along with `site-src/public/.nojekyll` so
   it survives every rebuild. GitHub Pages runs Jekyll by default on "Deploy
   from a branch," and Jekyll silently strips any directory starting with an

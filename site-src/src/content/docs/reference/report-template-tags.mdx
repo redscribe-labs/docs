@@ -46,6 +46,9 @@ anywhere else, only in the Document body itself.
 
 | Tag | What it renders | Notes |
 |---|---|---|
+| `{{ cover_page }}` | The report's own cover page, built from the Report Profile's Appearance settings and the engagement's own fields (cover title, client, reference number, dates, classification label) | Not automatic: a template with no `{{ cover_page }}` tag gets no cover page at all, the same as any other structural tag |
+| `{{ table_of_contents }}` | A table of contents, using the section numbers computed from your template's own heading structure | Placement matters: sections above this tag in the template won't be numbered relative to it, since numbering is computed by walking the template top to bottom |
+| `{{ document_control }}` | A table of the engagement's status history (stage / date / changed by) | Same content as `{{p document_control }}` in a [DOCX template](/reference/docx-template-guide/#anywhere-in-the-document--rich-content) |
 | `{{ breakdown_of_findings }}` | Severity/status bar chart (with a table fallback) plus a vulnerabilities summary table (ID, severity, title, status) | |
 | `{{ finding_details }}` | The full write-up for every included finding: metadata table, affected assets, each active finding section (see [Finding sections](#finding-sections-inside-finding_details) below), and (on a remediation report) retest history | This is the main body of the report, and it's almost always required |
 | `{{ observations }}` | Free-form dynamic entries configured per-engagement (title + rich content), each as its own subsection | Empty/omitted entirely if none are configured, with no placeholder text shown |
@@ -156,6 +159,13 @@ user-authored content.
 A minimal but complete Document template:
 
 ```
+{{ cover_page }}
+
+{{ table_of_contents }}
+
+# Document Control
+{{ document_control }}
+
 # Executive Summary
 {{ executive_summary }}
 
