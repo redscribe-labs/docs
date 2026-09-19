@@ -49,6 +49,24 @@ off-box yourself, with `rsync`, `rclone`, or whatever you already use.
 RedScribe doesn't build or assume any specific remote target.
 </Aside>
 
+## Permanently deleted data can still exist in a backup
+
+[Permanently deleting an engagement](/user-guide/engagements/#archiving-and-deletion)
+removes it from the live database only. A routine `create_backup` snapshot
+taken before the deletion, or a `restore_backup` pre-restore safety
+snapshot, is a whole-database dump — it still contains that engagement's
+data exactly as it was at backup time, and there's no mechanism to scrub a
+single engagement back out of an already-written backup file.
+
+<Aside type="caution">
+Routine backups age out on their own after `BACKUP_RETENTION_DAYS` (30 days
+by default). Pre-restore safety snapshots (below) aren't auto-pruned at
+all. If a retention or disposal obligation means deleted data needs to be
+gone from every copy, not just the live database, that means finding and
+removing any backup taken before the deletion too, rather than assuming
+the permanent-delete action alone covers it.
+</Aside>
+
 ## Restoring a backup
 
 ```sh

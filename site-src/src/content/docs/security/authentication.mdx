@@ -177,7 +177,9 @@ networking](/deployment/docker-compose/#why-nginx-uses-host-networking).
 - **Fixed cap**: `SESSION_COOKIE_AGE` is hard-coded to 4 hours and isn't
   separately configurable via environment variable.
 - **Idle timeout**: `SESSION_IDLE_TIMEOUT_SECONDS` (default `1800`, or 30
-  minutes, HIPAA's automatic-logoff figure). `IdleTimeoutMiddleware` tracks
+  minutes — HIPAA requires automatic logoff as an addressable
+  specification without mandating a specific interval; 30 minutes is a
+  common baseline). `IdleTimeoutMiddleware` tracks
   a `last_activity_ts` value in the session on every non-exempt request and
   force-logs-out (with a user-facing message) once that gap is exceeded,
   independent of the fixed 4-hour cap.

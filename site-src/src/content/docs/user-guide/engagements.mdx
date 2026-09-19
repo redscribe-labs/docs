@@ -81,7 +81,13 @@ was agreed mid-engagement:
 - **Permanent delete** is Superadmin-only, and only available on an
   already-archived engagement. It's the one deliberate exception to
   RedScribe's archive-not-delete, append-only-audit design, meant for
-  genuine data-retention purge rather than everyday cleanup.
+  genuine data-retention purge rather than everyday cleanup. It removes the
+  engagement from the live database only — a backup taken before the
+  deletion still contains it until that backup is separately pruned or
+  overwritten. See [Backup &
+  restore](/admin/backup-and-restore/#permanently-deleted-data-can-still-exist-in-a-backup)
+  if a retention or disposal obligation means it needs to be gone from
+  every copy.
 
 ## Releasing to the client portal
 

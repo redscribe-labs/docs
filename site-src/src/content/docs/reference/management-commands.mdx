@@ -67,6 +67,38 @@ empty one.
 docker compose exec web python manage.py seed_pentest_report_format
 ```
 
+## Account recovery
+
+See [Account recovery](/admin/user-management/#account-recovery-lost-password--lost-mfa-device)
+for the full escape-hatch workflow this command implements.
+
+### `emergency_account_recovery`
+
+Resets a local account's password and, optionally, clears its confirmed
+TOTP device — for when the normal in-app tools aren't usable (e.g. the only
+Superadmin is themselves locked out). Unlike a raw `manage.py shell`/
+`changepassword` session, this writes an entry to the [audit
+log](/security/audit-trail/), so the one access path that bypasses every
+other control doesn't also bypass the record of it happening.
+
+| Argument | Required | Purpose |
+|---|---|---|
+| `--username` | Yes | The account to recover |
+| `--reason` | Yes | Why this is being run (e.g. an incident/ticket reference); recorded verbatim in the audit log entry |
+| `--clear-mfa` | No | Also delete the account's confirmed TOTP device, forcing re-enrollment at next login |
+| `--operator` | No | Who is running this, recorded in the audit log. Defaults to the current OS user |
+
+Refuses to run against an OAuth account (there's no RedScribe-managed
+password to reset; use **Convert to local account** from that account's
+detail page instead). Prompts interactively for the new password (14+
+characters, validated against Django's password validators); it isn't
+passable as an argument.
+
+```sh
+docker compose exec web python manage.py emergency_account_recovery \
+  --username admin --reason "INC-42, oncall was locked out" --clear-mfa
+```
+
 ## Audit log
 
 See [Audit log](/admin/audit-log/) for the full retention/tamper-evidence

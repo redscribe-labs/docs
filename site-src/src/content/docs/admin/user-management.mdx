@@ -76,9 +76,14 @@ letting an instance end up with zero Superadmins.
 
 If a Superadmin (or any local account) loses their password, their TOTP
 device, or both, there's **no self-service recovery**. Fix it directly via
-the CLI on the `web` container. This is the escape hatch for when the
-in-app tools above aren't usable (e.g. the only Superadmin is themselves
-locked out).
+the CLI on the `web` container, using `emergency_account_recovery` rather
+than a raw `manage.py shell`/`changepassword` session. This is the escape
+hatch for when the in-app tools above aren't usable (e.g. the only
+Superadmin is themselves locked out), and it's the one access path that
+matters most during an actual incident — so unlike a bare shell session, it
+writes an entry to RedScribe's own tamper-evident [audit
+log](/security/audit-trail/) instead of leaving no trace beyond host-level
+shell history.
 
 <Steps>
 
@@ -92,23 +97,18 @@ locked out).
    "
    ```
 
-2. **Reset the password** (interactive, prompts twice, input hidden):
+2. **Reset the password**, and clear MFA in the same step if that's lost
+   too (interactive, prompts twice for the new password, input hidden):
 
    ```sh
-   docker compose exec web python manage.py changepassword <username>
+   docker compose exec web python manage.py emergency_account_recovery \
+     --username <username> --reason "<why this is being run>" --clear-mfa
    ```
 
-3. **If MFA access is also lost**, delete the confirmed TOTP device so the
-   account is forced back through enrollment on next login:
-
-   ```sh
-   docker compose exec web python manage.py shell -c "
-   from apps.accounts.models import User
-   from django_otp.plugins.otp_totp.models import TOTPDevice
-   u = User.objects.get(username='<username>')
-   TOTPDevice.objects.filter(user=u).delete()
-   "
-   ```
+   Drop `--clear-mfa` if only the password is lost. `--reason` is required
+   and recorded verbatim in the audit log entry, alongside the operator
+   (the current OS user by default, or `--operator <name>` to record
+   someone else).
 
 </Steps>
 
@@ -118,9 +118,9 @@ a fresh authenticator.
 
 <Aside type="danger">
 Never resort to wiping the database over a lost credential, since that
-destroys every engagement, finding, and report along with it. These
-commands touch only the affected user's row. If you do need to restore
-from a backup for some other reason, see [Backup &
+destroys every engagement, finding, and report along with it. This command
+touches only the affected user's row. If you do need to restore from a
+backup for some other reason, see [Backup &
 restore](/admin/backup-and-restore/), which has its own, separate
 safeguards around account state.
 </Aside>
