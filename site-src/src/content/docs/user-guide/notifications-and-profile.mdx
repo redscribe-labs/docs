@@ -86,9 +86,10 @@ accounts both respect this switch equally.
 `/profile/` (`accounts:profile`) is deliberately narrow. It edits exactly
 two fields on your account:
 
-- **Qualifications / certifications**, one per line, for example "OSCP" on
-  its own line, then "OSWE" on the next. This renders as a bulleted list.
-- **Background**, a short free text professional bio.
+- **Qualifications / certifications**, a rich-text editor. Write it as a
+  bulleted list (for example "OSCP" on one line, "OSWE" on the next) and it
+  renders the same way in the report.
+- **Background**, a short professional bio, also a rich-text editor.
 
 Both feed directly into the `{{p assessment_team }}` tag on generated
 reports (see [Report template tags](/reference/report-template-tags/)),

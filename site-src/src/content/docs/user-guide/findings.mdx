@@ -25,12 +25,17 @@ it further afterward.
   (for example `OWASP Top 10 2021` → `A01:2021-Broken Access Control`).
   Taxonomy/value pairs are free-typed the first time and offered as
   autocomplete suggestions afterward, org-wide.
-- **Affects**, the affected assets, as free text.
 - **Content sections**, a set of rich-text fields (vulnerability
   description, technical details, business impact, and so on) that are
   admin-configured per deployment, not fixed. See [Finding
   structure](/admin/finding-structure/) for what controls which sections
   exist and their order.
+- **Affects**, the affected assets, as free text (one host/URL per line, or
+  populated automatically by [Scanner import](/user-guide/scanner-import/)).
+  It appears among the content sections above, at whatever position and
+  under whatever label an admin has set for it on the [Finding
+  structure](/admin/finding-structure/#affected-assets-is-a-built-in-protected-section)
+  page — it's just not a rich-text field like its neighbors.
 
 ## The review workflow
 

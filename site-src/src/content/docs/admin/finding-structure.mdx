@@ -29,6 +29,22 @@ impact," with the following properties.
 | **Include in remediation report only** | Restricts this section to remediation report exports, hidden on the initial report |
 | **Import target** | Whether scanner imported findings ([Scanner import](/user-guide/scanner-import/)) get their parsed description dropped into this specific section |
 
+## Affected Assets is a built-in, protected section
+
+Every deployment always has one extra section beyond whatever you've
+configured yourself: **Affected Assets**. It exists so its position and
+label are just as configurable as any other section, but it isn't really
+"content" in the same sense — it's backed directly by a finding's own
+**Affects** field (a plain list of hosts/URLs, entered on the finding form
+and populated automatically by [Scanner import](/user-guide/scanner-import/)),
+not a rich-text field you type into here.
+
+You can **reorder** and **rename** it exactly like any other section. You
+cannot **delete** it — there's no Delete link for it on this page, and the
+delete endpoint itself refuses the request. Turning its **Active** toggle
+off does hide it everywhere, the same as deactivating any other section,
+without losing the underlying data on any finding.
+
 ## Default sections
 
 A typical deployment ships with these seven, in this order.

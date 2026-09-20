@@ -174,9 +174,10 @@ accounts both respect this switch equally.</p>
 <p><code dir="auto">/profile/</code> (<code dir="auto">accounts:profile</code>) is deliberately narrow. It edits exactly
 two fields on your account:</p>
 <ul>
-<li><strong>Qualifications / certifications</strong>, one per line, for example “OSCP” on
-its own line, then “OSWE” on the next. This renders as a bulleted list.</li>
-<li><strong>Background</strong>, a short free text professional bio.</li>
+<li><strong>Qualifications / certifications</strong>, a rich-text editor. Write it as a
+bulleted list (for example “OSCP” on one line, “OSWE” on the next) and it
+renders the same way in the report.</li>
+<li><strong>Background</strong>, a short professional bio, also a rich-text editor.</li>
 </ul>
 <p>Both feed directly into the <code dir="auto">{{p assessment_team }}</code> tag on generated
 reports (see <a href="/reference/report-template-tags/">Report template tags</a>),

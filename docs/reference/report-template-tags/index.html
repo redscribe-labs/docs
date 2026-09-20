@@ -165,7 +165,7 @@ anywhere else, only in the Document body itself.</p>
 </tr>
 <tr>
 <td><code dir="auto">{{ finding_details }}</code></td>
-<td>The full write-up for every included finding: metadata table, affected assets, each active finding section (see <a href="#finding-sections-inside-finding_details">Finding sections</a> below), and (on a remediation report) retest history</td>
+<td>The full write-up for every included finding: metadata table, then each active finding section in its configured order (see <a href="#finding-sections-inside-finding_details">Finding sections</a> below, which includes Affected Assets), and (on a remediation report) retest history</td>
 <td>This is the main body of the report, and it’s almost always required</td>
 </tr>
 <tr>
@@ -180,8 +180,8 @@ anywhere else, only in the Document body itself.</p>
 </tr>
 <tr>
 <td><code dir="auto">{{ assessment_team }}</code></td>
-<td>One subsection per engagement member with access, showing their bio and qualifications</td>
-<td>Omitted entirely if the engagement has no members</td>
+<td>One subsection per user actually assigned to the engagement, showing their bio and qualifications</td>
+<td>Omitted entirely if no one is assigned. Superadmins and anyone else with blanket instance-wide access are excluded unless they’re specifically assigned to this engagement</td>
 </tr>
 <tr>
 <td><code dir="auto">{{ checklist_coverage }}</code></td>
@@ -266,6 +266,13 @@ sections are:</p>
 admin screen, not the Document editor. Adding, reordering, or deactivating
 one changes what <code dir="auto">{{ finding_details }}</code> includes for every profile,
 immediately.</p>
+<p>Every deployment also always has an <strong>Affected Assets</strong> entry in this same
+ordered list (slug <code dir="auto">affects</code>), wherever it’s currently positioned — see
+<a href="/admin/finding-structure/#affected-assets-is-a-built-in-protected-section">Affected Assets is a built-in, protected
+section</a>.
+Unlike the sections above, it isn’t rich text and isn’t backed by
+<code dir="auto">FindingSection</code> content — it renders the finding’s own <strong>Affects</strong> field as
+a plain list — and it can be repositioned/renamed but never deleted.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="3-custom-text-block-tags-author-defined-prose">3. Custom text-block tags (author-defined prose)</h2><a class="sl-anchor-link" href="#3-custom-text-block-tags-author-defined-prose"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “3. Custom text-block tags (author-defined prose)”</span></a></div>
 <p>These are admin-authored rich-text blocks (<code dir="auto">ReportTextBlockDefinition</code>),
 the way you add your own prose sections (executive summary, disclaimers,

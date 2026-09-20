@@ -141,6 +141,32 @@ rather than queuing (there is no queue; this is a concurrency *cap*, not a
 job queue). See [Requirements & sizing](/getting-started/requirements/) for
 how slot counts scale with instance tier.
 
+## Pagination gotcha: WeasyPrint's own default stylesheet fights this
+
+If you're chasing a report where a section appears to jump to a new page
+with no explicit break configured, check `pdf_export.py`'s print CSS before
+assuming it's app-authored CSS at fault. WeasyPrint ships its own default UA
+stylesheet (`weasyprint/css/html5_ua.css`) that gives every heading
+`break-after: avoid; break-inside: avoid`, and every list `break-before:
+avoid` — meant to stop a heading/list from being orphaned alone at the
+bottom of a page. For a report whose sections scale with data, that default
+causes exactly the "whole box relocates to a fresh page" problem
+`_PRINT_CSS_TEMPLATE`'s own long comment already documents for
+`.report-table`/`.report-section`: if the content right after a heading
+doesn't fit the remaining page, WeasyPrint's only way to honor "don't break
+here" is to push the heading — and everything after it — onto a new page.
+`pdf_export.py` explicitly overrides this back to `auto` for `h1`–`h6` and
+lists. Don't remove that override without re-checking this exact failure
+mode; the tradeoff it accepts is a heading occasionally landing alone at the
+bottom of a page, which is judged better than an unexplained jump.
+
+This is orthogonal to explicit breaks — the Table of Contents
+(`report-toc`), `Section.page_break_before` (the "start each finding on a
+new page" toggle), and a manually-inserted page-break marker all use
+`break-before: page` on their own element, a different property from what
+the override above touches, so they keep working (and take priority)
+regardless.
+
 ## Where to look next
 
 - [Report template tags](/reference/report-template-tags/), the tag

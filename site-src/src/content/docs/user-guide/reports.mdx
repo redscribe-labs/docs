@@ -51,6 +51,22 @@ Set a password when exporting to PDF and the generated file is encrypted
 with it, so recipients need the password to open it. DOCX export doesn't
 have an equivalent yet.
 
+### Page breaks
+
+PDF export only starts a new page when one of these applies — nothing else
+does, regardless of how much content a section happens to hold:
+
+- The **Table of Contents** always starts on its own page.
+- **Start each finding on a new page**, a toggle on the report's Configure
+  page, if turned on.
+- An explicit page-break marker (the toolbar's page-break button, available
+  in a Report Profile's Document template editor) placed at that exact spot.
+
+Section headings and lists never force a page break on their own — a
+heading can end up as the last line on a page, with its content continuing
+on the next one, rather than the whole section being pushed down to keep
+them together.
+
 ### Export concurrency
 
 Report generation (PDF, HTML, Markdown, or DOCX, not the live preview)
