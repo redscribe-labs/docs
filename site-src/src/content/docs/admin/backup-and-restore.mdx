@@ -1,0 +1,134 @@
+---
+title: Backup & restore
+description: Server-side-only encrypted full-instance backup and restore, including the account-state safety report and pre-restore snapshot.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Backup and restore are **server-side only, deliberately**. This action both
+exfiltrates (backup) and can completely overwrite (restore) every
+engagement's data, so it's a terminal-only operation for whoever already has
+that level of server access, not a button reachable over HTTP. There is no
+web UI at all; everything on this page runs via `docker compose exec`.
+
+## Creating backups
+
+This is one-time setup. `create_backup` writes into `BACKUP_DIR`
+(`/app/backups` inside the container by default), which needs a real host
+directory behind it to survive a container recreation:
+
+```sh
+mkdir -p backups
+```
+
+<Aside type="note">
+The `web` container runs as `appuser`, UID/GID 1000, so the directory Docker
+just bind-mounted at `docker-compose.yml`'s `./backups:/app/backups` needs
+to be writable by that UID. If your own host user isn't UID 1000, run
+`chown 1000:1000 backups` once.
+</Aside>
+
+Set `BACKUP_ENCRYPTION_PASSPHRASE` in `.env`. It's required for unattended
+runs, since there's no one at a terminal to prompt. Then run this daily via
+the host's own cron:
+
+```sh
+0 2 * * * cd /path/to/redscribe && docker compose exec -T web python manage.py create_backup
+```
+
+Each run writes one timestamped, encrypted file
+(`redscribe-backup-<timestamp>.rsbk`) into `BACKUP_DIR` and prunes anything
+older than `BACKUP_RETENTION_DAYS` (default `30`, a month of daily
+backups). `--passphrase` overrides `BACKUP_ENCRYPTION_PASSPHRASE` for a
+single run if you ever need that.
+
+<Aside type="danger" title="BACKUP_DIR on the same disk isn't enough on its own">
+Living on the same disk as the database it's backing up is better than
+nothing, but it doesn't protect against a whole-host failure. Sync it
+off-box yourself, with `rsync`, `rclone`, or whatever you already use.
+RedScribe doesn't build or assume any specific remote target.
+</Aside>
+
+## Permanently deleted data can still exist in a backup
+
+[Permanently deleting an engagement](/user-guide/engagements/#archiving-and-deletion)
+removes it from the live database only. A routine `create_backup` snapshot
+taken before the deletion, or a `restore_backup` pre-restore safety
+snapshot, is a whole-database dump — it still contains that engagement's
+data exactly as it was at backup time, and there's no mechanism to scrub a
+single engagement back out of an already-written backup file.
+
+<Aside type="caution">
+Routine backups age out on their own after `BACKUP_RETENTION_DAYS` (30 days
+by default). Pre-restore safety snapshots (below) aren't auto-pruned at
+all. If a retention or disposal obligation means deleted data needs to be
+gone from every copy, not just the live database, that means finding and
+removing any backup taken before the deletion too, rather than assuming
+the permanent-delete action alone covers it.
+</Aside>
+
+## Restoring a backup
+
+```sh
+docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
+```
+
+(Prompts for the passphrase interactively; `--passphrase` skips that for
+scripted disaster-recovery drills.)
+
+### The account-state safety report
+
+**Before touching the live database**, `restore_backup` loads the backup
+into a throwaway scratch database and compares its accounts against the ones
+live right now, then prints exactly what would change. This is the direct
+answer to a specific problem. A whole-database restore silently undoes
+*any* account change made after the backup was taken, including someone who
+was deactivated since (say they left the team) quietly regaining access,
+in a way that's easy to miss if you're not specifically looking for it.
+
+You'll see one of four things per affected account:
+
+| Outcome | Meaning |
+|---|---|
+| **Reactivated** | Inactive right now, active in the backup. This is the one that matters most: if this account was deliberately deactivated since the backup, restoring undoes that. |
+| **Newly deactivated** | The reverse, reactivated since the backup. |
+| **Disappearing** | Created after the backup, so restoring removes it. |
+| **Reappearing** | Deleted since the backup, so restoring brings it back. |
+
+Nothing here is automatic. You still have to look at the list and decide,
+but it can no longer slip past unnoticed. Type `restore` at the prompt to
+proceed, anything else to abort with zero changes made. `--yes` skips the
+prompt (the report is still computed and printed either way) for scripted
+DR, so make sure you know what you're restoring before you automate past
+this step.
+
+### The pre-restore safety snapshot
+
+Immediately before the actual `pg_restore` (which drops every table first,
+then restores, so it isn't something a partial failure can be undone from on
+its own), `restore_backup` also takes its own encrypted snapshot of
+whatever's live *right now* and writes it into `BACKUP_DIR` as
+`redscribe-pre-restore-safety-<timestamp>.rsbk`, using the same passphrase.
+
+<Aside type="caution">
+If the restore then fails partway through, the database may be left
+inconsistent. Restore that safety file (same command, same passphrase) to
+get back to exactly how things were the moment before you ran this. Unlike
+the routine daily backups above, these aren't auto-pruned by
+`BACKUP_RETENTION_DAYS`, so clean them up yourself once you've confirmed the
+restore actually worked.
+</Aside>
+
+Because this loads the backup up to three times (the scratch-database
+comparison, the pre-restore safety snapshot, and the real restore), expect
+it to take roughly three times as long as a raw `pg_restore` would.
+
+## Upgrading, and rolling back a bad deploy or migration
+
+`entrypoint.sh` runs `python manage.py migrate --noinput` unconditionally on
+every container start, and there's no dry-run step and no automatic snapshot
+before it touches the schema. Taking a manual snapshot before every upgrade
+is the way back if something goes wrong; see [Upgrading & rolling
+back](/deployment/upgrading/) for the exact step-by-step sequence (snapshot
+→ pull/build → verify → roll back code and/or restore the snapshot if
+needed).

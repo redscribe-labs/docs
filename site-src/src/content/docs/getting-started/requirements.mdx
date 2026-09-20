@@ -1,0 +1,74 @@
+---
+title: Requirements & sizing
+description: What RedScribe needs to run, and how to size the host it runs on.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Requirements
+
+- **Docker** and **Docker Compose**, the normal way to run RedScribe
+  ([Installation Methods 1–3](/getting-started/installation/)).
+- For local development without Docker (Method 4): **Python 3** (for a
+  virtualenv) and a local **Postgres**, or just the `db` service from Docker
+  Compose.
+- **Node.js/npm**, only needed if you have to rebuild the frontend asset
+  bundles (Tiptap editor, password-strength meter, Tailwind CSS) after
+  touching their sources. It's not a runtime dependency of the deployed app
+  and isn't used in the Docker image at all. See [Frontend asset
+  builds](/dev/frontend-builds/).
+- For Method 1 (Tailscale): a host already joined to a
+  [Tailscale](https://tailscale.com) tailnet with MagicDNS + HTTPS certs
+  enabled.
+
+## Sizing
+
+RedScribe is sized by **concurrently active users**, not total registered
+accounts, since almost every request is a fast, DB-backed read/write. The
+one thing that blocks a full gunicorn worker for its duration is report
+export (WeasyPrint PDF / DOCX assembly).
+
+- **Recommended** matches gunicorn's `(2 × cores) + 1` worker formula (see
+  [CPU / worker count](/deployment/docker-compose/#cpu--worker-count)) and
+  the default `max_concurrent_report_jobs` limiter.
+- **Minimum** is the same tier a size down. It boots and holds up, just
+  without headroom to spare.
+
+These are estimates from the app's own concurrency model rather than a load
+test, so watch real report-export duration on your largest engagement before
+committing to a tier.
+
+| Tier | Concurrently active · registered accounts | vCPU (min → rec.) | RAM (min → rec.) | Gunicorn workers (rec.) | Disk | Report job slots |
+|---|---|---|---|---|---|---|
+| Solo | 1 user | 1 | 1 → 2 GB | 3 | 10 GB+ | 1 |
+| Pilot | ≤5 · ≤10 | 1 → 2 | 2 → 4 GB | 5 | 20 GB | 2 (default) |
+| Small firm | 10–15 · 10–30 | 2 → 4 | 4 → 8 GB | 9 | 40–50 GB | 2 (default) |
+| Mid-size firm | 25–40 · 30–80 | 4 → 8 | 8 → 16 GB | 17 | 100 GB+ | 3–4 |
+| Larger firm | 50+ · 80–150+ | 8 → 16 | 16 → 32 GB | 33 | 200 GB+ | 4–6, with caution |
+
+RedScribe runs fine on a **1 vCPU / 1 GB** box for a single person kicking
+the tires, below even the Solo row above, but that's a floor to try it out
+on, not a comfortable size once a second person or a report export joins in.
+
+<Aside type="caution" title="Past &quot;Larger firm&quot;">
+Stop scaling the box. Split Postgres onto its own host and add a task queue
+(e.g. Redis + Celery/RQ) so report exports stop competing with ordinary
+browsing for a gunicorn worker. Neither of those exists in the codebase
+today, see [Scaling & concurrency model](/dev/scaling/) for what that
+migration would actually involve, and why report export is the piece that
+runs out of headroom first.
+</Aside>
+
+### What shifts these numbers
+
+- **RAM before CPU.** WeasyPrint's rendering engine spikes hardest on
+  image-heavy reports, so bias a tier's RAM up before its vCPU if findings
+  carry a lot of screenshots.
+- **Shared host.** These figures assume `web` + Postgres on one box, as
+  shipped. Splitting the database onto its own host frees up headroom on
+  both sides independently.
+- **Disk growth** is driven by encrypted evidence blobs and backup
+  retention, not schema size.
+- **Per-engagement ceiling.** At most two people ever contend for one
+  engagement's data, by design, so total accounts and concurrent load scale
+  independently of write-conflict risk.

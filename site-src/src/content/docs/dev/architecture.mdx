@@ -1,0 +1,114 @@
+---
+title: Architecture overview
+description: The stack, the Django app layout, and a map from user-facing features to the code that implements them.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+RedScribe is a monolithic Django project. It uses server-rendered templates
+plus HTMX for interactivity, with no separate frontend build or SPA
+framework for the app itself. The only client-side JavaScript bundles are
+the Tiptap rich-text editor, a CVSS calculator widget, and a
+password-strength meter, covered in [Frontend asset
+builds](/dev/frontend-builds/).
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Backend framework | Django, server-rendered templates |
+| Interactivity | HTMX (no SPA framework) |
+| Styling | Tailwind CSS, compiled from `tailwind-src/input.css` |
+| Rich text editing | [Tiptap](https://tiptap.dev) (ProseMirror-based), bundled from `editor-src/main.js` |
+| Database | PostgreSQL |
+| PDF rendering | [WeasyPrint](https://weasyprint.org/) |
+| Word (.docx) generation | `python-docx` + [`docxtpl`](https://docxtpl.readthedocs.io/) (Jinja2-driven templating over a real `.docx`) |
+| Auth | Django's own auth, `django-allauth` for OAuth, `django-otp` for TOTP MFA |
+| App server | gunicorn, behind nginx in production |
+| Static files | WhiteNoise (compressed/manifest storage in prod) |
+
+Two independent settings modules select dev versus prod behavior,
+`config.settings.dev` and `config.settings.prod`, both layered on
+`config.settings.base`. See [Local development](/dev/local-development/) for
+what actually differs between them.
+
+## Django apps
+
+`INSTALLED_APPS` (from `config/settings/base.py`), each a directory under
+`apps/`:
+
+| App | Owns |
+|---|---|
+| `apps.accounts` | Users, roles/permissions (`permissions_registry.py`), login/MFA/session middleware, password validators, user & role management screens |
+| `apps.engagements` | The `Engagement` model, status lifecycle, membership, scope-change approval |
+| `apps.crypto` | Per-engagement AES-256-GCM encryption, the instance root key, encrypted-blob file access |
+| `apps.findings` | Findings, the review/QA workflow, the vulnerability catalogue, classifications, scanner import (Nmap/Burp/Nuclei), field visibility (`ContentSectionDefinition`), comment threads |
+| `apps.checklist` | Checklist templates and per-engagement runs |
+| `apps.reports` | Report Profiles, the report IR, all four exporters, branding, and trends (see [Report rendering pipeline](/dev/report-pipeline/)) |
+| `apps.audit` | The hash-chained append-only audit log, request-logging middleware, retention/purge |
+| `apps.notifications` | In-app + email notifications, per-user preferences |
+| `apps.search` | Global search across engagements/findings |
+| `apps.feature_flags` | The single-row instance-wide `FeatureFlags` toggle set |
+| `apps.backup` | Server-side-only encrypted `pg_dump`/`pg_restore` backup/restore |
+| `apps.clients` | Client companies, client-portal accounts, the client portal itself, finding view-tracking |
+| `apps.licensing` | Commercial license key verification and the footer's "Licensed to X" display |
+
+Route ownership matches this 1:1. See `config/urls.py` for the full URL
+include list, also the fastest way to see every top-level route in the app.
+
+## Middleware order matters here
+
+`MIDDLEWARE` in `config/settings/base.py` runs, notably:
+`IdleTimeoutMiddleware` → `MFAEnforcementMiddleware` →
+`ClientPortalAccessMiddleware` → `AuditLogMiddleware` (audit logging runs
+*last*, so it sees the final, fully-processed request/response, including
+whatever the earlier middleware decided, like a forced MFA redirect).
+
+## Templates and static assets
+
+- `templates/base/` holds shared chrome (`base.html`, sidebar, breadcrumbs,
+  pagination, toasts, theme toggle) that every app's templates extend.
+- `templates/<app>/` is one directory per app, mirroring the `apps/` layout.
+- `static/vendor/` holds **built** JS bundles (`redscribe-editor.bundle.js`,
+  `redscribe-datepicker.bundle.js`, `redscribe-password-strength.bundle.js`)
+  and vendored third-party files (`cvss40.js`, `flatpickr.min.css`), built
+  from `editor-src/`, `datepicker-src/`, `strength-src/`. See [Frontend
+  asset builds](/dev/frontend-builds/).
+- `static/css/tailwind.css` is compiled from `tailwind-src/input.css`.
+  `editor.css` is hand-matched to the same color tokens (see
+  `COLOR_SCHEME.md` in the repo root) since the editor iframe isn't run
+  through Tailwind.
+- `static/fonts/` holds self-hosted Inter (UI) and IBM Plex Mono / Source Code
+  Pro (code/mono).
+
+## Feature-to-code map
+
+| Feature | Key files |
+|---|---|
+| Engagement lifecycle & scope changes | `apps/engagements/lifecycle.py`, `views.py`, `models.py` |
+| Finding review/QA workflow | `apps/findings/review.py`, `review_views.py` |
+| Vulnerability catalogue approval | `apps/findings/catalogue_views.py`, `catalogue_io.py` |
+| Scanner import | `apps/findings/scan_import.py`, `apps/findings/importers/{nmap,burp,nuclei}.py` |
+| Field visibility / content sections | `apps/findings/field_visibility_views.py`, `models.ContentSectionDefinition` |
+| Checklist runs | `apps/checklist/services.py`, `item_views.py` |
+| Report IR & exporters | `apps/reports/report_ir.py`, `assembly.py`, `block_registry.py`, `{md,html,pdf,docx}_export.py` (see [Report rendering pipeline](/dev/report-pipeline/)) |
+| Per-engagement encryption | `apps/crypto/services.py`, `root_key.py` |
+| Audit log / tamper evidence | `apps/audit/integrity.py`, `middleware.py`, `retention.py` |
+| Backup/restore | `apps/backup/pg.py`, `crypto.py`, `impact.py` |
+| License key verification | `apps/licensing/verify.py`, `status.py` |
+
+<Aside type="tip">
+Every app also has its own `tests.py`. Reading an app's test file alongside
+its views is often the fastest way to understand its actual behavior, since
+RedScribe's test suite is substantial (run `grep -rc "def test_" apps/*/tests.py`
+from the repo root for a current count). See [Testing](/dev/testing/).
+</Aside>
+
+## Deployment and concurrency
+
+The app itself is a fairly ordinary Django monolith, but how it's deployed
+and what stays safe under concurrent load is its own topic. See [Scaling &
+concurrency model](/dev/scaling/) for the single box deployment shape, which
+parts of the app are protected by a real Postgres lock versus an in-process
+one, and what changes as usage grows toward the higher end of the
+[sizing table](/getting-started/requirements/#sizing).

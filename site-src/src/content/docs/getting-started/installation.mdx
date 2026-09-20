@@ -1,0 +1,143 @@
+---
+title: Installation
+description: Four ways to run RedScribe, from fully-automated HTTPS via Tailscale to local development without Docker.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Four ways to run RedScribe, in order of how much TLS setup they need. All of
+them share the same [First run](/getting-started/first-run/) finishing steps
+(root key plus first Superadmin) at the end.
+
+| Method | Best for | TLS |
+|---|---|---|
+| [1. Tailscale](#method-1-docker-compose--tailscale-recommended) | Recommended, fully automated HTTPS | Automatic, via Tailscale |
+| [2. Your own cert](#method-2-docker-compose--your-own-tls-certificate) | Your own domain, cert from anywhere | Bring your own `fullchain.pem`/`privkey.pem` |
+| [3. Plain HTTP](#method-3-docker-compose-plain-http) | Local/private-network trial only | None |
+| [4. Local dev](#method-4-local-development-without-docker) | Working on RedScribe itself | None (loopback only) |
+
+## Common setup (all methods)
+
+Copy the env template and generate its secrets first:
+
+```sh
+cp .env.example .env
+```
+
+```sh
+# Django's session/CSRF signing key — any random 50-char string works
+python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(50)))"
+```
+
+Set `DJANGO_SECRET_KEY` in `.env` to that value, and `POSTGRES_PASSWORD` to
+something of your own choosing. `REDSCRIBE_ROOT_KEY` (the instance's master
+key) needs the app's own generator, so it's created in [First
+run](/getting-started/first-run/), not here.
+
+## Method 1: Docker Compose + Tailscale (recommended)
+
+Best fit if the host is already on a [Tailscale](https://tailscale.com)
+tailnet with MagicDNS + HTTPS certs enabled. There's no separate cert
+management, no host cron, and no manual renewal ever.
+
+<Steps>
+1. In `.env`, set `NGINX_SERVER_NAME=<your-machine>.<tailnet>.ts.net` (find it
+   with `tailscale status --self --json`, field `DNSName`) and add the same
+   hostname to `DJANGO_ALLOWED_HOSTS`.
+2. Set `DJANGO_SETTINGS_MODULE=config.settings.prod` in `.env`.
+3. ```sh
+   docker compose --profile tailscale up -d --build
+   ```
+</Steps>
+
+That's the whole thing. The `cert-renew` service issues the first cert and
+keeps renewing it for as long as the stack runs (checks every 6h, no-ops
+until near expiry); `nginx` waits for it to exist, then reloads automatically
+whenever it changes. Continue at [First run](/getting-started/first-run/).
+
+<Aside type="caution" title="Your tailnet hostname becomes publicly visible">
+The cert `cert-renew` issues is a real, publicly-trusted certificate (via
+Let's Encrypt), and every certificate issued this way is logged permanently
+in public Certificate Transparency logs. The app itself stays reachable only
+from your tailnet, but the hostname `<your-machine>.<tailnet>.ts.net` is
+discoverable by anyone watching CT logs the moment the first cert is issued.
+If that hostname itself is sensitive, use [Method 2](#method-2-docker-compose--your-own-tls-certificate)
+instead.
+</Aside>
+
+Want it reachable from the public internet too, via Tailscale Funnel? See
+[Exposing it with Tailscale
+Funnel](/deployment/docker-compose/#exposing-it-beyond-your-tailnet-with-tailscale-funnel)
+in the deployment deep dive. It needs a specific raw-TCP forwarding mode,
+not Funnel's default.
+
+## Method 2: Docker Compose + your own TLS certificate
+
+For your own domain with a cert from anywhere else, be it Let's
+Encrypt/certbot, a corporate CA, or whatever you already run.
+
+<Steps>
+1. In `.env`, set `NGINX_SERVER_NAME=<your-domain>`, add it to
+   `DJANGO_ALLOWED_HOSTS`, and set `DJANGO_SETTINGS_MODULE=config.settings.prod`.
+2. Drop your certificate into place under exactly these two filenames (see
+   `certs/README.md`):
+   ```sh
+   cp /path/to/your/fullchain.pem certs/fullchain.pem
+   cp /path/to/your/privkey.pem   certs/privkey.pem
+   ```
+3. ```sh
+   docker compose up -d --build
+   ```
+   (No `--profile tailscale` needed, since that service only exists for
+   Method 1.)
+</Steps>
+
+`nginx` waits for both files to exist before starting, and reloads
+automatically (no restart needed) whenever it notices `fullchain.pem`'s
+content change. That means your own renewal process (e.g. a certbot timer)
+is picked up within the hour without touching this stack at all. Continue
+at [First run](/getting-started/first-run/).
+
+## Method 3: Docker Compose, plain HTTP
+
+No TLS at all. This is fine for trying things out locally or over a private
+network you already trust, but **not for anything reachable beyond that**.
+
+```sh
+docker compose up -d --build
+```
+
+Leave `DJANGO_SETTINGS_MODULE=config.settings.dev` (the `.env.example`
+default). `nginx` still starts alongside `web` but just idles waiting for a
+certificate that will never arrive, harmlessly. Skip straight to
+`http://localhost:8000/` (bound to loopback only, so only reachable from the
+host itself) instead of going through nginx. Continue at [First
+run](/getting-started/first-run/).
+
+## Method 4: Local development without Docker
+
+For working on the app itself without a container rebuild loop:
+
+```sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+docker compose up -d db          # just the database
+cp .env.example .env             # fill in secrets as above; POSTGRES_HOST=localhost
+python manage.py migrate
+python manage.py generate_root_key   # put the output in .env
+python manage.py bootstrap_superadmin --username admin --email admin@example.com
+python manage.py runserver
+```
+
+This already includes its own root key and Superadmin steps inline, so
+**skip [First run](/getting-started/first-run/)**, you're done. Rebuilding
+the frontend bundles after a template/JS/CSS change is a separate step, see
+[Frontend asset builds](/dev/frontend-builds/). See also [Local
+development](/dev/local-development/) for the full dev-environment loop.
+
+## Why nginx uses host networking
+
+`nginx`'s service in `docker-compose.yml` runs with `network_mode: host`
+rather than a `ports: - "80:80"` mapping. See [Docker Compose deep
+dive](/deployment/docker-compose/#why-nginx-uses-host-networking) for
+exactly why this matters for audit logging and login-lockout IP recording.

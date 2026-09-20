@@ -1,0 +1,208 @@
+---
+title: Authentication & sessions
+description: Local auth and OAuth, TOTP MFA enforcement, password policy, lockout and rate limiting, and session lifecycle, covering the exact mechanics rather than just the defaults.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Local authentication
+
+Local accounts (`User.AuthType.LOCAL`) are username + password, authenticated
+by `apps.accounts.backends.LockoutAwareModelBackend`. There is **no open
+self-registration**. `SingleRoleAccountAdapter.is_open_for_signup` always
+returns `False`, so every local account is created by an administrator, then
+activated via a single-use, 24-hour emailed setup link where the user sets
+their own password.
+
+### Password policy
+
+Enforced server-side via `AUTH_PASSWORD_VALIDATORS`
+(`config/settings/base.py`) regardless of anything shown client-side:
+
+- **14–128 characters** (`MinimumLengthValidator` / a custom
+  `MaximumLengthValidator`).
+- Rejected if too similar to the account's own username/email
+  (`UserAttributeSimilarityValidator`).
+- Rejected if it's a known common password (`CommonPasswordValidator`) or
+  entirely numeric (`NumericPasswordValidator`).
+- Checked against the **Have I Been Pwned** breach corpus via k-anonymity,
+  so only a 5-character SHA-1 hash prefix ever leaves the instance and never
+  the password itself (`apps.accounts.password_validators.PwnedPasswordValidator`).
+  Controlled by `PWNED_PASSWORD_CHECK_ENABLED` (default `true`). Set it to
+  `false` for air-gapped deployments with no outbound internet access.
+
+A client-side password-strength meter (zxcvbn-ts, see [Frontend asset
+builds](/dev/frontend-builds/)) gives advisory feedback only. The validators
+above are what's actually enforced.
+
+## OAuth (Google / Microsoft)
+
+`OAUTH_PROVIDER` (`"google"`, `"microsoft"`, or empty) enables OAuth sign-in
+alongside local auth. It's additive, never a replacement, so local accounts
+keep working either way.
+
+**RedScribe is single-tenant per instance**, and this is enforced at the
+adapter level, not just documentation: `OAUTH_ALLOWED_DOMAIN` locks sign-in
+to exactly one email domain. `SingleProviderSocialAdapter.pre_social_login`
+(`apps/accounts/adapters.py`) checks every incoming social login's email
+domain against it and raises an immediate redirect back to `/login/` with an
+error message for anything outside it. This check happens **before** anything
+else in the login flow, so an out-of-domain Google or Microsoft account is
+turned away regardless of any other state.
+
+<Aside type="caution" title="OAuth provisioning is invite-only, not self-service">
+Unlike some setups, signing in with a matching-domain Google or Microsoft
+account does **not** by itself create an account. `is_open_for_signup`
+always returns `False` for OAuth — there is no path that auto-provisions a
+brand-new `User` from an OAuth login. An administrator must first
+[create the user](/admin/user-management/#creating-a-user) from **User
+Management**; when `OAUTH_PROVIDER` is set, that flow creates the account as
+a **pending OAuth invite** (`auth_type = OAUTH`, `oauth_invite_pending =
+True`) instead of sending a local setup email. The invite has no token or
+expiry — it simply sits pending until claimed. The very first time that
+person signs in via OAuth with the matching email (matched
+case-insensitively), `pre_social_login` finds the pending row, links the new
+`SocialAccount` to it via allauth's `sociallogin.connect()`, and clears
+`oauth_invite_pending`. Every login after that is an ordinary repeat sign-in.
+An OAuth login with no matching pending invite is simply turned away — no
+account is created.
+</Aside>
+
+**Superadmin is local-auth only, defense-in-depth.** Even if a pending
+invite's role were somehow reassigned to Superadmin before being claimed,
+`pre_social_login` explicitly rejects the login (same redirect-with-error
+pattern as the domain check) rather than letting a Superadmin account
+authenticate via an identity provider. `LocalUserCreateForm` and
+`LocalUserEditForm` both refuse to let a Superadmin role be paired with an
+OAuth account in the first place — the CLI's `bootstrap_superadmin` command
+is the only way to create one, and it's always `auth_type = LOCAL`.
+
+If `OAUTH_PROVIDER` is later unset (or a pending invite needs a fallback
+before it's ever claimed), a Superadmin can convert that account to local
+auth from its detail page (**Convert to local account**), which flips
+`auth_type` back to `LOCAL`, clears the pending flag, and sends the same
+setup email a newly created local account gets. OAuth accounts never set a
+local password and don't go through the local password validators above.
+
+Per-provider setup:
+
+| Provider | Console | Redirect URI |
+|---|---|---|
+| Google | [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials), an OAuth 2.0 Client ID of type "Web application" | `https://<your-domain>/accounts/social/google/login/callback/` |
+| Microsoft | [entra.microsoft.com](https://entra.microsoft.com) → App registrations | `https://<your-domain>/accounts/social/microsoft/login/callback/` |
+
+`MICROSOFT_OAUTH_TENANT_ID` defaults to `organizations`; set it to a specific
+Entra tenant ID for a stricter, belt-and-braces restriction alongside (not
+instead of) `OAUTH_ALLOWED_DOMAIN`.
+
+Both providers are configured with `prompt=select_account`, so clicking "Sign
+in with Google/Microsoft" always shows the account chooser rather than
+silently reusing whichever account already has an active session in the
+browser — relevant because `OAUTH_ALLOWED_DOMAIN` only rejects the wrong
+account *after* it's been picked, so this avoids that trap for anyone signed
+into more than one Google or Microsoft account at once.
+
+## TOTP MFA
+
+Every **local** account must enroll in TOTP MFA, a QR code plus confirmation
+code on first login, with **no way to skip it**. Whether MFA is additionally
+*required to be satisfied before using the app* is computed per-request by
+`apps.accounts.middleware.mfa_required_for`:
+
+```python
+mfa_required_for(user) = (
+    user.auth_type == LOCAL
+    and (feature_flags.mfa_required OR user.role.requires_mfa)
+)
+```
+
+- The **Superadmin** role hard-codes `requires_mfa = True`, so it's always
+  enforced regardless of the instance-wide toggle.
+- Any other role can independently be marked `requires_mfa` from [Role
+  Management](/admin/roles-and-permissions/).
+- The `mfa_required` instance-wide [feature flag](/admin/feature-flags/)
+  (default **on**) applies it to every local account at once. Turn it off
+  only for a local or disposable dev/test instance.
+- OAuth accounts are exempt from this check entirely, since MFA there is the
+  identity provider's own responsibility.
+
+`MFAEnforcementMiddleware` redirects any request from a user this applies to
+straight to enrollment (`/mfa/enroll/`) if they have no confirmed TOTP
+device yet, or to verification (`/mfa/verify/`) if they have one but haven't
+passed it this session yet. This applies to every URL except the
+enrollment/verification/logout/session-ping endpoints themselves and static
+files.
+
+### MFA verification throttling
+
+Separately from login lockout below, repeated wrong TOTP codes are
+rate-limited per account: `MFA_THROTTLE_MAX_ATTEMPTS` (default **5**) within
+`MFA_THROTTLE_WINDOW_SECONDS` (default **30**). Both are
+environment-configurable, though not listed in `.env.example` since the
+defaults rarely need changing.
+
+## Login lockout & rate limiting
+
+`LockoutAwareModelBackend` checks recent failed attempts (`LoginAttempt`
+rows, scoped per-username) **before** verifying the password, using a
+short-lived cache-based lock (`login-attempt-lock:<username>`, held up to 10
+seconds) so two concurrent login attempts against the same username can't
+race past the threshold check simultaneously.
+
+Two different thresholds apply depending on the account being authenticated:
+
+| | Non-Superadmin | Superadmin |
+|---|---|---|
+| Env vars | `LOCKOUT_THRESHOLD` (default `5`), `LOCKOUT_DURATION_SECONDS` (default `86400` = 24h) | `SUPERADMIN_RATE_LIMIT_MAX_ATTEMPTS` (default `10`), `SUPERADMIN_RATE_LIMIT_WINDOW_SECONDS` (default `60`) |
+| Effect once hit | Account locked for the full duration | Rate-limited for the (much shorter) window, a lighter touch, since a Superadmin account being unreachable is itself an operational risk |
+
+The failure count only looks at attempts since the *last successful login*
+for that username, so a successful login effectively resets the counter.
+
+**The moment a lockout or rate-limit actually triggers** (not on every
+subsequent blocked attempt), every active Superadmin gets an email alert
+naming the affected username, how many failed attempts, and the source IP.
+It's an *active* notification, not something you'd only discover by later
+checking the [Audit Log](/security/audit-trail/).
+
+<Aside type="caution" title="Accurate IPs depend on nginx's host networking">
+`maybe_alert_lockout` and every `LoginAttempt.ip_address` read the client IP
+via `X-Forwarded-For` (`apps.accounts.security.client_ip`). This is only
+trustworthy because of how `nginx` is deployed. See [Why nginx uses host
+networking](/deployment/docker-compose/#why-nginx-uses-host-networking).
+</Aside>
+
+## Session lifecycle
+
+- **Fixed cap**: `SESSION_COOKIE_AGE` is hard-coded to 4 hours and isn't
+  separately configurable via environment variable.
+- **Idle timeout**: `SESSION_IDLE_TIMEOUT_SECONDS` (default `1800`, or 30
+  minutes — HIPAA requires automatic logoff as an addressable
+  specification without mandating a specific interval; 30 minutes is a
+  common baseline). `IdleTimeoutMiddleware` tracks
+  a `last_activity_ts` value in the session on every non-exempt request and
+  force-logs-out (with a user-facing message) once that gap is exceeded,
+  independent of the fixed 4-hour cap.
+- **Single active session per user**: on a new successful login,
+  `invalidate_other_sessions` deletes every other Django `Session` row (and
+  the app's own `UserSession` index row used to find them without decoding
+  every session in the table) belonging to that user, keeping only the one
+  just created. This is timed to apply **after** MFA is actually satisfied
+  where required, so a login attempt that's still mid-MFA-challenge doesn't
+  prematurely kick out an already-authenticated session on another device.
+
+## Password reset & account setup links
+
+Both use Django's `PasswordResetTokenGenerator` machinery (HMAC-signed,
+single-use, tied to the user's current password hash so using the link
+invalidates it for reuse):
+
+- **Password reset**: `PASSWORD_RESET_TIMEOUT_SECONDS` (default `3600`, or 1
+  hour).
+- **New-account setup** (staff and client-portal alike): a fixed 24-hour
+  window (`AccountSetupTokenGenerator.timeout_seconds`), not separately
+  configurable.
+
+Both are single-use in practice: consuming a valid token to set a password
+changes the password hash the token is bound to, so the same link can't be
+replayed afterward.

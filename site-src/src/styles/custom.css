@@ -1,0 +1,117 @@
+/*
+ * RedScribe Docs theme.
+ *
+ * Every color below is pulled verbatim from the app's own
+ * `COLOR_SCHEME.md` (Onyx / Brick Ember / Dim Grey / Ash Grey / Ghost White
+ * ramps) — this file does not invent new colors, it re-maps Starlight's
+ * token names onto the app's existing `brand` / `bell` / `navy` / `twilight`
+ * / `mist` roles so the docs read as the same product as the app.
+ *
+ * The neutral (gray) scale reuses `twilight`'s ramp the same way the app's
+ * own dark-mode `--color-slate-*` scale does: read back-to-front, since
+ * Dim Grey is already near-achromatic and doubles as a true neutral in
+ * both directions instead of carrying any hue cast into most of the
+ * page's surface area.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+	--sl-font: 'Plus Jakarta Sans', var(--sl-font-system);
+	--sl-font-mono: 'JetBrains Mono', var(--sl-font-system-mono);
+}
+
+/* Dark mode (Starlight's default :root) — brand = Onyx, neutrals = Dim Grey read light->dark. */
+:root {
+	--sl-color-white: #f2f2f3; /* twilight-50 */
+	--sl-color-gray-1: #e4e6e7; /* twilight-100 */
+	--sl-color-gray-2: #afb3b6; /* twilight-300 — body text */
+	--sl-color-gray-3: #959a9d; /* twilight-400 */
+	--sl-color-gray-4: #62676a; /* twilight-600 */
+	--sl-color-gray-5: #313435; /* twilight-800 */
+	--sl-color-gray-6: #181a1b; /* twilight-900 — nav/sidebar surface */
+	--sl-color-black: #111213; /* twilight-950 — page background */
+
+	--sl-color-accent-low: #293d29; /* brand-800 */
+	--sl-color-accent: #85ad85; /* brand-400 */
+	--sl-color-accent-high: #c2d6c2; /* brand-200 */
+
+	/* danger = Brick Ember, the app's own `bell` accent role */
+	--sl-color-red-low: #65010b; /* bell-800 */
+	--sl-color-red: #fe6776; /* bell-300 */
+	--sl-color-red-high: #ffccd1; /* bell-100 */
+
+	/* tip = Ghost White, the app's own `navy` accent role (its one lavender hue) */
+	--sl-color-purple-low: #2a2640; /* navy-800 */
+	--sl-color-purple: #a49fc6; /* navy-300 */
+	--sl-color-purple-high: #e1dfec; /* navy-100 */
+
+	/* success/green reuses brand, same hue as the primary accent */
+	--sl-color-green-low: #293d29; /* brand-800 */
+	--sl-color-green: #a3c2a3; /* brand-300 */
+	--sl-color-green-high: #e0ebe0; /* brand-100 */
+}
+
+/* Light mode — same ramps, read dark->light since text/bg roles invert. */
+:root[data-theme='light'] {
+	--sl-color-white: #111213; /* twilight-950 — strongest text */
+	--sl-color-gray-1: #181a1b; /* twilight-900 */
+	--sl-color-gray-2: #494d50; /* twilight-700 — body text */
+	--sl-color-gray-3: #62676a; /* twilight-600 */
+	--sl-color-gray-4: #959a9d; /* twilight-400 */
+	--sl-color-gray-5: #cacdce; /* twilight-200 */
+	--sl-color-gray-6: #e4e6e7; /* twilight-100 */
+	--sl-color-gray-7: #f2f2f3; /* twilight-50 */
+	--sl-color-black: #ffffff; /* page background */
+
+	--sl-color-accent-low: #e0ebe0; /* brand-100 */
+	--sl-color-accent: #3d5c3d; /* brand-700 — AA-contrast link/accent text on white */
+	--sl-color-accent-high: #141f14; /* brand-900 */
+
+	--sl-color-red-low: #ffe6e8; /* bell-50 */
+	--sl-color-red: #cb0115; /* bell-600 */
+	--sl-color-red-high: #330005; /* bell-900 */
+
+	--sl-color-purple-low: #f0eff5; /* navy-50 */
+	--sl-color-purple: #534d80; /* navy-600 */
+	--sl-color-purple-high: #151320; /* navy-900 */
+
+	--sl-color-green-low: #f0f5f0; /* brand-50 */
+	--sl-color-green: #527a52; /* brand-600 */
+	--sl-color-green-high: #141f14; /* brand-900 */
+}
+
+/* Sidebar/nav chrome matches the app's own solid `.twilight-surface` (not a tint of bg). */
+:root {
+	--sl-color-bg-nav: #111213;
+	--sl-color-bg-sidebar: #111213;
+}
+:root[data-theme='light'] {
+	--sl-color-bg-nav: #111213;
+	--sl-color-bg-sidebar: #111213;
+	--sl-color-text-invert: #ffffff;
+}
+
+/*
+ * The header and sidebar stay pinned to the dark surface above even in
+ * light mode, so their text/border tokens need to stay on the dark-mode
+ * ramp too (mirrors the dark-mode `:root` block up top) — otherwise
+ * light mode's dark-on-white neutrals render as dark text on that same
+ * dark chrome and the sidebar becomes unreadable.
+ */
+:root[data-theme='light'] .header,
+:root[data-theme='light'] .sidebar-pane {
+	--sl-color-white: #f2f2f3; /* twilight-50 */
+	--sl-color-gray-1: #e4e6e7; /* twilight-100 */
+	--sl-color-gray-2: #afb3b6; /* twilight-300 — sidebar link text */
+	--sl-color-gray-3: #959a9d; /* twilight-400 */
+	--sl-color-gray-4: #62676a; /* twilight-600 */
+	--sl-color-gray-5: #313435; /* twilight-800 — hairlines/borders */
+	--sl-color-gray-6: #181a1b; /* twilight-900 */
+	--sl-color-black: #111213; /* twilight-950 — search box fill */
+}
+
+/* Inline code / code blocks read from the mono stack; keep a hint of `mist` in blockquote/aside borders. */
+code {
+	font-feature-settings: 'liga' 0;
+}

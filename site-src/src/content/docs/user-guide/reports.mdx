@@ -1,0 +1,97 @@
+---
+title: Reports & exports
+description: The shared IR behind every export format, Word/PDF/HTML/Markdown generation, and per-engagement report configuration.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Reports are driven by a shared IR, short for intermediate representation. It
+is a single internal model of what a report contains, and it feeds both the
+live preview and every export format, so Markdown, PDF, HTML, and Word all
+render the same content: cover, document control, amendment history,
+disclaimers, table of contents, every body section, and back matter.
+
+## Report Profiles
+
+A Report Profile (`/report-profiles/`, needs `report_settings.manage`)
+bundles everything about how a report looks and what it contains by
+default: its Document template, an optional Word template, its own text
+blocks, and its appearance settings. Setting all that up is covered on its
+own page, [Report profiles](/admin/report-profiles/). This page is about
+generating and exporting an actual report once a profile already exists.
+
+A profile with no `.docx` uploaded simply has no Word export option
+offered. Nothing breaks.
+
+## Generating a report
+
+From an engagement, open **Report** (`/engagements/<id>/report/`).
+
+<Steps>
+1. **Configure** the report at `report/configure/`. Pick a Report Profile,
+   and set any per-engagement overrides: which observations and testing
+   phases to include (these are free form entries specific to this
+   engagement), and any per-block text block content overrides where the
+   profile's own default doesn't fit this particular report.
+2. **Preview** the report. This is a live render of the same IR that export
+   uses, so what you see is what you get.
+3. **Export**, choosing a format.
+
+   | Format | What it is |
+   |---|---|
+   | Markdown | A `.zip` of Markdown files, one per section |
+   | HTML | A single self-contained HTML file |
+   | PDF | Rendered via WeasyPrint, with an optional password to encrypt the output |
+   | Word (.docx) | Fills in the profile's uploaded `.docx` template, only offered if one is uploaded |
+</Steps>
+
+### PDF password protection
+
+Set a password when exporting to PDF and the generated file is encrypted
+with it, so recipients need the password to open it. DOCX export doesn't
+have an equivalent yet.
+
+### Page breaks
+
+PDF export only starts a new page when one of these applies — nothing else
+does, regardless of how much content a section happens to hold:
+
+- The **Table of Contents** always starts on its own page.
+- **Start each finding on a new page**, a toggle on the report's Configure
+  page, if turned on.
+- An explicit page-break marker (the toolbar's page-break button, available
+  in a Report Profile's Document template editor) placed at that exact spot.
+
+Section headings and lists never force a page break on their own — a
+heading can end up as the last line on a page, with its content continuing
+on the next one, rather than the whole section being pushed down to keep
+them together.
+
+### Export concurrency
+
+Report generation (PDF, HTML, Markdown, or DOCX, not the live preview)
+goes through a job slot limiter, `max_concurrent_report_jobs`, set from the
+profile list page. Only so many exports can run at once instance wide,
+which protects the gunicorn workers ordinary browsing needs from being
+starved by WeasyPrint or DOCX assembly. If every slot is busy, your export
+simply waits rather than piling on. See [Requirements &
+sizing](/getting-started/requirements/) for how job slot counts scale with
+instance tier.
+
+## Hidden fields are hidden everywhere
+
+Any content section hidden via [Finding structure](/admin/finding-structure/)
+is omitted from every exported format, not just the app's own UI. There's no
+separate case where it quietly still shows up in a PDF.
+
+## Scope note on Word export
+
+DOCX export is meant as a strong starting point for the deliverable, not a
+guaranteed camera ready final document. Organizations vary widely in
+reporting conventions, and not every house style is something a general
+purpose template filling engine can fully anticipate. The expected workflow
+is to export the `.docx`, apply any final organization specific touches by
+hand, then deliver. For most findings and observations, a Report Profile's
+own content blocks, appearance, and style role mapping are enough to cover
+the report end to end without manual editing. The escape hatch exists for
+the remaining cases, and it isn't the default expectation.

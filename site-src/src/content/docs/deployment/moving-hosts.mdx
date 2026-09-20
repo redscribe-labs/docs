@@ -1,0 +1,47 @@
+---
+title: Moving to a new machine
+description: Moving a Method 1/2 Docker Compose deployment to a new host, and forcing a fresh certificate.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Applies to [Method 1 (Tailscale)](/getting-started/installation/#method-1-docker-compose--tailscale-recommended)
+and [Method 2 (your own cert)](/getting-started/installation/#method-2-docker-compose--your-own-tls-certificate)
+deployments.
+
+`certs/` is gitignored, so copying the project directory (`rsync`/`scp`/`tar`)
+to a new host carries the **old** machine's `fullchain.pem`/`privkey.pem`
+along with it. `nginx` doesn't check whether a cert's subject matches
+`NGINX_SERVER_NAME`, it just serves whatever bytes are in those two files. If
+you don't clear them, the new host will silently keep serving the old
+machine's certificate.
+
+<Steps>
+1. Copy the project directory to the new host by whatever means you normally
+   would (`rsync`, `scp`, `tar`).
+2. On the new machine, update `.env`'s `NGINX_SERVER_NAME` to the new host's
+   value.
+3. Delete the stale certificate files and bring the stack up:
+
+   ```sh
+   rm certs/fullchain.pem certs/privkey.pem
+   docker compose --profile tailscale up -d --build   # or: up -d --build for BYO-cert (Method 2)
+   ```
+</Steps>
+
+For Method 1, `cert-renew`'s `tailscale cert` call is a no-op renewal until
+the file is near expiry, so deleting the stale files first forces a **real
+reissue** for the new domain instead of silently keeping the old one.
+
+<Aside type="caution" title="Already-running nginx can keep serving the stale cert for up to an hour">
+If `nginx` was already running when the new cert got written (for example
+you deleted or reissued the cert without recreating the `nginx` container),
+it can keep serving the stale cert it loaded at boot. `watch-certs.sh` only
+checks the file's hash once an hour (see [Certificate reload
+behavior](/deployment/docker-compose/#certificate-reload-behavior)). Force
+it immediately with:
+
+```sh
+docker compose exec nginx nginx -s reload
+```
+</Aside>

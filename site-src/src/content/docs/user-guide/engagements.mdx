@@ -1,0 +1,98 @@
+---
+title: Engagements
+description: Creating and running an engagement through its full lifecycle, covering membership, scope changes, status, archiving, and client release.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+An engagement is the top-level container for one client project: a web
+application pentest, a network assessment, a vulnerability scan, or a
+remediation retest. Everything else in RedScribe (findings, checklist runs,
+scanner imports, the report) hangs off one engagement.
+
+## Creating an engagement
+
+From **Engagements** (`/engagements/`) → **New**. Requires `engagements.create`.
+
+Fields: client (must already exist as a [Client
+company](/client-portal/managing-clients/), since an engagement can't be
+created against a free-typed client name), reference/project number, scope
+(free text), start/end dates, and test type (Web Application / Network /
+Vulnerability Scan).
+
+<Aside type="note">
+Linking to an existing `Client` (rather than a free-typed name) is what makes
+[client-portal](/client-portal/for-clients/) access and cross-engagement
+[trend reporting](/user-guide/trends-and-search/) by client possible.
+</Aside>
+
+## Status lifecycle
+
+An engagement's `status` moves through a fixed sequence, changed from its
+detail page via **Transition**:
+
+```
+In Progress → In Review → QA → Approved → Delivered
+                                              │
+                                              ▼ (if remediation testing is needed)
+                                   Awaiting Remediation Test → Remediation Test → Closed
+```
+
+Every transition is recorded in the engagement's status history (who,
+when, from and to). This history is what `{{p document_control }}` /
+`{{ document_control }}` renders into the report. Requires `engagements.manage`,
+same as editing the engagement's own metadata.
+
+## Membership
+
+Add or remove members from the engagement's detail page (`Members` section).
+Membership controls who can see and work on the engagement if you don't hold
+`engagements.view_all`, and members are exactly who `{{p assessment_team }}`
+pulls their bio/qualifications from for the report.
+
+<Aside type="caution">
+At most two people are expected to actively contend for one engagement's data
+at a time, by design. See [Requirements &
+sizing](/getting-started/requirements/#what-shifts-these-numbers). Membership
+isn't a hard access-control lock beyond that, just the visibility/assignment
+mechanism.
+</Aside>
+
+## Scope changes
+
+Scope changes go through an approval workflow rather than silently editing
+`scope` in place, which is useful for keeping a defensible record of what
+was agreed mid-engagement:
+
+<Steps>
+1. From the engagement, **New scope change request**, and describe the
+   change.
+2. Someone holding `engagements.manage` **Approves** or **Rejects** it.
+3. An approved request updates the engagement's recorded scope and is kept as
+   part of its history; a rejected one is kept too, as a record that it was
+   considered and declined.
+</Steps>
+
+## Archiving and deletion
+
+- **Archive** (needs `engagements.manage`) soft-deletes an engagement. It
+  drops out of default lists and view-all queries, but nothing is destroyed.
+  **Unarchive** reverses it.
+- **Permanent delete** is Superadmin-only, and only available on an
+  already-archived engagement. It's the one deliberate exception to
+  RedScribe's archive-not-delete, append-only-audit design, meant for
+  genuine data-retention purge rather than everyday cleanup. It removes the
+  engagement from the live database only — a backup taken before the
+  deletion still contains it until that backup is separately pruned or
+  overwritten. See [Backup &
+  restore](/admin/backup-and-restore/#permanently-deleted-data-can-still-exist-in-a-backup)
+  if a retention or disposal obligation means it needs to be gone from
+  every copy.
+
+## Releasing to the client portal
+
+Findings never appear in the [Client Portal](/client-portal/for-clients/)
+just by existing. An engagement has to be explicitly **released to client**
+(needs `engagements.release_to_client`), and even then, only findings that
+have individually cleared QA are shown. **Revoke client release** reverses
+it, immediately hiding the engagement from the portal again.

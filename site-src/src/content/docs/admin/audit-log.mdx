@@ -1,0 +1,100 @@
+---
+title: Audit log
+description: The append-only, hash-chained audit log covering every request and login attempt, its retention policy, and tamper verification.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+`/audit/` (needs `audit_log.manage`) records **every request**, including
+plain GET/view traffic and not just state-changing ones, plus every login
+attempt. Each entry captures the actor (user, username, and role at the
+time), action, HTTP method, path, status code, related engagement/object,
+client IP, query string, referer, user agent, and request duration.
+
+Only `HEAD`/`OPTIONS` requests and a short list of specifically-excluded
+views (the live report preview endpoint, the health check, and the CSP
+report endpoint) are skipped. Everything else, including plain page loads,
+is logged. Two sensitive URLs (`password_reset_confirm`,
+`account_setup_confirm`) have their path redacted in the log, since the URL
+itself contains a single-use token.
+
+## Browsing and filtering
+
+The Audit Log page is filterable by free-text search (matches actor
+username, action, path, object reference, IP, user agent, or referer),
+HTTP method, actor, status-code bucket (2xx/3xx/4xx/5xx), and a from/to date
+range, with a configurable page size (25/50/100/250).
+
+## Retention
+
+`AUDIT_LOG_RETENTION_DAYS` (default `2190`, which is 6 years and matches
+HIPAA's general documentation-retention rule; see `config/settings/base.py`'s
+comment for how that compares to PCI DSS/NIST/CIS) controls how far back
+entries are kept. Override it in `.env` per your own compliance obligations.
+
+Purging is **never automatic**, since nothing in RedScribe runs on a
+schedule of its own, so wire it into your host's own cron for a
+self-maintaining instance:
+
+```sh
+0 3 * * * cd /path/to/redscribe && docker compose exec -T web python manage.py purge_audit_log
+```
+
+Add `--dry-run` to preview the delete count first, or `--days N` to purge
+against a one-off window instead of the configured default. A Superadmin can
+also trigger the same purge on demand from the **Purge entries older than N
+days** button on the Audit Log page. It's the same underlying logic either
+way, and the purge action itself is recorded in the audit trail like any
+other state-changing request.
+
+<Aside type="tip">
+Purging drops whole year-partitions at once where an entire year is already
+past the cutoff (the audit log table is partitioned by year in Postgres),
+falling back to row-by-row deletion only for the partial year straddling the
+cutoff. That means a routine purge on a mature instance is a fast metadata
+operation, not a full table scan. Login-attempt records older than the same
+cutoff are purged in the same pass.
+</Aside>
+
+### Clearing everything
+
+Separate from the age-based purge above, the Audit Log page also offers
+**Clear all logs**, an unconditional wipe of every audit-log and
+login-attempt row, regardless of age. Because this is destructive,
+irreversible, and the one action that could undo the hash-chain's own
+tamper-evidence guarantee, it needs two things, not one: the exact phrase
+`DELETE ALL LOGS` typed into a confirmation field, **and** a second,
+currently active Superadmin's own username and password entered on the
+same page. That second Superadmin has to be a genuinely different account
+from whoever is doing the clearing — nothing is deleted otherwise. There's
+no equivalent one-step CLI flag for it.
+
+## Tamper-evidence
+
+Every entry's `entry_hash` is a **keyed hash (HMAC-SHA256, keyed with the
+instance's Django secret key)** computed over its own fields, chained onto
+the previous entry's hash. Changing a stored row anywhere in the chain,
+including through direct database access rather than the app, invalidates
+every hash after it. A brand-new instance's very first entry chains from a
+genesis hash of 64 zeros.
+
+Check the whole chain at any time with:
+
+```sh
+docker compose exec web python manage.py verify_audit_log
+```
+
+The oldest surviving row can't be checked against a prior link. Either it's
+genuinely the first entry ever, or everything before it was legitimately
+removed by `purge_audit_log`. The command reports that row as an **anchor**,
+not a failure, and flags the first row after it (if any) whose recomputed
+hash doesn't match what's stored.
+
+<Aside type="danger" title="This is a keyed hash, not a public signature">
+`entry_hash` is verifiable only by something that holds `DJANGO_SECRET_KEY`,
+meaning the app itself or an operator with server access. It proves the
+chain hasn't been altered by anyone going through the database directly
+without also knowing the secret key. It is not designed as a
+publicly-verifiable proof you'd hand to an external auditor without also
+handing them that key.
+</Aside>

@@ -1,0 +1,74 @@
+---
+title: First run
+description: Generating the instance root key and creating the first Superadmin account (Installation Methods 1–3).
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+These steps apply to [Installation Methods 1–3](/getting-started/installation/)
+(Docker Compose). Method 4 (local development) already includes its own root
+key and Superadmin steps inline, so skip this page if that's what you used.
+
+<Steps>
+
+1. **Build and start everything** (already done per method, repeated here
+   for reference: the `web` container's entrypoint runs migrations and
+   `collectstatic` automatically on every start):
+
+   ```sh
+   docker compose up -d --build          # or: docker compose --profile tailscale up -d --build
+   ```
+
+2. **Generate the instance root key.** Do this once, before creating any
+   engagements:
+
+   ```sh
+   docker compose exec web python manage.py generate_root_key
+   ```
+
+   Copy the printed value into `secrets/root_key.txt` (see
+   `secrets/README.md`), then restart so it picks it up:
+
+   ```sh
+   docker compose up -d web
+   ```
+
+   <Aside type="danger" title="Losing this key is unrecoverable">
+   `REDSCRIBE_ROOT_KEY` wraps every engagement's own per-project data key.
+   Losing it makes **all existing engagement data permanently unrecoverable**,
+   with no recovery path at all. Back it up the moment you generate it, with
+   the same care you'd give any other master key. See [Encryption
+   model](/security/encryption/).
+   </Aside>
+
+3. **Create the first Superadmin.** There are two ways to do this, so pick
+   one:
+
+   - **Via the web UI (recommended):** visit `/setup/` on whichever address
+     applies to your method (e.g. `https://<your-domain>/setup/`, or
+     `http://localhost:8000/setup/` for Method 3) and fill in the form. This
+     page only ever works before any Superadmin exists on the instance; once
+     you've created one, it redirects to the login page instead.
+   - **Via the CLI**, useful for scripted or automated deployments:
+
+     ```sh
+     docker compose exec web python manage.py bootstrap_superadmin --username admin --email admin@example.com
+     ```
+
+     You'll be prompted for a password (14+ characters).
+
+   Either way, on first login you'll be walked through TOTP MFA enrollment
+   (QR code plus confirmation), which is **required for every local
+   account, with no way to skip it**.
+
+4. Visit `/login/` (or you're probably already there from step 3).
+
+</Steps>
+
+## What's next
+
+- [Dashboard & navigation](/user-guide/dashboard/), to orient yourself in
+  the UI.
+- [User management](/admin/user-management/), to invite your team.
+- [Roles & permissions](/admin/roles-and-permissions/), to decide who can do
+  what before adding more staff accounts.

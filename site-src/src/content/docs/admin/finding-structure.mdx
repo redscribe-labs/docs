@@ -1,0 +1,95 @@
+---
+title: Finding structure
+description: Controlling which narrative content sections exist on findings and catalogue templates, and their order.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This is the screen you'll find in the sidebar under **Finding Structure**
+(`/field-visibility/`, needs the `field_visibility.manage` permission). It
+controls which rich text content sections exist on both
+[Findings](/user-guide/findings/) and [catalogue](/user-guide/catalogue/)
+templates, without deleting any data already saved in them when you hide
+one.
+
+## What a content section is
+
+Each content section (`ContentSectionDefinition` in the code) is one
+narrative field, things like "Vulnerability description" or "Business
+impact," with the following properties.
+
+| Property | Meaning |
+|---|---|
+| **Label** | Display name |
+| **Slug** | Stable identifier used by report tags (`{{p finding['<slug>'] }}`). It's generated from the label when the section is created and never changes afterward |
+| **Order** | Position among the other sections, lower first |
+| **Active** | Whether it currently appears on the finding or catalogue form and in exports at all |
+| **Supports image upload** | Whether this section's rich text editor allows embedding images |
+| **Portal visible** | Whether this section is shown to client portal users on a QA approved finding |
+| **Include in remediation report only** | Restricts this section to remediation report exports, hidden on the initial report |
+| **Import target** | Whether scanner imported findings ([Scanner import](/user-guide/scanner-import/)) get their parsed description dropped into this specific section |
+
+## Affected Assets is a built-in, protected section
+
+Every deployment always has one extra section beyond whatever you've
+configured yourself: **Affected Assets**. It exists so its position and
+label are just as configurable as any other section, but it isn't really
+"content" in the same sense — it's backed directly by a finding's own
+**Affects** field (a plain list of hosts/URLs, entered on the finding form
+and populated automatically by [Scanner import](/user-guide/scanner-import/)),
+not a rich-text field you type into here.
+
+You can **reorder** and **rename** it exactly like any other section. You
+cannot **delete** it — there's no Delete link for it on this page, and the
+delete endpoint itself refuses the request. Turning its **Active** toggle
+off does hide it everywhere, the same as deactivating any other section,
+without losing the underlying data on any finding.
+
+## Default sections
+
+A typical deployment ships with these seven, in this order.
+
+| Order | Slug | Label | Supports images | Portal visible |
+|---|---|---|---|---|
+| 10 | `vulnerability-description` | Vulnerability description | No | Yes |
+| 20 | `business-impact` | Business impact | No | Yes |
+| 30 | `testing-summary` | Testing summary | No | Yes |
+| 40 | `technical-details` | Technical details | Yes | Yes |
+| 50 | `remediation-testing` | Remediation testing | Yes | No |
+| 60 | `recommendations` | Recommendations | No | Yes |
+| 70 | `references` | References | No | Yes |
+
+These are managed here and not in the finding or catalogue editor itself.
+Adding, reordering, or deactivating a section changes what appears on every
+finding and catalogue template, and what `{{ finding_details }}` includes in
+the [Document report template](/reference/report-template-tags/),
+immediately and instance wide.
+
+## Managing sections
+
+<Steps>
+1. **Add a section.** Give it a label and set the flags above. Its slug and
+   order are assigned automatically, and a new section always goes to the
+   end.
+2. **Reorder** by moving a section up or down relative to its neighbors.
+   This just swaps two `order` values rather than renumbering everything.
+3. **Turn Active off** to hide a section instance wide without losing any
+   content already saved in it on existing findings. It simply stops
+   appearing on forms and in exports.
+4. **Delete** a section to remove it entirely.
+</Steps>
+
+<Aside type="danger" title="Deleting a section is destructive">
+Unlike deactivating, deleting a content section removes any content already
+stored against it, along with any comment threads attached to that section,
+on every finding and catalogue entry. If you just want to stop using a
+section without losing historical data, turn Active off instead of
+deleting it.
+</Aside>
+
+## Hidden fields are hidden everywhere
+
+A section with Active off is omitted from every exported format, Markdown,
+PDF, HTML, and Word alike, not just the app's own UI. There's no separate
+case where it quietly still shows up in a PDF. See [Reports and
+exports](/user-guide/reports/#hidden-fields-are-hidden-everywhere).

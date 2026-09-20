@@ -1,0 +1,64 @@
+---
+title: Branding
+description: Setting the firm name and logo shown on the login page, sidebar, client portal, transactional emails, and generated reports.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`/branding/` (needs `branding.manage`) sets two things on a single
+instance-wide settings row (`ReportSettings`, the same singleton model that
+holds `max_concurrent_report_jobs`, fetched with `get_solo()`):
+
+- **Company name**, a plain text field. It shows up on the login page, the
+  sidebar, the client portal, every transactional email, and reports, as
+  the fallback wherever RedScribe would otherwise show its own name. If
+  it's blank, every one of those surfaces falls back to plain "RedScribe."
+- **Logo**, an uploaded image. Wherever both a logo and a name are set, the
+  logo takes visual priority and the name is used only as its `alt` text,
+  it isn't shown as text alongside the image.
+
+## Uploading a logo
+
+The form accepts PNG, JPEG, or WebP, up to 2MB. Validation happens twice,
+not once: the form first checks the browser-supplied content type against
+that same PNG/JPEG/WebP allowlist, then, before the upload is ever saved,
+the view independently opens the actual uploaded bytes with Pillow and
+verifies they really are a decodable image of one of those three formats.
+A file that lies about its content type (for example a `.png` extension on
+something that isn't actually a PNG) is rejected at that second check with
+"File content doesn't match a supported image format," it never gets
+stored on the strength of its filename or declared content type alone.
+
+**Remove logo** clears it back to no logo, falling back to the text name
+(or plain "RedScribe" if that's blank too) everywhere the logo would have
+appeared.
+
+<Aside type="caution" title="The logo is not stored encrypted">
+Unlike engagement content, `firm_logo` is a plain `BinaryField` in
+Postgres, not one of the AES-256-GCM encrypted `_ciphertext` fields
+described in the [encryption model](/security/encryption/). That's a
+deliberate distinction, not an oversight: this is firm-level branding
+shown to every visitor on the public login page, not confidential
+engagement data, so there's nothing to protect it from by encrypting it at
+rest.
+</Aside>
+
+The logo is served back through its own endpoint, `/branding/logo/`, as raw
+image bytes rather than through Django's static files pipeline, so a
+change takes effect immediately with no `collectstatic` run needed. That
+endpoint has no login requirement of its own (the same login page it
+decorates hasn't authenticated anyone yet), sends
+`Cache-Control: max-age=3600` so a browser or proxy won't re-fetch it more
+than once an hour, and sets `X-Content-Type-Options: nosniff` so a browser
+won't try to reinterpret the bytes as anything other than the image type
+recorded when it was uploaded.
+
+## Where it appears
+
+| Surface | Company name | Logo |
+|---|---|---|
+| Login, MFA, and password reset screens | Yes, as a large heading if no logo is set | Yes, replaces the name heading entirely when set |
+| Staff sidebar | Yes, as sidebar text if no logo is set | Yes, replaces the sidebar text when set |
+| Client portal header and sidebar | Yes, same fallback behavior | Yes, same fallback behavior |
+| Transactional emails (account setup, password reset, review and QA assignment notifications) | Yes, in the subject line and body text | No, emails only ever use the text name, never the image |
+| Generated reports | Yes, as the `{{ firm_name }}` tag (see the [DOCX template guide](/reference/docx-template-guide/#anywhere-in-the-document--plain-values)) | Yes, as the `{{p firm_logo }}` rich content tag, embedded automatically in the Document template pipeline, or placed yourself in a Word template (see the [DOCX template guide](/reference/docx-template-guide/#anywhere-in-the-document--rich-content)) |

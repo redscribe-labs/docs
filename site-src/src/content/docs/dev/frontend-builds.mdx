@@ -1,0 +1,144 @@
+---
+title: Frontend asset builds
+description: Rebuilding the Tiptap editor, date picker, password strength meter, and Tailwind CSS bundles after touching their sources, including exact build commands and dependencies.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Three self-hosted, **committed** JavaScript bundles plus one committed CSS
+file are built from source via npm. Node and npm are **not** a runtime
+dependency of the deployed app and aren't used in the Docker image at all.
+They're only a dev-time tool for whoever next touches the editor JS,
+date-picker JS, or Tailwind classes. There is no `engines` field in this
+repo's `package.json`, so no specific Node version is enforced by the build
+itself, any reasonably current Node install should work.
+
+<Aside type="caution">
+Every build step below writes into `static/vendor/` or `static/css/`, and
+those outputs are committed to the repo, not generated at deploy time. If
+you edit `editor-src/`, `strength-src/`, `datepicker-src/`, or
+`tailwind-src/`, the rebuilt output has to be part of your commit, or the
+deployed app keeps serving the old bundle. There's no build step in
+`Dockerfile` or `entrypoint.sh` that would catch a stale bundle for you.
+</Aside>
+
+## Tiptap editor bundle
+
+`editor-src/main.js`, the rich-text editor used for finding content, report
+text blocks, and observations and testing phases, is bundled by
+[esbuild](https://esbuild.github.io/) into
+`static/vendor/redscribe-editor.bundle.js`. The exact invocation, from
+`package.json`'s `build:editor` script, is:
+
+```sh
+esbuild editor-src/main.js --bundle --format=iife --outfile=static/vendor/redscribe-editor.bundle.js --minify
+```
+
+`--format=iife` wraps the whole bundle in an immediately invoked function
+expression, so it can be loaded with a plain `<script>` tag and never
+pollutes the global scope beyond whatever it explicitly attaches. It
+depends on `@tiptap/core`, `@tiptap/starter-kit`, `@tiptap/pm`, and a set of
+individual extension packages (`extension-paragraph`, `extension-image`,
+`extension-code-block`, `extension-highlight`, `extension-underline`,
+`extension-link`, and the four table extensions), all pinned to the same
+`2.27.3` minor line in `package.json`'s `devDependencies`.
+
+<Steps>
+1. ```sh
+   npm install
+   ```
+2. ```sh
+   npm run build:editor
+   ```
+3. Commit the updated `static/vendor/redscribe-editor.bundle.js`.
+</Steps>
+
+<Aside type="note" title="Embedded images are restricted by source">
+`editor-src/main.js` strips any embedded image whose `src` doesn't match
+`/^\/engagements\/[0-9a-fA-F-]{36}\/blobs\/[0-9a-fA-F-]{36}\/?(?:\?.*)?$/`,
+meaning the app's own encrypted blob endpoint for that engagement. This
+runs client side as content is loaded into the editor, on top of whatever
+server side validation exists, so a pasted or hand-crafted document
+referencing an external image URL never renders one inside a finding.
+</Aside>
+
+## Date picker bundle
+
+`datepicker-src/main.js`, wrapping [flatpickr](https://flatpickr.js.org/),
+is bundled the same way into
+`static/vendor/redscribe-datepicker.bundle.js`:
+
+```sh
+npm run build:datepicker
+```
+
+This one is easy to forget since it doesn't come up as often as the editor
+or Tailwind bundles. If date fields across the app start looking like plain
+unstyled `<input type="date">` elements after a dependency bump, this is
+the bundle to rebuild.
+
+## Password strength meter
+
+`strength-src/main.js`, using
+[zxcvbn-ts](https://github.com/zxcvbn-ts/zxcvbn) (`@zxcvbn-ts/core` plus the
+`language-common` and `language-en` dictionary packages), is bundled into
+`static/vendor/redscribe-password-strength.bundle.js`. It attaches to every
+`input[type="password"]` on the page whose `id` ends in `password1`, which
+is Django's own naming convention for the first of a two-field
+password-confirmation pair, so it only ever shows up next to a
+password-creation field, never a login field. It's client side,
+**advisory-only** feedback. The actual policy is enforced server side by
+`AUTH_PASSWORD_VALIDATORS` (`config/settings/base.py`), independent of
+whatever this widget displays, so a browser with JavaScript disabled or a
+direct API call is never able to bypass the real policy just because the
+meter didn't run.
+
+```sh
+npm run build:strength
+```
+
+## Tailwind CSS
+
+`tailwind-src/input.css`, the theme tokens and component classes documented
+in `COLOR_SCHEME.md` at the repo root, is compiled by the Tailwind CLI
+(`@tailwindcss/cli`) into `static/css/tailwind.css`, scanning every template
+in the repo for utility class usage automatically, with `--minify` applied:
+
+```sh
+npm run build:css
+```
+
+<Aside type="danger" title="Keep the Tailwind source file out of static/">
+WhiteNoise's `collectstatic` post-processing tries to parse every file under
+`static/` as a real asset and chokes on Tailwind's `@import "tailwindcss";`
+directive if it ends up there. `tailwind-src/` is a sibling directory to
+`static/` specifically to avoid this. Don't move or symlink it in.
+</Aside>
+
+## Building everything at once
+
+```sh
+npm install
+npm run build
+```
+
+This runs `build:editor`, `build:strength`, `build:datepicker`, and
+`build:css` in sequence, then you commit the updated files in
+`static/vendor/` and `static/css/`.
+
+## If a build fails
+
+- **Missing packages or a version mismatch error from esbuild or the
+  Tailwind CLI**: run `npm install` again. `node_modules/` is gitignored,
+  so a fresh clone or a `package.json` change both need it before any
+  `build:*` script will find its dependencies.
+- **`esbuild: command not found`**: the same fix, `npm install` puts
+  `esbuild` in `node_modules/.bin/`, and `npm run` picks it up from there
+  automatically. Don't try to invoke `esbuild` as a global command unless
+  you've installed it globally yourself, the scripts don't assume that.
+- **Tailwind classes you added to a template don't show up after
+  `build:css`**: Tailwind only picks up class names it can find as literal
+  strings while scanning template files, so a dynamically constructed class
+  name (built by concatenating strings in a template tag, for instance)
+  won't be detected. Write the full class name literally somewhere Tailwind
+  can scan it.

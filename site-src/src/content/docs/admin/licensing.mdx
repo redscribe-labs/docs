@@ -1,0 +1,59 @@
+---
+title: Licensing
+description: Activating a commercial license key, and what it changes (and doesn't) about your instance.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The licensing model, briefly
+
+RedScribe is **source-available**, not OSI-approved open source: the source
+is public and modifiable, but the license restricts commercial use.
+
+- **Free** for personal and community/noncommercial use, under the PolyForm
+  Noncommercial License 1.0.0 (`LICENSE` in the repo), permanently.
+- **Commercial use** (including running it at a for-profit consultancy)
+  requires a commercial license (`COMMERCIAL-LICENSE.md` in the repo).
+
+<Aside type="tip" title="Commercial use is free right now">
+As a kickstart for the community, a commercial license key is free for the
+first year, no payment required. Email `redscribe.maintainer@proton.me` for
+one. Priced tiers begin once RedScribe has been proven at the scale real
+enterprise engagements demand, and nothing about a key already issued
+during the free period changes retroactively once pricing starts.
+</Aside>
+
+<Aside type="tip" title="Nothing is feature-gated, either way">
+Every RedScribe instance has every feature, whether or not anyone paid. A
+commercial license changes exactly one thing: a "Licensed to X" line in the
+app's own footer, purely as attribution and never a technical restriction.
+</Aside>
+
+## Activating a license key
+
+If your organization has a commercial license, you'll be given a license
+key, a signed, tamper-evident text string. Activate it from **Licensing**
+in the sidebar (`/licensing/`, Superadmin-only, `licensing.manage`): paste
+the key into the field and save.
+
+Pasting an invalid, tampered, or expired-in-the-past key doesn't error or
+break anything. It's checked instantly, and the footer simply falls back to
+the plain, unlicensed display if it doesn't verify.
+
+## What the footer shows
+
+| State | Footer | Also shown |
+|---|---|---|
+| No key entered | `RedScribe v<version>` | Nothing |
+| **Active** (valid, not near expiry) | `RedScribe v<version> — Licensed to <Org>` | Nothing |
+| **Expiring soon** (≤30 days left) | Same "Licensed to" line | An amber banner, **Superadmin-only**, across the whole app, saying your commercial license for `<Org>` expires in `N` days, with a Renew link. |
+| **Expired** | `RedScribe v<version> — License expired (<Org>)` | A red banner, **Superadmin-only** |
+
+<Aside type="note" title="Expiry never blocks anything">
+An expired key is still a genuinely valid, authentically-signed key. It
+just stops being displayed as "currently licensed." No feature is disabled,
+no workflow is blocked, and no one outside Superadmin ever sees an expiry
+banner. This is pure attribution, consistent with the no-feature-gating
+policy above. If your license has expired, contact whoever issued it for a
+renewed key. That's an offline process outside RedScribe itself.
+</Aside>

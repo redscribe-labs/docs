@@ -1,0 +1,61 @@
+---
+title: RedScribe
+description: Self-hosted engagement, finding, checklist, and report management for penetration testing teams.
+---
+
+RedScribe is a Django, HTMX, and Tailwind application, backed by Postgres,
+that runs a penetration testing firm's entire reporting workflow:
+engagements, findings, checklists, scanner imports, and client ready
+reports, all on infrastructure you control. Sensitive fields are encrypted
+at rest per engagement with AES-256-GCM, keyed off a single instance root
+key.
+
+## Contents
+
+- **[Getting Started](/getting-started/requirements/)**: requirements,
+  sizing, the four installation methods, and first run setup.
+- **[User Guide](/user-guide/login-and-mfa/)**: day to day use, covering
+  engagements, findings, the catalogue, checklists, scanner import, reports,
+  trends, and search.
+- **[Client Portal](/client-portal/for-clients/)**: what a client company
+  user sees, and how staff manage that access.
+- **[Administration](/admin/roles-and-permissions/)**: roles and
+  permissions, user management, finding structure, report profiles, feature
+  flags, branding, licensing, the audit log, and backup and restore.
+- **[Security](/security/encryption/)**: the encryption model,
+  authentication and session policy, audit trail tamper evidence, and
+  network and TLS configuration.
+- **[Deployment & Operations](/deployment/docker-compose/)**: the Compose
+  stack in depth, upgrading and rolling back, and moving to a new machine.
+- **[Developer Guide](/dev/architecture/)**: app layout, local development,
+  frontend asset builds, testing, contributing, and the report rendering
+  pipeline.
+- **[Reference](/reference/environment-variables/)**: environment
+  variables, management commands, both report template tag systems, the
+  checklist template format, the data model, and the full permissions list.
+- **[Changelog](/changelog/)** and **[Alpha status &
+  versioning](/start/alpha-status/)**.
+
+New here? Start at [Concepts & terminology](/start/concepts/) for the
+vocabulary the rest of this site assumes, or jump straight to
+[Installation](/getting-started/installation/).
+
+## What RedScribe is not
+
+- **Not multi-tenant SaaS.** One instance serves one consultancy, and
+  client companies get a restricted read only portal rather than their own
+  tenant.
+- **Not yet 1.0.** RedScribe is early alpha. See [Alpha status &
+  versioning](/start/alpha-status/) before relying on it for a real
+  engagement.
+- **Not a vulnerability scanner.** It imports results from Nmap, Burp
+  Suite, and Nuclei, but it doesn't run scans itself.
+
+## License
+
+RedScribe is source-available, not OSI approved open source: free for
+personal and community or noncommercial use under the PolyForm
+Noncommercial License 1.0.0, and it requires a flat fee commercial license
+to run at a for-profit consultancy. Every feature is available on every
+instance either way, since nothing is feature-gated. See
+[Licensing](/admin/licensing/) for what that means day to day.
