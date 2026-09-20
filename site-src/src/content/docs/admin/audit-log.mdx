@@ -5,35 +5,43 @@ description: The append-only, hash-chained audit log covering every request and 
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-`/audit/` (needs `audit_log.manage`) records **every request**, including
-plain GET/view traffic and not just state-changing ones, plus every login
-attempt. Each entry captures the actor (user, username, and role at the
-time), action, HTTP method, path, status code, related engagement/object,
-client IP, query string, referer, user agent, and request duration.
+RedScribe keeps a tamper-evident record of everything that happens on your
+instance, request by request, and login attempt by login attempt. This
+page covers what's in it, how to browse it, how long it's kept, and how to
+prove it hasn't been altered.
 
-Only `HEAD`/`OPTIONS` requests and a short list of specifically-excluded
-views (the live report preview endpoint, the health check, and the CSP
-report endpoint) are skipped. Everything else, including plain page loads,
-is logged. Two sensitive URLs (`password_reset_confirm`,
-`account_setup_confirm`) have their path redacted in the log, since the URL
-itself contains a single-use token.
+**Audit Log** in the sidebar needs its own permission to manage. It
+records **every request**, including plain page views and not just the
+ones that change something, plus every login attempt. Each entry captures
+who did it (user, username, and their role at the time), what they did,
+the HTTP method and path, the response status, any related engagement or
+object, their IP address, query string, referring page, browser, and how
+long the request took.
+
+Almost everything is logged. The only exceptions are a short, fixed list
+of things that would just add noise: the live report preview, the health
+check endpoint, and the CSP report endpoint, plus bare `HEAD`/`OPTIONS`
+requests. Two sensitive URLs, the password reset and account setup
+confirmation links, have their path redacted in the log, since the URL
+itself contains a single-use token that shouldn't sit around readable.
 
 ## Browsing and filtering
 
 The Audit Log page is filterable by free-text search (matches actor
-username, action, path, object reference, IP, user agent, or referer),
-HTTP method, actor, status-code bucket (2xx/3xx/4xx/5xx), and a from/to date
-range, with a configurable page size (25/50/100/250).
+username, action, path, object reference, IP, browser, or referring page),
+HTTP method, actor, status-code bucket (2xx/3xx/4xx/5xx), and a from/to
+date range, with a configurable page size.
 
 ## Retention
 
-`AUDIT_LOG_RETENTION_DAYS` (default `2190`, which is 6 years and matches
-HIPAA's general documentation-retention rule; see `config/settings/base.py`'s
-comment for how that compares to PCI DSS/NIST/CIS) controls how far back
-entries are kept. Override it in `.env` per your own compliance obligations.
+Entries are kept for a configurable window, six years by default. That
+default matches HIPAA's general documentation-retention rule, and is the
+most conservative of the commonly-referenced regimes for this kind of
+tool. Override it to match your own compliance obligations if six years
+isn't the right number for you.
 
 Purging is **never automatic**, since nothing in RedScribe runs on a
-schedule of its own, so wire it into your host's own cron for a
+schedule of its own. Wire it into your host's own cron for a
 self-maintaining instance:
 
 ```sh
@@ -41,42 +49,40 @@ self-maintaining instance:
 ```
 
 Add `--dry-run` to preview the delete count first, or `--days N` to purge
-against a one-off window instead of the configured default. A Superadmin can
-also trigger the same purge on demand from the **Purge entries older than N
-days** button on the Audit Log page. It's the same underlying logic either
-way, and the purge action itself is recorded in the audit trail like any
-other state-changing request.
+against a one-off window instead of the configured default. Whoever
+manages the audit log can also trigger the same purge on demand from the
+**Purge entries older than N days** button on the Audit Log page. It's the
+same underlying logic either way, and the purge action itself is recorded
+in the audit trail like any other state-changing request.
 
 <Aside type="tip">
-Purging drops whole year-partitions at once where an entire year is already
-past the cutoff (the audit log table is partitioned by year in Postgres),
-falling back to row-by-row deletion only for the partial year straddling the
-cutoff. That means a routine purge on a mature instance is a fast metadata
-operation, not a full table scan. Login-attempt records older than the same
-cutoff are purged in the same pass.
+Purging drops whole year-long chunks of the log at once wherever an entire
+year is already past the cutoff, falling back to row-by-row deletion only
+for the partial year straddling the cutoff. That means a routine purge on
+a mature instance is a fast operation, not a slow full scan. Login-attempt
+records older than the same cutoff are purged in the same pass.
 </Aside>
 
 ### Clearing everything
 
 Separate from the age-based purge above, the Audit Log page also offers
-**Clear all logs**, an unconditional wipe of every audit-log and
+**Clear all logs**, an unconditional wipe of every audit log and
 login-attempt row, regardless of age. Because this is destructive,
-irreversible, and the one action that could undo the hash-chain's own
+irreversible, and the one action that could undo the log's own
 tamper-evidence guarantee, it needs two things, not one: the exact phrase
 `DELETE ALL LOGS` typed into a confirmation field, **and** a second,
 currently active Superadmin's own username and password entered on the
 same page. That second Superadmin has to be a genuinely different account
-from whoever is doing the clearing — nothing is deleted otherwise. There's
-no equivalent one-step CLI flag for it.
+from whoever is doing the clearing; nothing is deleted otherwise. There's
+no equivalent one-step shortcut for it.
 
 ## Tamper-evidence
 
-Every entry's `entry_hash` is a **keyed hash (HMAC-SHA256, keyed with the
-instance's Django secret key)** computed over its own fields, chained onto
-the previous entry's hash. Changing a stored row anywhere in the chain,
-including through direct database access rather than the app, invalidates
-every hash after it. A brand-new instance's very first entry chains from a
-genesis hash of 64 zeros.
+Every entry is cryptographically chained to the one before it, so
+changing a stored row anywhere in the chain, including through direct
+database access rather than the app, invalidates every hash that comes
+after it. A brand-new instance's very first entry chains from a fixed
+starting value.
 
 Check the whole chain at any time with:
 
@@ -84,17 +90,17 @@ Check the whole chain at any time with:
 docker compose exec web python manage.py verify_audit_log
 ```
 
-The oldest surviving row can't be checked against a prior link. Either it's
-genuinely the first entry ever, or everything before it was legitimately
-removed by `purge_audit_log`. The command reports that row as an **anchor**,
-not a failure, and flags the first row after it (if any) whose recomputed
-hash doesn't match what's stored.
+The oldest surviving row can't be checked against a prior link. Either
+it's genuinely the first entry ever, or everything before it was
+legitimately removed by a retention purge. The command reports that row
+as an **anchor**, not a failure, and flags the first row after it (if any)
+whose recomputed value doesn't match what's stored.
 
-<Aside type="danger" title="This is a keyed hash, not a public signature">
-`entry_hash` is verifiable only by something that holds `DJANGO_SECRET_KEY`,
-meaning the app itself or an operator with server access. It proves the
-chain hasn't been altered by anyone going through the database directly
-without also knowing the secret key. It is not designed as a
-publicly-verifiable proof you'd hand to an external auditor without also
-handing them that key.
+<Aside type="danger" title="This proves the chain wasn't altered through the database, not a public signature">
+Verifying the chain requires the same secret the app itself uses
+internally. It proves the chain hasn't been altered by anyone going
+through the database directly without also knowing that secret. It isn't
+designed as a proof you'd hand to an external auditor to check
+independently, without also handing them a sensitive credential you
+otherwise wouldn't share.
 </Aside>

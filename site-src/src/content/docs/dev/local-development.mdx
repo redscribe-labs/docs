@@ -21,8 +21,8 @@ there's no container rebuild loop between code changes and seeing them run.
    ```sh
    docker compose up -d db
    ```
-3. Copy the env template and fill in secrets (see [Installation → Common
-   setup](/getting-started/installation/#common-setup-all-methods)),
+3. Copy the env template and fill in secrets (see [Installation → Before
+   you start](/getting-started/installation/#before-you-start)),
    setting `POSTGRES_HOST=localhost`:
    ```sh
    cp .env.example .env
@@ -52,7 +52,7 @@ restart needed to see a template or view change. Visit
   ```
   There's no CI to catch a missing migration for you, so run
   `makemigrations --check --dry-run` yourself (see
-  [Testing](/dev/testing/#no-ci--run-these-checks-yourself)) and commit the
+  [Testing](/dev/testing/#no-ci-run-these-checks-yourself)) and commit the
   generated migration file alongside the model change, in the same PR.
 - **Frontend changes.** Touching the Tiptap editor bundle, the password
   strength meter, or Tailwind classes needs a separate rebuild step. See
@@ -63,13 +63,18 @@ restart needed to see a template or view change. Visit
 
 `.env.example` defaults `DJANGO_SETTINGS_MODULE` to `config.settings.dev`,
 which is literally `from .base import *` plus `DEBUG = True`, and nothing
-else differs. `config.settings.prod` layers on top of the same `base.py` instead:
-it hard-requires `DJANGO_SECRET_KEY`/a root key to already be configured,
-refuses to start with `DEBUG=True` unless you explicitly opt in via
-`REDSCRIBE_ALLOW_DEBUG_IN_PROD=1`, and turns on
-`SECURE_SSL_REDIRECT`/HSTS/secure cookies, trusting `X-Forwarded-Proto` from
-a reverse proxy in front. Local development should always run under `dev`.
-See [Configuration](/getting-started/configuration/#dev-vs-prod-settings)
+else differs. `config.settings.prod` layers on top of the same `base.py`
+instead. It:
+
+- Hard-requires a root key (and `DJANGO_SECRET_KEY`) to already be
+  configured before the app will start.
+- Refuses to start with `DEBUG=True` unless you explicitly opt in via
+  `REDSCRIBE_ALLOW_DEBUG_IN_PROD=1`.
+- Turns on `SECURE_SSL_REDIRECT`, HSTS, and secure cookies, trusting
+  `X-Forwarded-Proto` from a reverse proxy in front.
+
+Local development should always run under `dev`. See
+[Configuration](/getting-started/configuration/#development-vs-production-settings)
 for why running `prod` without a real proxy in front causes a redirect loop.
 
 <Aside type="tip">

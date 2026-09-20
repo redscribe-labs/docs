@@ -3,12 +3,38 @@ title: RedScribe
 description: Self-hosted engagement, finding, checklist, and report management for penetration testing teams.
 ---
 
-RedScribe is a Django, HTMX, and Tailwind application, backed by Postgres,
-that runs a penetration testing firm's entire reporting workflow:
-engagements, findings, checklists, scanner imports, and client ready
-reports, all on infrastructure you control. Sensitive fields are encrypted
-at rest per engagement with AES-256-GCM, keyed off a single instance root
-key.
+import { Aside } from '@astrojs/starlight/components';
+
+**Run the whole engagement, not just the report.**
+
+<Aside type="tip" title="See it in action">
+Curious what a finished report looks like? [Download the sample PDF
+report](/sample-report.pdf), or see [Sample report](/user-guide/sample-report/)
+for what's in it and the Report Profile configuration behind it.
+</Aside>
+
+## Why RedScribe
+
+Most reporting tools built for penetration testers fall into one of two
+camps: expensive platforms priced for enterprise budgets, or convenient
+hosted services that never let your findings leave someone else's servers.
+RedScribe sits in neither camp. It's source available, it's self hosted,
+and it was built by a penetration tester on the workflow they run every
+day, not a generic ticketing system repurposed for security work.
+
+## How it works
+
+That workflow starts with logging findings by hand, pulling them from the
+vulnerability catalogue, or importing results straight from Nmap, Burp
+Suite, or Nuclei. Each finding then moves through a real draft, review, and
+QA workflow, so nothing reaches a client before someone has actually
+checked it.
+
+Once the engagement wraps, that same data becomes the report your client
+actually reads, exported as Markdown, HTML, PDF, or Word from one shared
+source, so nothing drifts between formats. Through all of it, your
+findings stay on infrastructure you control, encrypted per engagement with
+AES-256-GCM and keyed off a single instance root key.
 
 ## Contents
 
@@ -37,8 +63,10 @@ key.
   versioning](/start/alpha-status/)**.
 
 New here? Start at [Concepts & terminology](/start/concepts/) for the
-vocabulary the rest of this site assumes, or jump straight to
-[Installation](/getting-started/installation/).
+vocabulary the rest of this site assumes, jump straight to the
+[Quickstart](/getting-started/quickstart/) to try it in a few minutes, or
+go to [Installation](/getting-started/installation/) for a real
+deployment.
 
 ## What RedScribe is not
 

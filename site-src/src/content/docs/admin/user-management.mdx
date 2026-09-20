@@ -5,89 +5,100 @@ description: Creating and managing staff accounts, and recovering a lost passwor
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-`/user-management/` (needs `users.manage`) manages **staff** accounts:
-Superadmin, Team Lead, Senior, Consultant, and any custom role. Client-portal
-accounts are separate; see [Managing client access](/client-portal/managing-clients/).
+This is where you create staff accounts, change roles, and handle
+deactivation and account recovery. It's separate from the [client
+portal](/client-portal/managing-clients/), which has its own, much
+narrower account management.
+
+**User Management** in the sidebar manages staff accounts only: Superadmin,
+Team Lead, Senior, Consultant, and any custom role you've created. It needs
+the permission to manage users, and client-portal accounts aren't handled
+here at all.
 
 ## Creating a user
 
-**User Management** → **New user** (`/user-management/create/`). Set a
-username, email, and [role](/admin/roles-and-permissions/).
+From **User Management**, choose **New user**, and set a username, email,
+and [role](/admin/roles-and-permissions/). What happens next depends on how
+your instance handles login.
 
-- **`OAUTH_PROVIDER` unset (default):** the account is local, provisioned via
-  the same single-use, 24-hour emailed setup link used everywhere else in
-  RedScribe. You never choose a new user's password yourself; they set their
-  own from the link, then enroll in TOTP MFA on first login.
-- **`OAUTH_PROVIDER` set:** the account is created as a **pending OAuth
-  invite** instead — no email is sent, and there's no LOCAL/OAuth toggle to
-  choose; the tenancy-wide `OAUTH_PROVIDER` setting alone decides. It
-  activates automatically the first time someone signs in with that exact
-  email address through your identity provider. Superadmin can't be created
-  this way — the form rejects that role choice and points you at the CLI's
-  `bootstrap_superadmin` command instead. If `OAUTH_ALLOWED_DOMAIN` is set,
-  the email must match it, since an off-domain invite could never be claimed.
-  See [OAuth provisioning](/security/authentication/#oauth-google--microsoft)
-  for the full claiming mechanics.
+- **Local login (the default):** the account is provisioned through the
+  same single-use, 24-hour emailed setup link used everywhere else in
+  RedScribe. You never set a new user's password yourself; they set their
+  own from the link, then enroll in two factor authentication on first
+  login.
+- **OAuth login (Google or Microsoft, if configured):** the account is
+  created as a **pending invite** instead. No email goes out, and there's
+  nothing to choose between local and OAuth, since that's decided once for
+  the whole instance. The account activates automatically the first time
+  someone signs in with that exact email address through your identity
+  provider. Superadmin can't be created this way; the form blocks that role
+  choice, since that account needs the command line setup path instead. If
+  your instance also restricts sign ins to a specific email domain, the
+  invite's address has to match it, or it could never be claimed. See
+  [OAuth provisioning](/security/authentication/#oauth-google--microsoft)
+  for how claiming actually works.
 
-A pending invite shows an amber "Invited — awaiting first login" badge on
-both the list and detail pages until it's claimed.
+A pending invite shows an amber "Invited — awaiting first login" badge
+until it's claimed.
 
 ## Managing an existing user
 
-From a user's detail page (`/user-management/<uuid>/`):
+From a user's detail page:
 
-- **Edit** changes email, name, or role. You can't change your **own** role
-  from here (the field is disabled when editing yourself), so get another
-  Superadmin to do it.
+- **Edit** changes email, name, or role. You can't change your own role
+  from here, so get another Superadmin to do it if that's ever needed.
 - **Deactivate** signs the account out of every active session immediately
-  and blocks further login. Two guardrails prevent locking yourself out of
-  the instance:
+  and blocks further login. Two safeguards stop you from locking yourself,
+  or the whole instance, out:
   - You can't deactivate your own account.
-  - You can't deactivate the **last active Superadmin**.
+  - You can't deactivate the last active Superadmin.
 
-  <Aside type="caution" title="Orphaned review/QA assignments">
-  Deactivating a user who still has findings assigned to them for review or
-  QA doesn't reassign those findings automatically. You'll see a warning
-  listing up to 5 affected findings (by title and client) plus a count of any
-  more, so you know to reassign them to someone else. The assignments
-  themselves are left as they are until you do.
+  <Aside type="caution" title="Deactivating someone doesn't reassign their work">
+  If the person you're deactivating still has findings assigned to them for
+  review or QA, those assignments aren't moved anywhere automatically.
+  You'll see a warning listing a few of the affected findings, plus a count
+  of any more, so you know to hand them off to someone else. Nothing
+  reassigns itself until you do.
   </Aside>
 
-- **Reactivate** restores login access without touching role or
-  assignments.
-- **Send password reset** triggers the same emailed reset link a
-  self-service "Forgot password" would, on the user's behalf. It's only
-  available for local accounts, not OAuth.
-- **Clear MFA** deletes the account's confirmed TOTP device, forcing
-  re-enrollment at next login. Also local accounts only.
-- **Convert to local account** (OAuth accounts only) flips the account back
-  to local auth, clears any pending-invite state, and sends the standard
-  24-hour setup email. This is the safety valve for an OAuth account that
-  needs a local fallback — most commonly, `OAUTH_PROVIDER` being unset after
-  the account was created, which the detail page calls out with a warning
-  since the account otherwise has no way to sign in.
+- **Reactivate** restores login access without touching their role or
+  existing assignments.
+- **Send password reset** sends the same emailed reset link someone would
+  get from "Forgot password" themselves. Local accounts only.
+- **Clear MFA** wipes the account's enrolled authenticator, forcing them to
+  set up a new one at next login. Also local accounts only.
+- **Convert to local account** flips an OAuth account back to local login,
+  clears any pending invite state, and sends the standard 24-hour setup
+  email. This is the fallback for an OAuth account that's lost its way to
+  sign in, most commonly because OAuth login got turned off for the
+  instance after the account was created. The detail page flags that
+  situation with a warning of its own.
+- **Convert to OAuth** does the reverse: turns a local account into a
+  pending OAuth invite, provided OAuth login is actually configured on the
+  instance. It's blocked for Superadmin, since that role is local-login
+  only, and blocked if the account's email doesn't match your instance's
+  allowed sign-in domain (when one is set), since that invite could never
+  be claimed.
 
-The same last-active-Superadmin protection applies when changing a role away
-from Superadmin: RedScribe refuses the change with "This is the last active
-Superadmin — change another account's role to Superadmin first" rather than
-letting an instance end up with zero Superadmins.
+The same last-active-Superadmin protection applies to changing someone's
+role away from Superadmin: RedScribe blocks it and tells you to make
+another account Superadmin first, rather than ever letting an instance end
+up with none.
 
 ## Account recovery (lost password / lost MFA device)
 
-If a Superadmin (or any local account) loses their password, their TOTP
-device, or both, there's **no self-service recovery**. Fix it directly via
-the CLI on the `web` container, using `emergency_account_recovery` rather
-than a raw `manage.py shell`/`changepassword` session. This is the escape
-hatch for when the in-app tools above aren't usable (e.g. the only
-Superadmin is themselves locked out), and it's the one access path that
-matters most during an actual incident — so unlike a bare shell session, it
-writes an entry to RedScribe's own tamper-evident [audit
-log](/security/audit-trail/) instead of leaving no trace beyond host-level
-shell history.
+There's no self-service recovery for a local account that's lost its
+password, its authenticator, or both. This has to be fixed directly on the
+server, using a dedicated recovery command rather than reaching into the
+database by hand. It's the escape hatch for when the tools above aren't
+usable, most importantly when the only Superadmin is the one locked out,
+and because it's the one access path that matters most during an actual
+incident, running it writes its own entry to RedScribe's [audit
+log](/security/audit-trail/) rather than leaving no trace at all.
 
 <Steps>
 
-1. **Find the username**, if you don't already know it:
+1. **Find the username**, if you don't already know it. From the server:
 
    ```sh
    docker compose exec web python manage.py shell -c "
@@ -98,29 +109,29 @@ shell history.
    ```
 
 2. **Reset the password**, and clear MFA in the same step if that's lost
-   too (interactive, prompts twice for the new password, input hidden):
+   too:
 
    ```sh
    docker compose exec web python manage.py emergency_account_recovery \
      --username <username> --reason "<why this is being run>" --clear-mfa
    ```
 
-   Drop `--clear-mfa` if only the password is lost. `--reason` is required
-   and recorded verbatim in the audit log entry, alongside the operator
-   (the current OS user by default, or `--operator <name>` to record
-   someone else).
+   This prompts for the new password interactively (input hidden) and asks
+   you to confirm it. Drop `--clear-mfa` if only the password is lost.
+   `--reason` is required and gets recorded verbatim in the audit log
+   entry, along with who ran it (your current OS user by default, or
+   `--operator <name>` to record someone else).
 
 </Steps>
 
-Log in with the new password. With no confirmed TOTP device, the account is
-routed straight to MFA enrollment (per `apps.accounts.middleware`) to set up
-a fresh authenticator.
+Log in with the new password. With no enrolled authenticator left, the
+account is routed straight into MFA setup to add a fresh one.
 
 <Aside type="danger">
-Never resort to wiping the database over a lost credential, since that
-destroys every engagement, finding, and report along with it. This command
-touches only the affected user's row. If you do need to restore from a
-backup for some other reason, see [Backup &
-restore](/admin/backup-and-restore/), which has its own, separate
-safeguards around account state.
+Never resort to restoring the whole database over a single lost
+credential; that destroys every engagement, finding, and report along with
+it. Account recovery touches only the one affected user. If you do need to
+restore from a backup for some other reason, see [Backup &
+restore](/admin/backup-and-restore/), which has its own safeguards around
+account state.
 </Aside>

@@ -5,70 +5,71 @@ description: What RedScribe needs to run, and how to size the host it runs on.
 
 import { Aside } from '@astrojs/starlight/components';
 
-## Requirements
+Before you install RedScribe, here's what it actually needs to run, and
+how to size the machine you put it on.
 
-- **Docker** and **Docker Compose**, the normal way to run RedScribe
-  ([Installation Methods 1–3](/getting-started/installation/)).
-- For local development without Docker (Method 4): **Python 3** (for a
-  virtualenv) and a local **Postgres**, or just the `db` service from Docker
-  Compose.
-- **Node.js/npm**, only needed if you have to rebuild the frontend asset
-  bundles (Tiptap editor, password-strength meter, Tailwind CSS) after
-  touching their sources. It's not a runtime dependency of the deployed app
-  and isn't used in the Docker image at all. See [Frontend asset
-  builds](/dev/frontend-builds/).
-- For Method 1 (Tailscale): a host already joined to a
-  [Tailscale](https://tailscale.com) tailnet with MagicDNS + HTTPS certs
-  enabled.
+## What you need
+
+- **Docker and Docker Compose.** The normal way to run RedScribe
+  ([Installation Methods 1 through 3](/getting-started/installation/)).
+- **Python 3 and a local Postgres**, only if you're working on RedScribe's
+  own code without Docker ([Method 4](/getting-started/installation/#method-4-local-development-without-docker)).
+- **Node.js and npm**, only if you need to rebuild a frontend bundle after
+  changing its source yourself. This isn't needed to run the app day to
+  day, and isn't part of the Docker image at all. See
+  [Frontend asset builds](/dev/frontend-builds/) if that's you.
+- **An existing Tailscale network**, with MagicDNS and HTTPS certificates
+  turned on, only for [Method 1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended).
 
 ## Sizing
 
-RedScribe is sized by **concurrently active users**, not total registered
-accounts, since almost every request is a fast, DB-backed read/write. The
-one thing that blocks a full gunicorn worker for its duration is report
-export (WeasyPrint PDF / DOCX assembly).
+Size RedScribe by how many people are actively using it at the same
+moment, not by how many accounts exist in total. Almost every request is
+quick, and the one thing that ties up real resources for a while is
+generating a report.
 
-- **Recommended** matches gunicorn's `(2 × cores) + 1` worker formula (see
-  [CPU / worker count](/deployment/docker-compose/#cpu--worker-count)) and
-  the default `max_concurrent_report_jobs` limiter.
-- **Minimum** is the same tier a size down. It boots and holds up, just
-  without headroom to spare.
+| Tier | Active at once · total accounts | vCPU (min → recommended) | RAM (min → recommended) | Disk | Report jobs at once |
+|---|---|---|---|---|---|
+| Solo | 1 user | 1 | 1 → 2 GB | 10 GB+ | 1 |
+| Pilot | up to 5 · up to 10 | 1 → 2 | 2 → 4 GB | 20 GB | 2 |
+| Small firm | 10 to 15 · 10 to 30 | 2 → 4 | 4 → 8 GB | 40 to 50 GB | 2 |
+| Mid size firm | 25 to 40 · 30 to 80 | 4 → 8 | 8 → 16 GB | 100 GB+ | 3 to 4 |
+| Larger firm | 50+ · 80 to 150+ | 8 → 16 | 16 → 32 GB | 200 GB+ | 4 to 6 |
 
-These are estimates from the app's own concurrency model rather than a load
-test, so watch real report-export duration on your largest engagement before
-committing to a tier.
+"Report jobs at once" is how many exports (PDF, DOCX, and so on) can run
+in the background simultaneously before the next one has to wait its
+turn, set from the Report Profiles page. See
+[Reports & exports](/user-guide/reports/#export-concurrency) for what
+that limit actually protects.
 
-| Tier | Concurrently active · registered accounts | vCPU (min → rec.) | RAM (min → rec.) | Gunicorn workers (rec.) | Disk | Report job slots |
-|---|---|---|---|---|---|---|
-| Solo | 1 user | 1 | 1 → 2 GB | 3 | 10 GB+ | 1 |
-| Pilot | ≤5 · ≤10 | 1 → 2 | 2 → 4 GB | 5 | 20 GB | 2 (default) |
-| Small firm | 10–15 · 10–30 | 2 → 4 | 4 → 8 GB | 9 | 40–50 GB | 2 (default) |
-| Mid-size firm | 25–40 · 30–80 | 4 → 8 | 8 → 16 GB | 17 | 100 GB+ | 3–4 |
-| Larger firm | 50+ · 80–150+ | 8 → 16 | 16 → 32 GB | 33 | 200 GB+ | 4–6, with caution |
-
-RedScribe runs fine on a **1 vCPU / 1 GB** box for a single person kicking
-the tires, below even the Solo row above, but that's a floor to try it out
-on, not a comfortable size once a second person or a report export joins in.
+These come from how the app actually behaves under load, not a formal load
+test, so keep an eye on how long report exports take on your largest
+engagement before committing to a tier. A single person kicking the tires
+can get by on even less than the Solo row, a 1 vCPU, 1 GB box, but that's a
+floor for trying it out, not somewhere to stay once a second person or a
+report export joins in.
 
 <Aside type="caution" title="Past &quot;Larger firm&quot;">
-Stop scaling the box. Split Postgres onto its own host and add a task queue
-(e.g. Redis + Celery/RQ) so report exports stop competing with ordinary
-browsing for a gunicorn worker. Neither of those exists in the codebase
-today, see [Scaling & concurrency model](/dev/scaling/) for what that
-migration would actually involve, and why report export is the piece that
-runs out of headroom first.
+At that scale, stop scaling the box itself. The better move is splitting
+the database onto its own host and adding a background job queue, so
+report generation stops competing with ordinary browsing for the same
+limited resources. Neither of those exists yet as a built-in option, see
+[Scaling & concurrency model](/dev/scaling/) for what that change would
+involve and why report generation is the first thing to run out of
+headroom.
 </Aside>
 
 ### What shifts these numbers
 
-- **RAM before CPU.** WeasyPrint's rendering engine spikes hardest on
-  image-heavy reports, so bias a tier's RAM up before its vCPU if findings
-  carry a lot of screenshots.
-- **Shared host.** These figures assume `web` + Postgres on one box, as
-  shipped. Splitting the database onto its own host frees up headroom on
-  both sides independently.
-- **Disk growth** is driven by encrypted evidence blobs and backup
-  retention, not schema size.
-- **Per-engagement ceiling.** At most two people ever contend for one
-  engagement's data, by design, so total accounts and concurrent load scale
-  independently of write-conflict risk.
+- **Add RAM before CPU.** Rendering a report spikes hardest on
+  image-heavy findings, so if your team pastes in a lot of screenshots,
+  bias toward more memory first.
+- **A shared host.** These figures assume the app and its database share
+  one machine, as shipped. Moving the database to its own host frees up
+  headroom on both sides independently.
+- **Disk usage grows** with stored evidence and how long you keep backups
+  around, not with how much data is in the database schema itself.
+- **Engagements don't contend with each other.** At most two people are
+  ever actively working the same engagement at once, by design, so total
+  account count and how busy the system feels scale independently of each
+  other.

@@ -5,65 +5,77 @@ description: Controlling which narrative content sections exist on findings and 
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-This is the screen you'll find in the sidebar under **Finding Structure**
-(`/field-visibility/`, needs the `field_visibility.manage` permission). It
-controls which rich text content sections exist on both
-[Findings](/user-guide/findings/) and [catalogue](/user-guide/catalogue/)
-templates, without deleting any data already saved in them when you hide
-one.
+Every finding is built out of a set of rich text sections, things like
+"Vulnerability description" or "Business impact." This page controls
+which sections exist, what order they appear in, and where else they show
+up, across every finding and catalogue template on your instance.
+
+You'll find this screen in the sidebar under **Finding Structure**. It
+needs its own permission to manage, separate from managing findings
+themselves, and changes here never delete data already saved in a section,
+only hide it.
 
 ## What a content section is
 
-Each content section (`ContentSectionDefinition` in the code) is one
-narrative field, things like "Vulnerability description" or "Business
-impact," with the following properties.
+Each section is one narrative field on a finding or catalogue entry, with
+a handful of properties you control:
 
-| Property | Meaning |
-|---|---|
-| **Label** | Display name |
-| **Slug** | Stable identifier used by report tags (`{{p finding['<slug>'] }}`). It's generated from the label when the section is created and never changes afterward |
-| **Order** | Position among the other sections, lower first |
-| **Active** | Whether it currently appears on the finding or catalogue form and in exports at all |
-| **Supports image upload** | Whether this section's rich text editor allows embedding images |
-| **Portal visible** | Whether this section is shown to client portal users on a QA approved finding |
-| **Include in remediation report only** | Restricts this section to remediation report exports, hidden on the initial report |
-| **Import target** | Whether scanner imported findings ([Scanner import](/user-guide/scanner-import/)) get their parsed description dropped into this specific section |
+- **Label**, the name shown on the form.
+- **Slug**, a stable internal identifier used when this section's content
+  is pulled into a report template. It's generated automatically from the
+  label when you create the section and never changes afterward, even if
+  you rename the label later.
+- **Order**, its position relative to the other sections, lower first.
+- **Active**, whether it currently appears on forms and in exports at all.
+- **Supports image upload**, whether its editor allows embedding images.
+- **Portal visible**, whether client portal users see it on a QA approved
+  finding.
+- **Include in remediation report only**, restricts it to remediation
+  report exports, hidden from the initial report.
+- **Import target**, whether [Scanner import](/user-guide/scanner-import/)
+  drops a parsed description into this specific section automatically.
 
 ## Affected Assets is a built-in, protected section
 
-Every deployment always has one extra section beyond whatever you've
-configured yourself: **Affected Assets**. It exists so its position and
-label are just as configurable as any other section, but it isn't really
-"content" in the same sense — it's backed directly by a finding's own
-**Affects** field (a plain list of hosts/URLs, entered on the finding form
-and populated automatically by [Scanner import](/user-guide/scanner-import/)),
-not a rich-text field you type into here.
+Every deployment has one extra section beyond whatever you've configured
+yourself: **Affected Assets**. You can reorder and rename it exactly like
+any other section, but it isn't ordinary content. It's tied directly to a
+finding's own list of affected hosts and URLs, the same list [Scanner
+import](/user-guide/scanner-import/) fills in automatically, rather than
+being a rich text field you type into here.
 
-You can **reorder** and **rename** it exactly like any other section. You
-cannot **delete** it — there's no Delete link for it on this page, and the
-delete endpoint itself refuses the request. Turning its **Active** toggle
-off does hide it everywhere, the same as deactivating any other section,
-without losing the underlying data on any finding.
+Because of that, it can't be deleted. There's no delete option for it on
+this screen. Turning its **Active** toggle off does hide it everywhere,
+the same as deactivating any other section, without losing the underlying
+data on any finding.
 
-## Default sections
+## A fresh instance starts with none
 
-A typical deployment ships with these seven, in this order.
+Unlike the built-in Affected Assets section above, a brand new instance
+ships with **zero** narrative content sections. Nothing is pre-seeded, by
+design: what a finding's write-up actually looks like is entirely up to
+you, built from scratch on this screen rather than assumed for you.
 
-| Order | Slug | Label | Supports images | Portal visible |
-|---|---|---|---|---|
-| 10 | `vulnerability-description` | Vulnerability description | No | Yes |
-| 20 | `business-impact` | Business impact | No | Yes |
-| 30 | `testing-summary` | Testing summary | No | Yes |
-| 40 | `technical-details` | Technical details | Yes | Yes |
-| 50 | `remediation-testing` | Remediation testing | Yes | No |
-| 60 | `recommendations` | Recommendations | No | Yes |
-| 70 | `references` | References | No | Yes |
+<Aside type="tip" title="Starting from a working example instead of a blank slate">
+If you'd rather begin from a complete, populated set of sections instead
+of building one up from nothing, RedScribe ships an optional command that
+seeds a full sample pentest report format: eight content sections
+(including a "Risk Assessment" section that explains the reasoning behind
+a finding's rating, not just its content), a demo finding template, and a
+fully built report profile to go with them. It's not run automatically;
+someone with server access runs it deliberately with
+`python manage.py seed_pentest_report_format`, and it's safe to re-run,
+since it never overwrites content that already exists.
+</Aside>
 
-These are managed here and not in the finding or catalogue editor itself.
-Adding, reordering, or deactivating a section changes what appears on every
-finding and catalogue template, and what `{{ finding_details }}` includes in
-the [Document report template](/reference/report-template-tags/),
-immediately and instance wide.
+Whatever set you end up with, sections are managed here, not from inside
+the finding or catalogue editor itself. Adding, reordering, or
+deactivating a section changes what appears on every finding and
+catalogue template, and what gets pulled into a [Document report
+template](/reference/report-template-tags/), immediately and across the
+whole instance. If you're writing a custom Document template and need to
+reference a specific section by its stable slug, the [Report template
+tags](/reference/report-template-tags/) page covers that syntax.
 
 ## Managing sections
 
@@ -72,24 +84,23 @@ immediately and instance wide.
    order are assigned automatically, and a new section always goes to the
    end.
 2. **Reorder** by moving a section up or down relative to its neighbors.
-   This just swaps two `order` values rather than renumbering everything.
-3. **Turn Active off** to hide a section instance wide without losing any
-   content already saved in it on existing findings. It simply stops
+3. **Turn Active off** to hide a section instance wide without losing
+   anything already saved in it on existing findings. It just stops
    appearing on forms and in exports.
 4. **Delete** a section to remove it entirely.
 </Steps>
 
 <Aside type="danger" title="Deleting a section is destructive">
-Unlike deactivating, deleting a content section removes any content already
-stored against it, along with any comment threads attached to that section,
-on every finding and catalogue entry. If you just want to stop using a
+Unlike deactivating, deleting a content section removes any content
+already stored in it, along with any comment threads attached to it, on
+every finding and catalogue entry. If you just want to stop using a
 section without losing historical data, turn Active off instead of
 deleting it.
 </Aside>
 
-## Hidden fields are hidden everywhere
+## Hidden sections are hidden everywhere
 
-A section with Active off is omitted from every exported format, Markdown,
-PDF, HTML, and Word alike, not just the app's own UI. There's no separate
-case where it quietly still shows up in a PDF. See [Reports and
-exports](/user-guide/reports/#hidden-fields-are-hidden-everywhere).
+A section with Active off is left out of every exported format, Markdown,
+PDF, HTML, and Word alike, not just the app's own screens. There's no case
+where it quietly still shows up in one export but not another. See
+[Reports and exports](/user-guide/reports/#hidden-fields-are-hidden-everywhere).

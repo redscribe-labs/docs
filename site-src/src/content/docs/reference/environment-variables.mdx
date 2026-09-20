@@ -16,11 +16,12 @@ This page is just the "what," and those are the "why."
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `DJANGO_SETTINGS_MODULE` | Which settings module to run, `config.settings.dev` or `config.settings.prod`. See [Configuration](/getting-started/configuration/#dev-vs-prod-settings). | `config.settings.dev` |
+| `DJANGO_SETTINGS_MODULE` | Which settings module to run, `config.settings.dev` or `config.settings.prod`. See [Configuration](/getting-started/configuration/#development-vs-production-settings). | `config.settings.dev` |
 | `DJANGO_SECRET_KEY` | Session/CSRF signing key. Generate a random 50-char value; never reuse the placeholder. | `change-me-to-a-random-50-char-value` |
 | `DJANGO_DEBUG` | Django debug mode: verbose error pages, no static file caching. Never enable in a real deployment. | `true` |
 | `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames Django will serve; must include whatever `NGINX_SERVER_NAME` is set to. | `localhost,127.0.0.1` |
 | `REDSCRIBE_ALLOW_DEBUG_IN_PROD` | Explicit opt-in escape hatch: `config.settings.prod` normally refuses to start at all with `DJANGO_DEBUG=true`. Set to `1` only for a specific debugging session, never leave it set. See [Local development](/dev/local-development/#dev-vs-prod-settings). | *(unset)* |
+| `DJANGO_LOG_LEVEL` | Log level for Django's root, `django`, and `django.request`/`django.security` loggers (console output). | `INFO` |
 
 ## Reverse proxy / TLS
 
@@ -38,7 +39,7 @@ This page is just the "what," and those are the "why."
 | `POSTGRES_PASSWORD` | Database password. Set this to something of your own choosing. | `change-me` |
 | `POSTGRES_HOST` | Database hostname: `db` under Docker Compose, `localhost` for [Method 4](/getting-started/installation/#method-4-local-development-without-docker). | `db` |
 | `POSTGRES_PORT` | Database port. | `5432` |
-| `POSTGRES_SSLMODE` | TLS mode for the Postgres connection (`prefer`, `require`, `verify-ca`, `verify-full`, ...). The shipped default is safe for the same-host Docker Compose topology, where `db` and `web` only ever talk over the Docker-internal network — but `prefer` silently allows a plaintext fallback and never validates the server certificate. Set this to `verify-full` if `POSTGRES_HOST` ever points at a separate host. | `prefer` |
+| `POSTGRES_SSLMODE` | TLS mode for the Postgres connection (`prefer`, `require`, `verify-ca`, `verify-full`, ...). The shipped default is safe for the same-host Docker Compose topology, where `db` and `web` only ever talk over the Docker-internal network, but `prefer` silently allows a plaintext fallback and never validates the server certificate. Set this to `verify-full` if `POSTGRES_HOST` ever points at a separate host. | `prefer` |
 | `POSTGRES_SSLROOTCERT` | Path to a CA certificate file to validate the Postgres server's certificate against. Only meaningful alongside `verify-ca`/`verify-full`. | *(unset)* |
 
 ## Encryption

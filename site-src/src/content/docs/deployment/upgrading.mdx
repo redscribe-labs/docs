@@ -5,14 +5,17 @@ description: Upgrading a running instance safely, and rolling back a bad deploy 
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-<Aside type="danger" title="entrypoint.sh runs migrations unconditionally">
-`entrypoint.sh` runs `python manage.py migrate --noinput` on **every**
-container start, with no dry-run step and no automatic snapshot before it
-touches the schema. If a new migration (or the code that shipped alongside
-it) turns out to be broken once it's live, the only way back is the
-backup/restore tooling below, and only if you took a snapshot **before**
-upgrading. Make that step part of the upgrade, not something you reach for
-after it's already gone wrong.
+This page covers how to upgrade a running instance without losing data if
+something goes wrong, and how to roll back if it does.
+
+<Aside type="danger" title="Upgrades run database migrations automatically, every time">
+Every time the `web` container starts, it runs any pending database
+migrations automatically, with no dry-run step and no automatic snapshot
+first. If a new migration (or the code that shipped with it) turns out to
+be broken once it's live, the only way back is the backup and restore
+tooling below, and only if you took a snapshot **before** upgrading. Make
+that step part of the upgrade itself, not something you reach for after
+it's already gone wrong.
 </Aside>
 
 ## The upgrade procedure
@@ -24,7 +27,7 @@ after it's already gone wrong.
    docker compose exec -T web python manage.py create_backup
    ```
 
-2. **Pull/build the new version and restart as usual:**
+2. **Pull the new version and restart as usual:**
 
    ```sh
    git pull
@@ -38,9 +41,9 @@ after it's already gone wrong.
    docker compose up -d --build
    ```
 
-4. **Then restore the pre-upgrade snapshot from step 1** (path printed by
-   `create_backup`, or look in `BACKUP_DIR` for the most recent
-   `redscribe-backup-<timestamp>.rsbk`):
+4. **Then restore the pre-upgrade snapshot from step 1** (the path was
+   printed when you ran `create_backup`, or look in `BACKUP_DIR` for the
+   most recent `redscribe-backup-<timestamp>.rsbk`):
 
    ```sh
    docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
@@ -48,20 +51,21 @@ after it's already gone wrong.
 </Steps>
 
 Rolling the code back alone is sometimes enough, if it's a bad release with
-no migration in it. Restoring the database is only needed once a migration
+no migration in it. You only need to restore the database once a migration
 has actually changed the schema in a way the old code can't run against.
-Either way, having the pre-upgrade snapshot in hand before you start means
-that decision is never made under pressure with nothing to fall back on.
+Either way, having that pre-upgrade snapshot in hand before you start means
+you're never making this call under pressure with nothing to fall back on.
 
-For the full detail on `create_backup`/`restore_backup`, including
+For the full detail on `create_backup` and `restore_backup`, including
 retention, encryption, the account-reconciliation report `restore_backup`
-prints before touching anything live, and the automatic pre-restore safety
-snapshot it takes on your behalf, see [Backup & restore](/admin/backup-and-restore/).
+prints before it touches anything live, and the automatic safety snapshot
+it takes for you right before restoring, see [Backup &
+restore](/admin/backup-and-restore/).
 
 ## Version tags
 
-Releases are tagged `v<version>` (e.g. `v0.1.0-alpha.1`) against the
-`VERSION` file in the repo root. `git checkout <previous-tag-or-commit>` in
-step 3 above means exactly that tag, or any commit you know was working. See
-[Alpha status & versioning](/start/alpha-status/) for how RedScribe's
-pre-1.0 versioning works and what to expect from a minor-version bump.
+Releases are tagged `v<version>` (for example `v0.1.0-alpha.1`). The
+`git checkout <previous-tag-or-commit>` in step 3 above means exactly that
+tag, or any commit you know was working. See [Alpha status &
+versioning](/start/alpha-status/) for how RedScribe's pre-1.0 versioning
+works and what to expect from a minor-version bump.

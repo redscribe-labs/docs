@@ -3,50 +3,24 @@ title: Dashboard & navigation
 description: Orienting yourself in the RedScribe UI after logging in.
 ---
 
-After login, `/` shows your dashboard, a personalized landing page rather
-than a global one. What's on it depends on your role, but it generally
-includes:
+Your dashboard is the first thing you see after logging in, and it's personalized rather than a generic homepage. This page is a quick tour of what's there and how the sidebar is organized.
 
-- Engagements you're a member of, or (with `engagements.view_all`) every
-  active engagement.
-- Findings currently assigned to you for review or QA, the same list that
-  backs **My Queue** (`/reviews/`).
-- Recent notifications.
+## What's on your dashboard
 
-## Sidebar
+What you see depends on your role, but it generally includes:
 
-The sidebar is your primary navigation, organized around the objects
-described in [Concepts & terminology](/start/concepts/):
+- The engagements you're a member of (or, if you have broad visibility permissions, every active engagement on the instance).
+- Findings currently assigned to you for review or QA, the same list that backs **My Queue**.
+- Your recent notifications.
 
-| Section | Where it goes | Who sees it |
-|---|---|---|
-| Engagements | `/engagements/`, list, create, and open engagements | Everyone, scoped by membership unless `engagements.view_all` |
-| Vulnerability Catalogue | `/catalogue/` | Everyone (contribute drafts); approve/manage needs `catalogue.*` |
-| Checklist Templates | `/checklist-templates/` | Everyone (view); manage needs `checklist_templates.manage` |
-| Report Profiles | `/report-profiles/` | Needs `report_settings.manage` |
-| Trends | `/trends/` | Needs `reports.trends` |
-| My Queue | `/reviews/` | Everyone with review/QA permissions |
-| Notifications | `/notifications/` | Everyone |
-| Search | `/search/` | Everyone, scoped to what you can already see |
-| Clients | `/clients/` | Needs `clients.manage` |
-| User Management | `/user-management/` | Needs `users.manage` |
-| Role Management | `/roles/` | Needs `roles.manage` |
-| Finding Structure | `/field-visibility/` | Needs `field_visibility.manage` |
-| Feature Flags | `/feature-flags/` | Needs `feature_flags.manage` |
-| Licensing | `/licensing/` | Needs `licensing.manage` |
-| Audit Log | `/audit/` | Needs `audit_log.manage` |
-| Branding | `/branding/` | Needs `branding.manage` |
+## The sidebar
 
-See [Roles & permissions](/admin/roles-and-permissions/) for exactly what
-each permission unlocks and which built-in role has it by default.
+The sidebar is your main way of getting around, organized around engagements, the catalogue, checklists, reports, and administration. What you see there depends on your role and permissions, so a section missing from your sidebar usually just means you haven't been granted access to it. See [Roles & permissions](/admin/roles-and-permissions/) for exactly what each permission unlocks and which built-in role has it by default, and the [Permissions reference](/reference/permissions/) for the full list.
 
 ## Theme
 
-A light/dark toggle sits in the sidebar and floats on auth screens too.
-This is a per-browser preference, not an account setting.
+A light and dark toggle sits in the sidebar, and also floats on the login and setup screens. It's a per-browser preference, not something tied to your account, so it won't follow you to a different computer.
 
 ## Notifications bell
 
-The bell in the top bar shows unread in-app notifications: review/QA
-assignments, review/QA outcomes, scope-change decisions, and new-account
-setup links. See [Notifications & profile](/user-guide/notifications-and-profile/).
+The bell in the top bar shows your unread in-app notifications: review and QA assignments, review and QA outcomes, scope change decisions, and new account setup links. See [Notifications & profile](/user-guide/notifications-and-profile/) for the full list of what triggers a notification.

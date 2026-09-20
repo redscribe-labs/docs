@@ -1,0 +1,61 @@
+---
+title: Quickstart
+description: Try RedScribe on your own machine in a few minutes, no TLS certificate or domain required.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+Want to see RedScribe running before committing to a real deployment?
+This gets you a working instance on your own machine in a few minutes:
+no TLS certificate, no domain, nothing to configure beyond two secrets.
+
+<Steps>
+1. Get the code and set up your environment file:
+
+   ```sh
+   git clone https://github.com/redscribe-labs/redscribe.git
+   cd redscribe
+   cp .env.example .env
+   ```
+2. Open `.env` and set two values:
+   - `DJANGO_SECRET_KEY` to any random 50 character string. Generate one
+     with:
+
+     ```sh
+     python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(50)))"
+     ```
+   - `POSTGRES_PASSWORD` to a password of your own choosing.
+3. Build and start everything:
+
+   ```sh
+   docker compose up -d --build
+   ```
+4. Generate the instance's encryption key, and restart to pick it up:
+
+   ```sh
+   docker compose exec web python manage.py generate_root_key
+   ```
+
+   Copy the value it prints into `secrets/root_key.txt`, then:
+
+   ```sh
+   docker compose up -d web
+   ```
+5. Open `http://localhost:8000/setup/` and create your first account. Two
+   factor authentication setup happens automatically on that first login.
+</Steps>
+
+That's it, you're in. Poke around, create a test engagement, generate a
+report.
+
+<Aside type="note" title="This setup isn't meant to stay this way">
+No TLS means no encryption in transit, which is fine for a machine only
+you can reach, but not for anything else. When you're ready for a real
+deployment reachable by your team or over a network you don't fully
+trust, see [Installation](/getting-started/installation/) for the options
+that add TLS properly, then continue through
+[Requirements & sizing](/getting-started/requirements/) and
+[Configuration](/getting-started/configuration/).
+</Aside>
+
+Running into trouble? See [Troubleshooting](/getting-started/troubleshooting/).

@@ -61,17 +61,21 @@ anywhere else, only in the Document body itself.
 
 `{{ finding_details }}` doesn't have its own separate tag list. It
 automatically includes every **active** `ContentSectionDefinition` (Finding
-Structure), in their configured order. As of this writing, the active
-sections are:
+Structure), in their configured order. A fresh instance starts with **zero**
+content sections; the table below is what
+[`seed_pentest_report_format`](/reference/management-commands/#seed_pentest_report_format)
+creates as a starting point, and it's fully editable afterward from
+[Finding structure](/admin/finding-structure/):
 
 | Order | Slug | Label | Supports images | Visible on client portal |
 |---|---|---|---|---|
-| 10 | `vulnerability-description` | Vulnerability description | No | Yes |
-| 20 | `business-impact` | Business impact | No | Yes |
-| 30 | `testing-summary` | Testing summary | No | Yes |
-| 40 | `technical-details` | Technical details | Yes | Yes |
-| 50 | `remediation-testing` | Remediation testing | Yes | No |
-| 60 | `recommendations` | Recommendations | No | Yes |
+| 5 | `risk_assessment` | Risk Assessment | No | Yes |
+| 10 | `description` | Description | No | Yes |
+| 20 | `impact` | Impact | No | Yes |
+| 30 | `steps_to_reproduce` | Steps to Reproduce | Yes | Yes |
+| 40 | `proof_of_concept` | Proof of Concept | Yes | Yes |
+| 50 | `affected_assets` | Affected URLs / Assets | No | Yes |
+| 60 | `recommendation` | Recommendation | No | Yes |
 | 70 | `references` | References | No | Yes |
 
 These are managed from the [Finding structure](/admin/finding-structure/)
@@ -80,12 +84,12 @@ one changes what `{{ finding_details }}` includes for every profile,
 immediately.
 
 Every deployment also always has an **Affected Assets** entry in this same
-ordered list (slug `affects`), wherever it's currently positioned — see
+ordered list (slug `affects`), wherever it's currently positioned. See
 [Affected Assets is a built-in, protected
 section](/admin/finding-structure/#affected-assets-is-a-built-in-protected-section).
 Unlike the sections above, it isn't rich text and isn't backed by
-`FindingSection` content — it renders the finding's own **Affects** field as
-a plain list — and it can be repositioned/renamed but never deleted.
+`FindingSection` content: it renders the finding's own **Affects** field as
+a plain list, and it can be repositioned/renamed but never deleted.
 
 ## 3. Custom text-block tags (author-defined prose)
 
@@ -143,6 +147,9 @@ profile's block-defaults UI, not the block's own content editor.
 
 ## How the systems differ
 
+A side-by-side summary of the three systems described above, for when you
+just need a quick comparison rather than the full explanation of each:
+
 | | Placeholder tags | Structural tags | Custom text-block tags |
 |---|---|---|---|
 | Where usable | Anywhere (Document body, text blocks, finding sections, observations, etc.) | Only as a standalone paragraph in the Document template | Only as a standalone paragraph in the Document template |
@@ -156,10 +163,9 @@ Document template itself; once resolved, its output is never fed back
 through tag resolution again. So a text block cannot reference another text
 block or a structural tag and have it expand. Only a placeholder tag
 (`{{ client_name }}` etc.) works inside nested content, and even that is a
-single non-recursive substitution pass. This is a deliberate design choice,
-not a current limitation. It guarantees output is always bounded and
-predictable, with no risk of infinite loops or runaway expansion from
-user-authored content.
+single non-recursive substitution pass. This is a deliberate design choice
+that guarantees output is always bounded, with no risk of runaway expansion
+from user-authored content.
 </Aside>
 
 ## Practical example

@@ -40,32 +40,49 @@ export default defineConfig({
 				// Matches the app's own solid `.twilight-surface` (twilight-950, see
 				// COLOR_SCHEME.md) so the browser chrome doesn't clash on mobile.
 				{ tag: 'meta', attrs: { name: 'theme-color', content: '#111213' } },
+				// Cloudflare Web Analytics — this site's own beacon token, distinct
+				// from the marketing site's (see redscribe-site/site-src/src/pages/index.astro).
+				{
+					tag: 'script',
+					attrs: {
+						type: 'module',
+						src: 'https://static.cloudflareinsights.com/beacon.min.js',
+						'data-cf-beacon': '{"token": "54ae040b395d44b0b649c6163b6283ec"}',
+					},
+				},
 			],
 			// Only "Start here" is expanded by default, everything else stays
 			// collapsed until opened, since Starlight auto-expands whichever
 			// group contains the page you're currently on regardless of this
 			// setting, so nothing here is ever more than one click away.
+			// Flat lists throughout, on purpose: a two-level group (expand the
+			// section, then expand a sub-group, then click the page) costs more
+			// clicks than it saves for lists this size. Scrolling a slightly
+			// longer flat list beats an extra click every time.
 			sidebar: [
 				{
 					label: 'Start here',
 					items: [
 						{ label: 'What is RedScribe?', slug: 'index' },
+						{ label: 'Concepts & terminology', slug: 'start/concepts' },
 						{
 							label: 'Alpha status & versioning',
 							slug: 'start/alpha-status',
 							badge: { text: 'Alpha', variant: 'caution' },
 						},
-						{ label: 'Concepts & terminology', slug: 'start/concepts' },
+						{ label: 'Changelog', slug: 'changelog' },
 					],
 				},
 				{
 					label: 'Getting Started',
 					collapsed: true,
 					items: [
+						{ label: 'Quickstart', slug: 'getting-started/quickstart' },
 						{ label: 'Requirements & sizing', slug: 'getting-started/requirements' },
 						{ label: 'Installation', slug: 'getting-started/installation' },
 						{ label: 'First run', slug: 'getting-started/first-run' },
 						{ label: 'Configuration reference', slug: 'getting-started/configuration' },
+						{ label: 'Troubleshooting', slug: 'getting-started/troubleshooting' },
 					],
 				},
 				{
@@ -80,6 +97,7 @@ export default defineConfig({
 						{ label: 'Checklists', slug: 'user-guide/checklists' },
 						{ label: 'Scanner import', slug: 'user-guide/scanner-import' },
 						{ label: 'Reports & exports', slug: 'user-guide/reports' },
+						{ label: 'Sample report', slug: 'user-guide/sample-report' },
 						{ label: 'Trends & search', slug: 'user-guide/trends-and-search' },
 						{ label: 'Notifications & profile', slug: 'user-guide/notifications-and-profile' },
 					],
@@ -152,7 +170,6 @@ export default defineConfig({
 						{ label: 'Permissions reference', slug: 'reference/permissions' },
 					],
 				},
-				{ label: 'Changelog', slug: 'changelog' },
 			],
 		}),
 	],

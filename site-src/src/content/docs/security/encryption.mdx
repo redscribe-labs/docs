@@ -1,144 +1,121 @@
 ---
 title: Encryption model
-description: How RedScribe encrypts engagement data at rest, covering the root key, per-engagement data keys, AAD binding, and exactly what is and isn't encrypted.
+description: How RedScribe encrypts engagement data at rest, what is and isn't covered, and what happens if the root key is lost.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-RedScribe encrypts sensitive engagement content at rest using **AES-256-GCM**,
-in a two-tier key hierarchy. One instance-wide **root key** wraps a separate,
-randomly generated **data key** for every individual engagement.
+RedScribe encrypts the sensitive parts of your engagements at rest, using
+AES-256-GCM, so that a stolen database backup or an exposed disk image
+can't be read without a separate key that lives elsewhere entirely. This
+page explains how that protection actually works, exactly what it does and
+doesn't cover, and what happens if you lose the key.
 
-## Key hierarchy
+## Two keys, not one
 
 ```
-REDSCRIBE_ROOT_KEY (instance-wide, 32 bytes)
-        │  wraps (AES-256-GCM)
-        ▼
-ProjectKey.wrapped_key  (one per engagement)
-        │  unwraps to
-        ▼
-per-engagement data key (32 bytes, never stored unwrapped)
-        │  encrypts
-        ▼
-every *_ciphertext field belonging to that engagement
+Root key (one per instance)
+   wraps
+Engagement key (one per engagement, created automatically)
+   encrypts
+The sensitive content that engagement contains
 ```
 
-- The **root key** (`apps/crypto/root_key.py`) is a single 32-byte value for
-  the whole instance, generated once with `python manage.py
-  generate_root_key` (see [First run](/getting-started/first-run/)) and
-  supplied to the app in one of two ways:
-  - **Docker secret file** (preferred): `secrets/root_key.txt`, mounted
-    read-only into the `web` container at `/run/secrets/redscribe_root_key`.
-  - **`REDSCRIBE_ROOT_KEY` environment variable**, the fallback for
-    non-Docker/bare-metal deployments or CI, where there's no Compose secret
-    to mount.
+One key belongs to your whole instance: the **root key**, generated once
+during setup. It never touches your actual finding content directly.
+Instead, the first time an engagement needs one, RedScribe generates a
+fresh, random key just for that engagement and encrypts it with the root
+key. That per-engagement key is what actually encrypts and decrypts the
+sensitive content inside it.
 
-  The file takes precedence over the env var when both are present. This is
-  deliberate, not arbitrary: an environment variable is readable via `docker
-  inspect` or `/proc/<pid>/environ` by any root/same-UID process on the host,
-  while the secret file's exposure is bounded by the mount itself.
+The practical effect: compromising one engagement's key (which never
+happens on its own, since it's never stored anywhere unencrypted) still
+wouldn't expose any other engagement's data, and the root key itself never
+directly touches the data it's ultimately protecting.
 
-- A **`ProjectKey`** row (`apps/crypto/models.py`) is created per engagement
-  the first time it needs one, holding a fresh random 32-byte data key that's
-  immediately wrapped (encrypted) with the root key and stored as
-  `wrapped_key`. The unwrapped data key is never persisted anywhere.
-- Every request that touches engagement data unwraps that engagement's data
-  key on the fly (`apps/crypto/services.py:get_data_key`) and attaches it to
-  the request (`apps/crypto/access.py`) for the duration of that request
-  only.
+### Where the root key lives
 
-<Aside type="danger" title="Losing REDSCRIBE_ROOT_KEY is unrecoverable">
-Every `ProjectKey.wrapped_key` is only decryptable with the root key that
-wrapped it. If the root key is lost, **every engagement's encrypted data
-becomes permanently unrecoverable**. This is a hard cryptographic property,
-not a support limitation. Treat `secrets/root_key.txt` and
-`REDSCRIBE_ROOT_KEY` with the same care as any other master key: back it up
-immediately after generating it, and store that backup somewhere the
-database backup itself doesn't reach. RedScribe's own [backup and
-restore](/admin/backup-and-restore/) tooling backs up the *database*, not
-this key, since they are deliberately separate secrets.
+You supply the root key one of two ways:
+
+- **A Docker secret file** (the default, and the one to prefer if you can).
+- **An environment variable**, for deployments that aren't using Docker
+  Compose, or for CI.
+
+If both are present, the file wins. That's a deliberate choice, not an
+arbitrary one: an environment variable can be read by anyone who can
+inspect the running container or its process list, while a secret file's
+visibility is limited to whoever can actually read that mounted file.
+
+<Aside type="danger" title="Losing the root key is unrecoverable">
+Every engagement's key is only decryptable with the root key that wrapped
+it. If the root key is lost, every engagement's encrypted data becomes
+permanently unrecoverable. This isn't a support limitation, it's how the
+cryptography works. Treat your root key with the same care as any other
+master key: back it up as soon as you generate it, and keep that backup
+somewhere your database backup doesn't reach. RedScribe's own
+[backup and restore](/admin/backup-and-restore/) tooling backs up the
+database, not this key, since the two are deliberately kept separate.
 </Aside>
 
 ## What's actually encrypted
 
-Encryption is applied at the *field* level to specific rich-text/free-text
-content, not to entire tables or the database as a whole. As of this
-writing, the encrypted fields are:
+Encryption applies to specific, sensitive content, not to your entire
+database. As of this writing, that's:
 
-| Model | Field | Content |
-|---|---|---|
-| `findings.FindingSection` | `content_ciphertext` | A finding's rich-text content sections (vulnerability description, technical details, business impact, etc.) |
-| `findings.RetestRecord` | `notes_ciphertext` | Free-text notes on a retest record |
-| `findings.CommentThread` | `anchored_text_ciphertext` | The specific text a comment thread is anchored to |
-| `findings.CommentEntry` | `body_ciphertext` | An individual comment's body |
-| `checklist.ChecklistItem` | `test_results_ciphertext` | A checklist item's recorded test results |
-| `checklist.ChecklistItemComment` | `body_ciphertext` | A checklist item comment's body |
-| `crypto.EncryptedBlob` | `ciphertext` | Uploaded images (evidence screenshots embedded in rich text, see below) |
+- Each finding's written content: description, technical details,
+  business impact, and whatever other sections your instance uses.
+- Notes attached to a retest record.
+- Comment threads on findings, both the specific text a comment points at
+  and each comment's own body.
+- Checklist item results and comments.
+- Images pasted into rich text, such as evidence screenshots.
 
-Metadata *about* these records, things like who wrote them, when, a
-finding's title, severity, status, CVSS score, classification tags, an
-engagement's client name and scope, or checklist item titles and
-categories, is **not** encrypted. Those fields are needed for listing,
-filtering, search, and reporting without unwrapping a data key on every
-query. The encryption boundary is drawn around actual narrative and
-evidence *content*, not the whole schema.
+Everything else, a finding's title, severity, status, CVSS score,
+classification tags, an engagement's client name and scope, checklist item
+titles and categories, stays unencrypted. That's what makes listing,
+filtering, search, and reporting work without needing an engagement's key
+for every single query. The line is drawn around the actual narrative and
+evidence content, not the whole schema.
 
 ### Uploaded images
 
-Images embedded in rich-text content (e.g. a screenshot pasted into a
-finding's technical details) are uploaded via `apps/crypto/blob_views.py`,
-validated against an allow-list of image content types (PNG/JPEG/GIF/WEBP)
-re-detected from the actual decoded bytes (not just the claimed
-`Content-Type` header) with a 10 MB size cap, then stored encrypted as an
-`EncryptedBlob` and served back out decrypted only to a request that already
-has that engagement's data key, meaning only a user with access to that
-engagement.
+An image pasted into rich text, a screenshot of evidence for example, is
+checked against the actual bytes of the file, not just the label the
+upload claims to be, so a renamed file can't sneak past the image-only
+restriction. It's capped at 10 MB, then stored encrypted the same way as
+everything else above, and only ever served back out, decrypted, to
+someone who already has access to that engagement.
 
-## Associated data (AAD) binding
+## Ciphertext can't be swapped between records
 
-Every encrypt/decrypt call, both root-key wrapping and per-record field
-encryption, passes **associated data** (AAD) into AES-GCM alongside the
-nonce and ciphertext:
+Every piece of encrypted content is cryptographically tied to exactly
+which record it belongs to, not just encrypted in isolation. If someone
+with direct database access tried to copy one finding's encrypted content
+into a different finding's row, it wouldn't quietly succeed: decryption
+would fail loudly the next time anyone tried to read it, rather than
+silently showing the wrong finding's content. The same protection applies
+to the root key wrapping each engagement's key in the first place.
 
-- The root key wraps a `ProjectKey` with AAD `engagement:<engagement pk>`
-  (`apps/crypto/services.py:_engagement_aad`).
-- Individual field ciphertexts are encrypted with AAD built by
-  `record_aad(model_label, pk, field)`, which produces
-  `"<model_label>:<pk>:<field>"` (for example
-  `"encryptedblob:<uuid>:ciphertext"`).
+Each encryption also uses a fresh, unpredictable value every time, so the
+same content never produces the same ciphertext twice. That's a basic
+requirement for this kind of encryption to hold up at all, and it's
+handled automatically, not something you need to think about.
 
-AES-GCM's AAD isn't itself encrypted, but it *is* authenticated: decryption
-fails (`InvalidTag`) if the ciphertext is decrypted with different AAD than
-it was encrypted with. Binding each blob's AAD to its own model, primary
-key, and field name means a ciphertext can't be silently swapped between two
-different records (for example copying one finding's encrypted blob into
-another finding's row at the database level) without the swap being
-detected the next time it's read back. The mismatched AAD makes decryption
-fail loudly rather than returning the wrong engagement's plaintext.
+## What this protects against, and what it doesn't
 
-## Nonces
+- **Protects against:** a stolen database backup, dump, or disk image
+  being readable without the separate root key. A compromised read-only
+  database credential, say a misconfigured reporting connection, exposing
+  narrative finding content.
+- **Doesn't protect against:** a compromise of the running application
+  itself. While the app is actively serving a request, it necessarily
+  holds that engagement's key in memory for the moment it needs it, since
+  this protects data at rest, not data while it's actively being used. It
+  also doesn't protect against a compromise of wherever you store your
+  root key backup, so guard that backup the same way you'd guard the key
+  itself.
 
-Every AES-GCM encryption, both root-key wrap and per-record field alike,
-uses a freshly random 12-byte nonce (`os.urandom(12)`), stored as a prefix
-on the ciphertext blob itself (`nonce + ciphertext`) rather than in a
-separate column. That way no nonce is ever reused under the same key, which
-is the one hard requirement AES-GCM's security depends on.
-
-## What this model does and doesn't protect against
-
-- **Protects against:** a stolen database backup, dump, or disk image being
-  readable without the separate root key; a compromised read-only DB
-  credential (e.g. a misconfigured reporting connection) exposing narrative
-  finding content.
-- **Does not protect against:** a compromise of the running application
-  itself. A live app process holds unwrapped data keys in memory for the
-  duration of active requests, by necessity, since this is an at-rest
-  encryption model rather than a confidential-computing one. It also
-  doesn't protect against a compromise of wherever you store the root key
-  backup.
-
-See also [Backup and restore](/admin/backup-and-restore/) for how encrypted
-data is backed up and restored. The ciphertext travels with the database
-dump, but the root key is a separate prerequisite you must already have to
-make a restored backup usable again.
+See [backup and restore](/admin/backup-and-restore/) for how encrypted
+data is actually backed up and restored. The encrypted content travels
+with the database backup, but the root key is a separate prerequisite you
+need to already have on hand to make a restored backup usable again.

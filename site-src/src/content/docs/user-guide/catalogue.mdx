@@ -1,30 +1,15 @@
 ---
 title: Vulnerability catalogue
-description: The catalogue's draft, pending QA, and approved workflow in full detail, including exactly how the approval snapshot and JSON import/export work.
+description: The catalogue's draft, pending QA, and approved workflow, including how the approval snapshot and JSON import/export work.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-The catalogue (`/catalogue/`) is a shared library of pre-written
-vulnerability templates your whole team draws from, so common findings
-don't get rewritten from scratch on every engagement.
+The catalogue is a shared library of pre-written vulnerability templates your whole team draws from, so common findings don't get rewritten from scratch on every engagement.
 
-## Who can do what, without any special permission
+## Who can do what
 
-Anyone signed in can create a draft catalogue entry. Anyone can also edit or
-delete an entry they created themselves, with no permission required at
-all, the same way you can always edit your own draft. Touching someone
-else's entry is where permissions come in:
-
-- `catalogue.manage` lets you edit any entry, not just your own, and submit
-  any entry for QA.
-- `catalogue.approve` lets you move an entry from Pending QA to Approved, or
-  revert an approved entry back to Draft.
-- `catalogue.delete_any` lets you delete any entry, not just your own.
-- `catalogue.bulk_manage` unlocks whole catalogue export and import. The
-  view code checks this permission specifically, not a hardcoded role, so
-  any role you grant it to can use it, even though by default only
-  Superadmin holds it.
+Anyone signed in can create a draft catalogue entry, and anyone can edit or delete an entry they created themselves with no special permission at all, the same way you can always edit your own draft. Touching someone else's entry is where permissions come in: some let you edit or delete any entry, others let you approve entries or move them through QA, and one unlocks whole-catalogue export and import. See the [Permissions reference](/reference/permissions/) for the exact list if you're setting up roles.
 
 ## The workflow
 
@@ -32,112 +17,36 @@ else's entry is where permissions come in:
 Draft ──submit for QA──▶ Pending QA ──approve──▶ Approved
 ```
 
-Only an entry that is currently **Approved**, or that has a stored approved
-snapshot even while its live status has since moved elsewhere, can be
-imported into a finding. See [Creating a
-finding](/user-guide/findings/#creating-a-finding).
+Only an entry that's currently **Approved**, or one that used to be approved and still has that approved version on file, can be imported into a finding. See [Creating a finding](/user-guide/findings/#creating-a-finding).
 
-### What a catalogue entry actually stores
+### What a catalogue entry stores
 
-A title, a default severity, an optional default CVSS score and vector
-string, one or more classification tags, and one rich text block per active
-[content section](/admin/finding-structure/) (vulnerability description,
-business impact, and so on, whatever your instance currently has active).
-There's no separate "notes" or "author" free text field beyond that. Whoever
-created the entry is tracked for permission purposes, not shown as byline
-content.
+A title, a default severity, an optional default CVSS score and vector, one or more classification tags, and a block of rich text for each active [content section](/admin/finding-structure/) your instance uses (vulnerability description, business impact, and so on). There's no separate "notes" or "author" field beyond that. Whoever created the entry is tracked for permission purposes, but it isn't shown as a byline anywhere.
 
-## Editing an entry that isn't a fresh Draft
+## Editing an entry that isn't a fresh draft
 
-Saving an edit to an entry whose status is **Pending QA** or **Approved**
-resets its live status straight back to **Draft**, unconditionally, and
-tells you so with a message explaining it needs to be approved again. This
-is true even for a small wording fix. There's no "minor edit" exception.
+Saving an edit to an entry that's Pending QA or Approved resets it straight back to Draft, every time, and tells you so. This applies even to a small wording fix; there's no "minor edit" exception. If you edit an Approved entry, it drops all the way to Draft rather than back to Pending QA, so it has to go through the full submit-for-QA step again before it can be re-approved.
 
-<Aside type="caution" title="The reset target is always Draft, never back to Pending QA">
-If you edit an Approved entry, it drops all the way to Draft, not back to
-Pending QA. It has to go through the full submit for QA step again before
-it can be re-approved, the same as if it had never been approved at all.
-</Aside>
+### How the approval snapshot works
 
-### The approval snapshot, precisely
+Approving an entry doesn't just flip a status label. It also saves a complete, frozen copy of the entry, title, severity, CVSS fields, classifications, and every section's content, in a separate record. That snapshot, not whatever the entry currently looks like, is what actually gets pulled in when someone imports it into a finding. Re-approving replaces the snapshot; it isn't versioned history.
 
-Approving an entry doesn't just flip a status flag. It also writes a
-complete, frozen copy of the entry's title, severity, CVSS fields,
-classifications, and every section's content into a separate snapshot
-record, one snapshot per template, fully overwritten (not versioned) on
-every re-approval. This snapshot, not the live row, is what actually gets
-pulled in when someone imports the entry into a finding.
+That separation is what makes the catalogue safe to edit while other people are using it. The moment you start editing an Approved entry, its status drops to Draft, but the snapshot from its last approval stays exactly as it was. Anyone importing from that entry in the meantime still gets the vetted, approved content, not your unfinished edit, right up until someone approves the new version.
 
-That separation is what makes the whole system safe to edit concurrently.
-The moment you start editing an Approved entry, its live status drops to
-Draft, but the snapshot from its last approval stays exactly as it was.
-Anyone importing from this entry in the meantime still gets the vetted
-content, not your unfinished edit, right up until someone approves the new
-version and a new snapshot replaces the old one.
-
-Explicitly reverting an entry from Approved back to Draft (rather than just
-editing it) is different: it also **deletes** the snapshot outright, which
-immediately makes the entry un-importable until it's approved again. An
-edit-triggered reset leaves the old snapshot in place and importable; an
-explicit revert does not. If a catalogue entry's detail page shows it as
-importable while its own status reads Draft or Pending QA, that's this
-mechanism working as intended: you're looking at the live, in-progress
-content, but importing would pull the last approved snapshot instead.
+Explicitly reverting an entry from Approved back to Draft (rather than just editing it) is different: it also deletes the snapshot outright, which immediately makes the entry un-importable until it's approved again. So if a catalogue entry shows as importable while its status reads Draft or Pending QA, that's expected: you're looking at the in-progress content, but importing would still pull the last approved version instead.
 
 ## Import and export
 
-Export produces a single JSON file, one array entry per catalogue template,
-shaped like this:
+Export produces a single JSON file with one entry per catalogue template, including title, severity, CVSS fields, classification tags, and each content section's rich text. It's meant for moving a catalogue between RedScribe instances or keeping an external backup, not as something you'd hand-edit day to day.
 
-```json
-[
-  {
-    "title": "Reflected Cross-Site Scripting",
-    "default_severity": "HIGH",
-    "default_cvss_score": "6.1",
-    "default_cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
-    "classifications": [
-      {"taxonomy": "OWASP Top 10 2021", "value": "A03:2021-Injection"}
-    ],
-    "sections": {
-      "vulnerability-description": { "type": "doc", "content": [ ] },
-      "technical-details": { "type": "doc", "content": [ ] }
-    }
-  }
-]
-```
+Importing checks every entry before creating anything: a title is required, severity has to be one of RedScribe's real severity values, any CVSS vector has to parse correctly, and every classification needs both a taxonomy and a value. A single bad entry anywhere in the file rejects the whole import, naming which entry and field failed, so nothing partial gets created.
 
-Each key under `sections` is a [content section](/admin/finding-structure/)
-slug, and its value is that section's content as Tiptap's own rich text JSON
-document format, the same structure the editor itself produces.
-
-Importing validates every entry before creating anything: `title` is
-required, `default_severity` must be one of RedScribe's actual severity
-values, the CVSS vector (if present) must parse as a valid CVSS vector,
-`sections` must be an object, and each classification needs both a taxonomy
-and a value. A single bad entry anywhere in the file rejects the whole
-import with an error naming which entry and field failed. Nothing partial
-gets created.
-
-<Aside type="danger" title="Import never updates or merges, it always creates new entries">
-There is no matching on title, slug, or anything else. Importing the same
-file twice produces two full sets of duplicate entries. If you're
-re-importing an updated version of a catalogue you exported earlier, expect
-duplicates rather than an in-place update, and clean up the old entries
-yourself if that's not what you want.
+<Aside type="danger" title="Import never updates or merges existing entries, it always creates new ones">
+There's no matching on title or anything else. Importing the same file twice produces two full sets of duplicate entries. If you're re-importing an updated version of a catalogue you exported earlier, expect duplicates rather than an in-place update, and clean up the old entries yourself if that's not what you want.
 </Aside>
 
-A section slug in the imported JSON that doesn't match any of your
-instance's current content section slugs is silently skipped rather than
-causing an error, so importing a catalogue exported from a differently
-configured instance quietly drops whatever sections don't line up, without
-telling you it happened. Every imported entry lands as a fresh **Draft**,
-regardless of whether the export captured it as Approved, so imported
-content always goes through your instance's own review process from
-scratch.
+A content section in the imported file that doesn't match any section your instance currently uses is silently skipped, so importing a catalogue exported from a differently configured instance can quietly drop content you'd expect to see, without telling you it happened. Every imported entry lands as a fresh **Draft** regardless of whether the export captured it as Approved, so imported content always goes through your instance's own review process from scratch.
 
 <Aside type="note">
-A fresh RedScribe instance ships with an **empty** catalogue. Nothing is
-seeded by default, so build it up over time, or import one.
+A fresh RedScribe instance ships with an empty catalogue. Nothing is pre-loaded, so build it up over time or import one.
 </Aside>

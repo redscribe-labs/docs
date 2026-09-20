@@ -5,13 +5,15 @@ description: Rebuilding the Tiptap editor, date picker, password strength meter,
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Three self-hosted, **committed** JavaScript bundles plus one committed CSS
+Three self hosted, **committed** JavaScript bundles plus one committed CSS
 file are built from source via npm. Node and npm are **not** a runtime
 dependency of the deployed app and aren't used in the Docker image at all.
 They're only a dev-time tool for whoever next touches the editor JS,
-date-picker JS, or Tailwind classes. There is no `engines` field in this
-repo's `package.json`, so no specific Node version is enforced by the build
-itself, any reasonably current Node install should work.
+date-picker JS, or Tailwind classes.
+
+There is no `engines` field in this repo's `package.json`, so no specific
+Node version is enforced by the build itself. Any reasonably current Node
+install should work.
 
 <Aside type="caution">
 Every build step below writes into `static/vendor/` or `static/css/`, and
@@ -36,12 +38,19 @@ esbuild editor-src/main.js --bundle --format=iife --outfile=static/vendor/redscr
 
 `--format=iife` wraps the whole bundle in an immediately invoked function
 expression, so it can be loaded with a plain `<script>` tag and never
-pollutes the global scope beyond whatever it explicitly attaches. It
-depends on `@tiptap/core`, `@tiptap/starter-kit`, `@tiptap/pm`, and a set of
-individual extension packages (`extension-paragraph`, `extension-image`,
-`extension-code-block`, `extension-highlight`, `extension-underline`,
-`extension-link`, and the four table extensions), all pinned to the same
-`2.27.3` minor line in `package.json`'s `devDependencies`.
+pollutes the global scope beyond whatever it explicitly attaches.
+
+It depends on:
+
+- `@tiptap/core`, `@tiptap/starter-kit`, and `@tiptap/pm`
+- individual extension packages: `extension-paragraph`, `extension-image`,
+  `extension-code-block`, `extension-highlight`, `extension-underline`, and
+  `extension-link`
+- `extension-table`, which exports the `Table`, `TableRow`, `TableHeader`,
+  and `TableCell` node types the editor actually uses
+
+All of these share the same `^3.31.3` version range in `package.json`'s
+`devDependencies`.
 
 <Steps>
 1. ```sh
@@ -83,15 +92,16 @@ the bundle to rebuild.
 [zxcvbn-ts](https://github.com/zxcvbn-ts/zxcvbn) (`@zxcvbn-ts/core` plus the
 `language-common` and `language-en` dictionary packages), is bundled into
 `static/vendor/redscribe-password-strength.bundle.js`. It attaches to every
-`input[type="password"]` on the page whose `id` ends in `password1`, which
-is Django's own naming convention for the first of a two-field
-password-confirmation pair, so it only ever shows up next to a
-password-creation field, never a login field. It's client side,
-**advisory-only** feedback. The actual policy is enforced server side by
-`AUTH_PASSWORD_VALIDATORS` (`config/settings/base.py`), independent of
-whatever this widget displays, so a browser with JavaScript disabled or a
-direct API call is never able to bypass the real policy just because the
-meter didn't run.
+`input[type="password"][id$="password1"]` on the page, matching Django's
+own naming convention for the first of a two-field password-confirmation
+pair, so it only ever shows up next to a password-creation field, never a
+login field.
+
+It's client side, **advisory-only** feedback. The actual policy is enforced
+server side by `AUTH_PASSWORD_VALIDATORS` (`config/settings/base.py`),
+independent of whatever this widget displays, so a browser with JavaScript
+disabled or a direct API call is never able to bypass the real policy just
+because the meter didn't run.
 
 ```sh
 npm run build:strength

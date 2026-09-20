@@ -75,7 +75,7 @@ for the full escape-hatch workflow this command implements.
 ### `emergency_account_recovery`
 
 Resets a local account's password and, optionally, clears its confirmed
-TOTP device — for when the normal in-app tools aren't usable (e.g. the only
+TOTP device, for when the normal in-app tools aren't usable (e.g. the only
 Superadmin is themselves locked out). Unlike a raw `manage.py shell`/
 `changepassword` session, this writes an entry to the [audit
 log](/security/audit-trail/), so the one access path that bypasses every

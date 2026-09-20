@@ -5,31 +5,33 @@ description: Creating and configuring Report Profiles, the appearance and labels
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-A **Report Profile** is where everything about how a report looks and what
-it contains by default gets configured. This page walks through the admin
-side of that screen. If you're looking for the tags themselves, see
-[Report template tags](/reference/report-template-tags/) for the Document
-tab and the [DOCX template guide](/reference/docx-template-guide/) for the
-Word tab.
+A **Report Profile** is where you configure how a report looks and what
+it contains by default. This page walks through the admin side of that
+screen. If you're looking for the tags themselves, see [Report template
+tags](/reference/report-template-tags/) for the Document tab and the
+[DOCX template guide](/reference/docx-template-guide/) for the Word tab.
+See the [Sample report](/user-guide/sample-report/) for a worked example
+built from these pieces.
 
-`/report-profiles/` needs the `report_settings.manage` permission.
+Managing report profiles needs its own permission, separate from
+generating or viewing reports themselves.
 
 ## The profile list
 
-Opening **Report Profiles** in the sidebar shows every profile that exists
-on the instance.
+Opening **Report Profiles** in the sidebar shows every profile on the
+instance.
 
-- **Create** a new profile by giving it a name. It starts empty. Write its
-  Document template to build it out.
+- **Create** a new profile by giving it a name. It starts empty; build it
+  out from its Document template.
 - **Set as default** makes this the profile pre-selected whenever someone
   configures a new report.
-- **Delete** removes a profile, but only if it isn't the current default and
-  it isn't the only remaining profile. Set a different profile as default
-  first if you need to delete one that currently holds that spot.
-- **Export limits**, also on this page, sets `max_concurrent_report_jobs`,
-  the instance wide cap on how many report exports can run at once. See
-  [Export concurrency](/user-guide/reports/#export-concurrency) for what
-  this actually protects against.
+- **Delete** removes a profile, but only if it isn't the current default
+  and isn't the only remaining profile. Set a different profile as default
+  first if you need to delete the one that currently holds that spot.
+- **Export limits**, also on this page, caps how many report exports can
+  run at once across the whole instance. See [Export
+  concurrency](/user-guide/reports/#export-concurrency) for what this
+  actually protects against.
 
 ## Editing a profile
 
@@ -38,9 +40,9 @@ A profile's edit page is organized into a handful of sections.
 ### Document template
 
 The free form, tag driven template that drives Markdown, PDF, and HTML
-export. Every available tag, both the built in structural ones and any text
-blocks you've defined on this profile, is listed live on this same page as
-you write it. See [Report template tags](/reference/report-template-tags/)
+export. Every available tag, both the built in structural ones and any
+text blocks you've defined on this profile, is listed live on this same
+page as you write it. See [Report template tags](/reference/report-template-tags/)
 for the full reference.
 
 ### Appearance
@@ -49,12 +51,14 @@ Fonts, colors, and small pieces of text that change how a report looks
 without touching its content.
 
 - **Cover title**, **classification label** (for example "Strictly
-  Confidential"), and **finding ID prefix** (for example the `F` in `F001`).
-- **Body font** and **monospace font**, both self hosted Google Fonts.
-  Choosing one that isn't already cached triggers a fetch the first time you
-  save. If that fetch fails, you'll get a warning and the report falls back
-  to whatever font is installed wherever it's viewed, rather than the export
-  breaking.
+  Confidential"), and **finding ID prefix** (for example the `F` in
+  `F001`).
+- **Body font** and **monospace font**, chosen from Google Fonts. The
+  first time you pick one that isn't already cached, RedScribe fetches it
+  and stores its own copy, so later exports don't depend on reaching
+  Google Fonts again. If that fetch fails, you'll get a warning and the
+  report falls back to whatever font is installed wherever it's viewed,
+  rather than the export breaking.
 - **Severity colors**, one open and one closed shade per severity level,
   used for per severity table theming across every export format.
 - **Table header color** and **empty cell background color**.
@@ -64,67 +68,68 @@ without touching its content.
 
 ### Labels
 
-Every string a profile can rename instead of accepting the shipped English
-default, things like column headings ("CVSS score," "Tested by," "Linked
-findings") and the severity/status words themselves. A blank value falls
-back to the built in default, so a profile you've never touched here renders
-exactly as it always did. This is aimed at localization or house style
-rather than day to day use.
+Every string a profile can rename instead of accepting the shipped
+English default, things like column headings ("CVSS score," "Tested by,"
+"Linked findings") and the severity and status words themselves. Leave a
+value blank and it falls back to the built in default, so a profile
+you've never touched here renders exactly as it always did. This is aimed
+at localization or house style rather than day to day use.
 
 ### Text blocks
 
 Your own author defined prose sections, the way you add things like an
-executive summary, a disclaimer, or a methodology writeup without touching
-any code.
+executive summary, a disclaimer, or a methodology writeup without
+touching any code.
 
 <Steps>
-1. **Create a text block** from the profile's Text Blocks section, giving it
-   a label. A slug is generated from that label automatically.
-2. The block becomes available as a `{{ slug }}` tag (or `{{p slug }}` for
-   rich content in a DOCX template) on this profile's own template.
+1. **Create a text block** from the profile's Text Blocks section, giving
+   it a label. RedScribe generates an internal identifier from that label
+   automatically.
+2. The block becomes available as a tag on this profile's own template,
+   the same way the built-in structural tags are (see [Report template
+   tags](/reference/report-template-tags/)).
 3. **Edit its default content** from the block's own edit page. This is
    what renders whenever a report doesn't set a per report override.
-4. **Delete** a text block when you no longer need it. A `{{ slug }}` tag
-   still sitting in a template after that is simply skipped at render time,
-   not shown as a broken tag.
+4. **Delete** a text block when you no longer need it. If its tag is still
+   sitting in a template afterward, it's simply skipped at render time
+   rather than shown as a broken tag.
 </Steps>
 
 <Aside type="note">
 A text block always belongs to exactly one profile. There's no shared or
-global block that every profile resolves automatically, so the same
-executive summary text has to be created separately on each profile that
-wants it.
+global block every profile can reuse automatically, so the same executive
+summary text has to be created separately on each profile that wants it.
 </Aside>
 
 ### Word (.docx) template
 
-An optional uploaded `.docx` file that drives Word export instead of
+An optional uploaded Word file that drives Word export instead of
 generating a document from scratch. A profile with nothing uploaded here
-simply has no Word export option, and nothing else breaks.
+simply has no Word export option; nothing else breaks.
 
 <Steps>
-1. **Upload** a `.docx` file. It's validated immediately with a dry run
-   render against dummy data, so a broken template (bad Jinja syntax, a
-   missing `{%p endfor %}`, or a file that isn't really a `.docx`) is
-   rejected on the spot rather than discovered later against a real
-   engagement.
+1. **Upload** a `.docx` file. RedScribe validates it immediately with a
+   dry run render against dummy data, so a broken template is rejected on
+   the spot, whether that's a syntax problem in the template tags, a
+   missing loop closer, or a file that isn't really a `.docx`, rather than
+   discovered later against a real engagement.
 2. You're taken straight to the **style mapping** screen. RedScribe reads
    every named style out of your uploaded document and lets you tell it
    which one is "the code block style," "the image caption style," and so
-   on, for each of the ten content roles described in the [DOCX template
-   guide](/reference/docx-template-guide/#mapping-your-styles).
+   on. The full walkthrough for each of those content roles lives in the
+   [DOCX template guide](/reference/docx-template-guide/#mapping-your-styles).
 3. **Download** the currently uploaded template at any time, or **remove**
    it to turn Word export back off for this profile. Removing it also
    clears the style mapping.
 </Steps>
 
 <Aside type="caution" title="Re-uploading clears the style mapping">
-A new file's styles may not match the old names, so re-uploading a template
-under this profile starts the mapping over from scratch. Re-map after every
-re-upload.
+A new file's styles may not match the old names, so re-uploading a
+template under this profile starts the mapping over from scratch. Re-map
+after every re-upload.
 </Aside>
 
-There's also a **download starter template** link here, a working example
+There's also a **download starter template** link here: a working example
 with a finding loop and the tag patterns from the DOCX guide already in
-place, which is the fastest way to get something working instead of
-starting from a blank document.
+place, the fastest way to get something working instead of starting from
+a blank document.

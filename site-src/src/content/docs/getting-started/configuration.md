@@ -3,62 +3,66 @@ title: Configuration
 description: How RedScribe is configured, and where to find every setting.
 ---
 
-All configuration is via environment variables, normally set in `.env`
-(copied from `.env.example`, see [Installation](/getting-started/installation/)).
-Settings are cross-referenced against `config/settings/base.py` /
-`config/settings/prod.py` where `.env.example`'s own comments don't spell out
-the default or behavior.
+Everything about how RedScribe runs is set through environment variables,
+usually in your `.env` file (copied from `.env.example` during
+[installation](/getting-started/installation/)). This page walks through
+the handful of settings worth understanding conceptually before you tune
+them. For the full list of every variable, its purpose, and its default,
+see the [Environment variables](/reference/environment-variables/)
+reference page.
 
-The full, authoritative table of every variable, its purpose and default,
-lives on the [Environment variables](/reference/environment-variables/)
-reference page. This page covers the handful of settings areas worth
-understanding conceptually before you tune them.
+## Development vs. production settings
 
-## Dev vs. prod settings
+One setting, `DJANGO_SETTINGS_MODULE`, decides which of two modes
+RedScribe runs in:
 
-`DJANGO_SETTINGS_MODULE` picks between two settings modules:
-
-- **`config.settings.dev`**, the `.env.example` default. It has no
-  HTTPS-redirect behavior, so it works whether or not anything is
-  terminating TLS in front of it. Used by [Installation Method
-  3](/getting-started/installation/#method-3-docker-compose-plain-http).
-- **`config.settings.prod`**, for real deployment behind a TLS-terminating
-  reverse proxy ([Methods 1 and 2](/getting-started/installation/)). It sets
-  `SECURE_PROXY_SSL_HEADER` to trust `X-Forwarded-Proto: https` from that
-  proxy, and hard-enforces HTTPS/HSTS/secure cookies once that's set.
+- **Development mode**, the default out of the box. It doesn't redirect
+  anything to HTTPS, so it works whether or not something in front of it
+  is handling TLS. This is what [Installation Method
+  3](/getting-started/installation/#method-3-docker-compose-plain-http)
+  uses.
+- **Production mode**, for a real deployment sitting behind a TLS
+  terminating reverse proxy
+  ([Methods 1 and 2](/getting-started/installation/)). It trusts that
+  proxy's signal that the original request was HTTPS, and once that's
+  set, it enforces HTTPS, strict transport security, and secure cookies
+  across the board.
 
 <details>
 <summary>Common mistake: redirect loops</summary>
 
-Don't point `prod.py` at port 8000 directly without a proxy in front setting
-the `X-Forwarded-Proto` header. Doing so force-redirects everything to
-HTTPS and you'll get a redirect loop.
+Don't point production mode at the app directly, without a proxy in front
+of it signaling that the request came in over HTTPS. Doing that forces
+every request into an HTTPS redirect it can never satisfy, and you end up
+with a redirect loop.
 
 </details>
 
 ## Authentication
 
-Local username/password is always available. OAuth (Google or Microsoft) can
-be layered on via `OAUTH_PROVIDER`. RedScribe is single-tenant per instance,
-so OAuth sign-in is locked to exactly one provider and one email domain
-(`OAUTH_ALLOWED_DOMAIN`); anyone authenticating with a valid provider account
-outside that domain is rejected before an account is created. See
-[Authentication & sessions](/security/authentication/) for the full model,
-including MFA, lockout, and session policy.
+A local username and password always works. You can layer OAuth (Google
+or Microsoft) on top of that. Since one RedScribe instance serves one
+organization, OAuth sign in is locked to exactly one provider and one
+email domain: anyone who authenticates successfully but falls outside
+that domain is rejected before an account is even created. See
+[Authentication & sessions](/security/authentication/) for the full
+picture, including multi factor authentication, lockout, and session
+behavior.
 
 ## Email
 
-Password-reset links and change notifications go out via SMTP
-(`EMAIL_HOST` and friends). Leave `EMAIL_HOST` blank during evaluation to use
-Django's console backend, so emails are printed to the app log instead of
-sent. That's fine for local or dev use, but not for production.
+Password reset links and change notifications go out over SMTP. Leave the
+mail server setting blank while you're evaluating RedScribe, and emails
+print to the app's log instead of actually sending, which is fine for
+local or development use, but not for anything real.
 
 ## Encryption, audit, and backup settings
 
-These three areas each have their own dedicated docs page, since the
-*settings* only make sense alongside how the feature actually behaves:
+These three areas each get their own dedicated page, since the settings
+only make sense alongside how the feature actually behaves:
 
-- [Encryption model](/security/encryption/), covering `REDSCRIBE_ROOT_KEY`.
-- [Audit log](/admin/audit-log/), covering `AUDIT_LOG_RETENTION_DAYS`.
-- [Backup & restore](/admin/backup-and-restore/), covering `BACKUP_DIR`,
-  `BACKUP_ENCRYPTION_PASSPHRASE`, and `BACKUP_RETENTION_DAYS`.
+- [Encryption model](/security/encryption/), covering the instance's root
+  key.
+- [Audit log](/admin/audit-log/), covering how long audit history is kept.
+- [Backup & restore](/admin/backup-and-restore/), covering where backups
+  are stored, how they're encrypted, and how long they're kept.

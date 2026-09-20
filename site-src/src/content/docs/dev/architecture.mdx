@@ -5,6 +5,11 @@ description: The stack, the Django app layout, and a map from user-facing featur
 
 import { Aside } from '@astrojs/starlight/components';
 
+This page maps RedScribe's stack, its Django app boundaries, and the order
+requests flow through middleware, so you can find the code that owns a
+given feature and understand what already ran by the time your view or
+template gets a request.
+
 RedScribe is a monolithic Django project. It uses server-rendered templates
 plus HTMX for interactivity, with no separate frontend build or SPA
 framework for the app itself. The only client-side JavaScript bundles are
@@ -66,8 +71,10 @@ whatever the earlier middleware decided, like a forced MFA redirect).
 
 ## Templates and static assets
 
-- `templates/base/` holds shared chrome (`base.html`, sidebar, breadcrumbs,
-  pagination, toasts, theme toggle) that every app's templates extend.
+- `templates/base/` holds shared chrome that every app's templates extend:
+  `base.html` (which includes the sidebar markup directly), plus partials
+  like `_breadcrumbs.html`, `_pagination.html`, `_toasts.html`, and
+  `_theme_toggle.html`.
 - `templates/<app>/` is one directory per app, mirroring the `apps/` layout.
 - `static/vendor/` holds **built** JS bundles (`redscribe-editor.bundle.js`,
   `redscribe-datepicker.bundle.js`, `redscribe-password-strength.bundle.js`)
@@ -78,8 +85,8 @@ whatever the earlier middleware decided, like a forced MFA redirect).
   `editor.css` is hand-matched to the same color tokens (see
   `COLOR_SCHEME.md` in the repo root) since the editor iframe isn't run
   through Tailwind.
-- `static/fonts/` holds self-hosted Inter (UI) and IBM Plex Mono / Source Code
-  Pro (code/mono).
+- `static/fonts/` holds self hosted Plus Jakarta Sans (UI) and JetBrains
+  Mono / Source Code Pro (code/mono).
 
 ## Feature-to-code map
 

@@ -32,6 +32,10 @@ Nothing breaks, it's just not offered.
 
 ## Two kinds of tag
 
+Every tag in a DOCX template is one of these two kinds, and which one you
+need depends on whether the content is a single value or something with its
+own paragraphs, images, or tables.
+
 | | Syntax | Use for | What it does |
 |---|---|---|---|
 | Plain | `{{ tag }}` | Single values, such as names, dates, numbers, and labels | Replaces just the tag's text, keeping whatever formatting (bold, font, color) the tag's own run already has in your document |
@@ -207,7 +211,7 @@ the same as any other paragraph.)
 | Tag | Renders |
 |---|---|
 | `{{p finding['<slug>'] }}` | One finding's content for that content section (see below) |
-| `{{p finding.details_table }}` | A ready-made table of severity, ID, CVSS score/vector, CVE ID, classifications, and status — the severity and status rows' value cell (e.g. "Critical", not the "Severity rating" label next to it) is shaded using the profile's configured severity colors, open/closed variant included. Prefer this over hand-rolling `{{ finding.severity }}`/`{{ finding.status }}` yourself if you want that coloring |
+| `{{p finding.details_table }}` | A ready-made table of severity, ID, CVSS score/vector, CVE ID, classifications, and status. The severity and status rows' value cell (e.g. "Critical", not the "Severity rating" label next to it) is shaded using the profile's configured severity colors, open/closed variant included. Prefer this over hand-rolling `{{ finding.severity }}`/`{{ finding.status }}` yourself if you want that coloring |
 | `{{p finding.retest_history }}` | A date/tested-by/result table of retest records, remediation reports only, empty otherwise |
 
 #### Content sections are dynamic
@@ -219,29 +223,36 @@ and each one's slug, can change at any time. **Always check the live list on
 the profile's Word (.docx) tab before authoring**, since it's generated
 fresh from whatever's currently active, not from this document.
 
-As of this writing, a typical deployment's slugs look like:
+A fresh instance starts with zero content sections; the slugs below are what
+[`seed_pentest_report_format`](/reference/management-commands/#seed_pentest_report_format)
+creates as a starting point, and they're fully editable afterward from
+[Finding structure](/admin/finding-structure/):
 
 | Slug | Label |
 |---|---|
-| `vulnerability-description` | Vulnerability description |
-| `business-impact` | Business impact |
-| `testing-summary` | Testing summary |
-| `technical-details` | Technical details |
-| `remediation-testing` | Remediation testing |
-| `recommendations` | Recommendations |
+| `risk_assessment` | Risk Assessment |
+| `description` | Description |
+| `impact` | Impact |
+| `steps_to_reproduce` | Steps to Reproduce |
+| `proof_of_concept` | Proof of Concept |
+| `affected_assets` | Affected URLs / Assets |
+| `recommendation` | Recommendation |
 | `references` | References |
 
 <Aside type="danger" title="Use bracket notation, not dot notation, for these">
 ```
-{{p finding['technical-details'] }}         ✓ correct
-{{p finding.technical-details }}            ✗ wrong — silently breaks
+{{p finding['root-cause-analysis'] }}         ✓ correct
+{{p finding.root-cause-analysis }}            ✗ wrong — silently breaks
 ```
 
-This is a hard Jinja rule, not a RedScribe quirk: a slug like
-`technical-details` contains a hyphen, and `finding.technical-details`
-parses as *subtraction* (`finding.technical` minus `details`), not as one
-attribute name. Bracket notation with the slug as a quoted string always
-works, regardless of what characters the slug contains, so use it for every
+This is a hard Jinja rule, not a RedScribe quirk: a slug containing a
+hyphen, like a custom section named `root-cause-analysis`, makes
+`finding.root-cause-analysis` parse as *subtraction*
+(`finding.root` minus `cause` minus `analysis`), not as one attribute name.
+`ContentSectionDefinition` slugs can contain letters, numbers, underscores,
+and hyphens, so this can bite you the moment an admin names a section with
+one. Bracket notation with the slug as a quoted string always works,
+regardless of what characters the slug contains, so use it for every
 content-section tag, even ones that happen to only contain underscores.
 </Aside>
 
@@ -281,11 +292,12 @@ you'll see to pick from.
 ## Formatting notes and limitations
 
 - **Marks** (bold/italic/underline/strikethrough) on text within a rich
-  section carry through automatically. **Inline code** uses your mapped
-  "Inline code" character style if set, else falls back to the profile's
-  configured monospace font. **Highlighted** text maps to Word's built-in
-  yellow highlight. Arbitrary highlight colors aren't supported.
-  **Links** render using Word's built-in "Hyperlink" character style
+  section carry through automatically.
+- **Inline code** uses your mapped "Inline code" character style if set,
+  else falls back to the profile's configured monospace font.
+- **Highlighted** text maps to Word's built-in yellow highlight. Arbitrary
+  highlight colors aren't supported.
+- **Links** render using Word's built-in "Hyperlink" character style
   automatically; only `http://`, `https://`, and `mailto:` links are ever
   embedded (anything else is dropped as a precaution).
 - **Nested bulleted/numbered lists** (a sub-bullet under a bullet) are
@@ -364,13 +376,13 @@ Heading 1: Detailed Findings
                                     {{p finding.details_table }}
 
 Heading 2: Description
-                                    {{p finding['vulnerability-description'] }}
-Heading 2: Technical Details
-                                    {{p finding['technical-details'] }}
-Heading 2: Business Impact
-                                    {{p finding['business-impact'] }}
-Heading 2: Recommendations
-                                    {{p finding['recommendations'] }}
+                                    {{p finding['description'] }}
+Heading 2: Impact
+                                    {{p finding['impact'] }}
+Heading 2: Steps to Reproduce
+                                    {{p finding['steps_to_reproduce'] }}
+Heading 2: Recommendation
+                                    {{p finding['recommendation'] }}
 Heading 2: Retest History
                                     {{p finding.retest_history }}
                                     {%p endfor %}

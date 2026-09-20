@@ -1,44 +1,81 @@
 ---
 title: Moving to a new machine
-description: Moving a Method 1/2 Docker Compose deployment to a new host, and forcing a fresh certificate.
+description: Moving a Method 1/2 Docker Compose deployment to a new host, moving the database along with it, and forcing a fresh certificate.
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Applies to [Method 1 (Tailscale)](/getting-started/installation/#method-1-docker-compose--tailscale-recommended)
-and [Method 2 (your own cert)](/getting-started/installation/#method-2-docker-compose--your-own-tls-certificate)
-deployments.
+This page walks through moving a [Method
+1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended)
+or [Method
+2](/getting-started/installation/#method-2-docker-compose--your-own-tls-certificate)
+deployment to a new host, including the database itself and a fresh TLS
+certificate for the new machine.
 
-`certs/` is gitignored, so copying the project directory (`rsync`/`scp`/`tar`)
-to a new host carries the **old** machine's `fullchain.pem`/`privkey.pem`
-along with it. `nginx` doesn't check whether a cert's subject matches
-`NGINX_SERVER_NAME`, it just serves whatever bytes are in those two files. If
-you don't clear them, the new host will silently keep serving the old
-machine's certificate.
+<Aside type="caution" title="Copying the project directory alone does not move your data">
+The database lives in a Docker-managed volume, not inside the project
+directory, so copying the project directory with `rsync`, `scp`, or `tar`
+does **not** bring your engagements, findings, or anything else in the
+database along with it. Use the backup and restore steps below to actually
+move that data.
+</Aside>
 
 <Steps>
-1. Copy the project directory to the new host by whatever means you normally
-   would (`rsync`, `scp`, `tar`).
-2. On the new machine, update `.env`'s `NGINX_SERVER_NAME` to the new host's
-   value.
-3. Delete the stale certificate files and bring the stack up:
+1. **On the old host, take a fresh backup right before you copy anything:**
+
+   ```sh
+   docker compose exec -T web python manage.py create_backup
+   ```
+
+   This writes an encrypted `.rsbk` file into `./backups`, which is a
+   regular host directory, so it travels along with the project directory
+   copy in the next step.
+
+2. **Copy the project directory to the new host** by whatever means you
+   normally would (`rsync`, `scp`, `tar`). This carries `.env`,
+   `secrets/root_key.txt` (your root encryption key, needed to read the
+   backup you just took), `certs/`, and the backup file from step 1.
+
+3. **On the new machine, update `.env`'s `NGINX_SERVER_NAME`** to the new
+   host's value.
+
+4. **Delete the stale certificate files** left over from the old host, and
+   bring the stack up:
 
    ```sh
    rm certs/fullchain.pem certs/privkey.pem
    docker compose --profile tailscale up -d --build   # or: up -d --build for BYO-cert (Method 2)
    ```
+
+   This creates a fresh, empty database on the new host. It doesn't
+   contain the backup from step 1 yet.
+
+5. **Restore the backup from step 1** to bring your data into that fresh
+   database:
+
+   ```sh
+   docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
+   ```
+
+   See [Backup & restore](/admin/backup-and-restore/) for what this
+   command prints along the way, including the account-impact report it
+   shows you before touching anything.
 </Steps>
 
-For Method 1, `cert-renew`'s `tailscale cert` call is a no-op renewal until
-the file is near expiry, so deleting the stale files first forces a **real
-reissue** for the new domain instead of silently keeping the old one.
+For Method 1, `cert-renew`'s certificate request is a no-op renewal until
+the existing file is near expiry, so deleting the stale files first forces
+a **real reissue** for the new domain instead of silently keeping the old
+one. `nginx` doesn't check whether a certificate's subject matches
+`NGINX_SERVER_NAME` either, it just serves whatever bytes are in those two
+files, so an un-deleted stale certificate would keep being served
+silently.
 
 <Aside type="caution" title="Already-running nginx can keep serving the stale cert for up to an hour">
-If `nginx` was already running when the new cert got written (for example
-you deleted or reissued the cert without recreating the `nginx` container),
-it can keep serving the stale cert it loaded at boot. `watch-certs.sh` only
-checks the file's hash once an hour (see [Certificate reload
-behavior](/deployment/docker-compose/#certificate-reload-behavior)). Force
+If `nginx` was already running when the new certificate got written (for
+example you deleted or reissued the certificate without recreating the
+`nginx` container), it can keep serving the stale certificate it loaded at
+boot. The reload check only runs once an hour, see [Certificate reload
+behavior](/deployment/docker-compose/#certificate-reload-behavior). Force
 it immediately with:
 
 ```sh

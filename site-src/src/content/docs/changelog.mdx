@@ -15,6 +15,52 @@ versioning](/start/alpha-status/) for how that's applied pre-1.0.
 
 ## [Unreleased]
 
+### Security
+
+- `mfa_required` now defaults to **on** instead of off. Every local account
+  is enrolled in TOTP MFA from first login unless an admin turns off the
+  instance-wide flag in Feature Flags (useful for a local or disposable
+  dev/test instance). Existing instances get migrated to the new default on
+  upgrade.
+- Added an `emergency_account_recovery` management command. Resetting a
+  locked-out local account used to mean a raw `manage.py shell` or
+  `changepassword` session that left no trace in RedScribe's audit log, the
+  one access path that matters most during an incident. The new command
+  requires a `--reason` and writes an audit log entry for what it did.
+- The permanent-engagement-delete confirmation page now says plainly that a
+  database backup taken before the deletion still holds that engagement's
+  data until the backup itself ages out or gets cleaned up. Deletion only
+  ever touched the live database, but the page used to imply otherwise. See
+  [Backup & restore](/admin/backup-and-restore/) for more.
+- Fixed a server-side template injection vulnerability in Word (`.docx`)
+  report export. Uploaded `.docx` templates were rendered through an
+  unrestricted `jinja2.Environment` (via `docxtpl`), so a crafted template
+  could reach Python internals and potentially run arbitrary code on the
+  server. Both render paths (upload-time validation and the real export)
+  now use `jinja2.sandbox.SandboxedEnvironment` instead.
+- Clearing all audit logs now requires a second, currently active
+  Superadmin's username and password at confirmation time, not just the
+  `audit_log.manage` permission on its own. A full purge is the one action
+  that could undo the audit log's tamper-evidence guarantee, so it's no
+  longer left to a single person acting alone.
+- The uploaded `.docx` report template now has an explicit 20MB size cap,
+  plus a check on the archive's declared uncompressed size and member count
+  before it's opened by `python-docx`/`docxtpl`. This closes a zip-bomb
+  style resource-exhaustion path the size cap alone didn't cover.
+- A `.docx` template's original filename is now sanitized before it's used
+  in a download's `Content-Disposition` header, closing a header-injection
+  path for filenames containing an unescaped `"`.
+- Added `.dockerignore` (`.env`, `secrets/*.txt`, `certs/*.pem`, `.git/`,
+  and similar). The `Dockerfile`'s `COPY . .` had no exclusions, so any of
+  these present in the build context at `docker build` time would get
+  baked into the image layer despite being `.gitignore`d, since gitignore
+  has no effect on Docker's build context.
+- Postgres connections now set `sslmode` explicitly (default `prefer`,
+  matching the shipped same-host Compose setup, configurable via
+  `POSTGRES_SSLMODE`/`POSTGRES_SSLROOTCERT`) instead of relying on
+  psycopg's undocumented default. This matters once `POSTGRES_HOST` points
+  at a separate host.
+
 ## [0.1.0-alpha.1] - 2026-09-17
 
 Initial public release.

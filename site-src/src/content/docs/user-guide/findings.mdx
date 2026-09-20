@@ -5,42 +5,44 @@ description: Creating findings, the draft → review → QA workflow, CVSS scori
 
 import { Aside, Steps, Badge } from '@astrojs/starlight/components';
 
+A finding is where the actual work of an engagement lives: one
+vulnerability, written up, scored, and walked through review before it
+ever reaches a client. This page covers creating one, the review workflow
+it moves through, and what happens when you retest it later.
+
 ## Creating a finding
 
-From an engagement → **Findings** → **New** (`/engagements/<id>/findings/new/`).
-You can also **import from the catalogue** while creating one, pulling in an
-approved [vulnerability catalogue](/user-guide/catalogue/) entry's content as
-a starting point instead of writing from scratch. Nothing stops you editing
-it further afterward.
+From an engagement, go to **Findings** → **New**. You can also **import
+from the catalogue** while creating one, pulling in an approved
+[vulnerability catalogue](/user-guide/catalogue/) entry as a starting
+point instead of writing from scratch. Nothing stops you editing it
+further afterward.
 
-### Fields
+### What you fill in
 
-- **Title**, **severity** (Critical / High / Medium / Low / Informational),
-  and **status** (Open / Closed, whether the vulnerability itself is
-  currently present, independent of the workflow status below).
-- **CVSS score/vector**, entered directly or via the built-in **CVSS v3.1
-  and v4.0 calculators**.
-- **CVE ID**, if applicable.
-- **Classifications**, tagging the finding against one or more taxonomies
-  (for example `OWASP Top 10 2021` → `A01:2021-Broken Access Control`).
-  Taxonomy/value pairs are free-typed the first time and offered as
-  autocomplete suggestions afterward, org-wide.
-- **Content sections**, a set of rich-text fields (vulnerability
-  description, technical details, business impact, and so on) that are
-  admin-configured per deployment, not fixed. See [Finding
-  structure](/admin/finding-structure/) for what controls which sections
-  exist and their order.
-- **Affects**, the affected assets, as free text (one host/URL per line, or
-  populated automatically by [Scanner import](/user-guide/scanner-import/)).
-  It appears among the content sections above, at whatever position and
-  under whatever label an admin has set for it on the [Finding
-  structure](/admin/finding-structure/#affected-assets-is-a-built-in-protected-section)
-  page — it's just not a rich-text field like its neighbors.
+- **Title**, **severity** (Critical, High, Medium, Low, or Informational),
+  and **status** (Open or Closed, whether the vulnerability itself is
+  still present, separate from where it stands in review, below).
+- **CVSS score and vector**, typed directly or worked out with the
+  built-in CVSS v3.1 and v4.0 calculators.
+- **CVE ID**, if one applies.
+- **Classifications**, tagging the finding against one or more taxonomies,
+  for example `OWASP Top 10 2021` → `A01:2021-Broken Access Control`. Type
+  a new pair once and it's offered as a suggestion everywhere else
+  afterward.
+- **Content sections**, a set of rich text fields such as a vulnerability
+  description, technical details, or business impact. Which sections
+  exist and in what order is set per instance, not fixed. See
+  [Finding structure](/admin/finding-structure/) if you want to change
+  them.
+- **Affected assets**, the hosts or URLs the finding applies to, one per
+  line. [Scanner import](/user-guide/scanner-import/) fills this in
+  automatically when it creates a finding for you.
 
 ## The review workflow
 
-Every finding carries a `workflow_status`, separate from its `status`
-(open/closed):
+Every finding moves through its own review stage, separate from whether
+it's open or closed:
 
 ```
 Draft ──submit for review──▶ Reviewed ──submit for QA──▶ QA Approved
@@ -48,63 +50,64 @@ Draft ──submit for review──▶ Reviewed ──submit for QA──▶ QA 
   └────── changes requested ─────┘◀──── changes requested ────┘
 ```
 
-- **Draft**, the starting state for every new finding.
-- **Reviewed**, meaning a reviewer has approved it. **Changes Requested (Review)**
-  sends it back to Draft with review feedback instead.
-- **QA Approved**, meaning a second, independent reviewer has QA-approved
-  it. **Changes Requested (QA)** sends it back to Draft too. Only a **QA
-  Approved** finding on a **released** engagement is ever visible in the
-  [Client Portal](/client-portal/for-clients/).
+- **Draft** is where every new finding starts.
+- **Reviewed** means a reviewer has signed off on it. If they instead send
+  it back with feedback, it returns to Draft as **Changes Requested
+  (Review)**.
+- **QA Approved** means a second, independent reviewer has signed off too.
+  A QA rejection sends it back to Draft the same way. Only a QA-approved
+  finding on a released engagement is ever visible in the
+  [Client Portal](/client-portal/for-clients/). Nothing earlier in the
+  pipeline reaches a client, ever.
 
-### Assigning and acting
+### Who can review and QA
 
-- **Assign reviewer** / **Assign QA** needs `findings.review` /
-  `findings.qa` to be *eligible for assignment*. Assigning itself needs
-  engagement access.
-- **Submit review** / **Submit QA** (approve or request changes) needs
-  `findings.review` (or `findings.review_own` for your own authored
-  findings) / `findings.qa` (or `findings.qa_own`).
-- **Reopen to draft** manually pulls a finding back to Draft regardless of
-  its current stage.
-- `findings.act_any_assignment` lets someone submit *any* finding's
-  review/QA decision, regardless of who it's actually assigned to. This is
-  useful for a Team Lead covering for an absent reviewer.
+Reviewing and QA-ing findings each need their own permission, and someone
+can have one without the other. A narrower version of each exists too, for
+reviewing only your own findings rather than everyone's. See the
+[Permissions reference](/reference/permissions/) for the exact grants if
+you're setting up roles.
 
-Bulk versions of assign-reviewer, submit-review, assign-QA, and submit-QA
-exist from the findings list, for acting on several findings in one pass.
+One useful exception: a permission exists that lets someone submit
+*anyone's* review or QA decision, regardless of who it's actually assigned
+to. That's meant for a Team Lead covering for someone who's out, not for
+everyday use.
+
+You can also **reopen a finding to Draft** manually at any point,
+regardless of its current stage, and act on several findings at once from
+the findings list rather than one at a time.
 
 <Aside type="tip" title="My Queue">
-`/reviews/` (**My Queue** in the sidebar) lists every finding currently
-assigned to you for review or QA. It's the fastest way to find your
-outstanding work across every engagement you have access to.
+**My Queue** in the sidebar lists every finding currently assigned to you
+for review or QA, across every engagement you have access to. It's the
+fastest way to see your outstanding work in one place.
 </Aside>
 
 ## Archiving
 
-**Archive** / **Unarchive** on a finding works the same way as on an
-engagement: a soft-delete that drops it from default lists without
-destroying data.
+**Archive** and **Unarchive** work the same as they do on an engagement: a
+soft delete that removes a finding from the default list view without
+destroying anything.
 
 ## Retesting
 
-Once an engagement moves into remediation testing, log a **retest record**
-per finding: <Badge text="Not Retested" variant="note" /> →
+Once an engagement moves into remediation testing, log a retest record per
+finding: <Badge text="Not Retested" variant="note" /> →
 <Badge text="Fixed" variant="success" /> / <Badge text="Not Fixed" variant="danger" /> /
 <Badge text="Partially Fixed" variant="caution" /> / <Badge text="Risk Accepted" variant="note" />.
-Retest history renders into the report automatically
-(`{{p finding.retest_history }}` / `{{p finding['retest_history'] }}`) on a
-remediation report, and it's empty otherwise.
+That history renders straight into a remediation report automatically, and
+simply doesn't appear on a report at all until there's something to show.
 
 ## Comments
 
-Every rich-text field on a finding supports threaded, position-anchored
-comments. Select the relevant text, start a thread, reply, and mark it
-resolved when addressed. This is how review/QA feedback usually gets
-attached to the *specific* sentence it's about, rather than living in a
-separate unstructured field.
+Every rich text field on a finding supports threaded comments anchored to
+the exact text they're about. Select the relevant sentence, start a
+thread, reply, and mark it resolved once it's addressed. This is how
+review and QA feedback usually gets attached to the specific thing it's
+about, instead of living in a separate note nobody reads in context.
 
 ## Scanner import
 
-Findings can also be bulk-created from a scanner's raw output (Nmap, Burp
-Suite, Nuclei) instead of one at a time. See [Scanner
-import](/user-guide/scanner-import/).
+Findings can also be created in bulk straight from a scanner's raw output
+(Nmap, Burp Suite, Nuclei) instead of one at a time by hand. See
+[Scanner import](/user-guide/scanner-import/).

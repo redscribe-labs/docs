@@ -5,6 +5,10 @@ description: Running RedScribe's Django test suite locally and in CI, the testin
 
 import { Aside } from '@astrojs/starlight/components';
 
+This page covers running RedScribe's Django test suite, the testing
+conventions used across apps, and what to check yourself before opening an
+issue or a PR, since there's no CI to catch it for you.
+
 ## Running the suite
 
 ```sh
@@ -26,7 +30,7 @@ exactly what you're working on instead of the full suite:
 ```sh
 python manage.py test apps.findings              # one app
 python manage.py test apps.findings.tests.FindingViewTests            # one test class
-python manage.py test apps.findings.tests.FindingViewTests.test_create_requires_permission  # one test method
+python manage.py test apps.findings.tests.FindingViewTests.test_non_member_cannot_create_finding  # one test method
 ```
 
 This is worth using while iterating. The full suite takes real time to run
@@ -38,18 +42,22 @@ every save while you're working inside a single app.
 Every app has exactly one `tests.py` at `apps/<app>/tests.py`, following
 Django's default test discovery convention rather than a separate `tests/`
 package per app. There's no `pytest`, no `factory_boy`, and no fixture
-files. Every test is a plain `django.test.TestCase` subclass grouped by the
-feature it covers (for example `apps/findings/tests.py` has
-`FindingViewTests`, `CommentThreadTests`, `CatalogueTests`,
-`CatalogueVersioningTests`, and so on, each with its own `setUp()` building
-whatever engagement, finding, or user state that group of tests needs from
-scratch). Most tests exercise real views through Django's test `Client`
-rather than calling internal functions directly, so they cover permission
-checks, redirects, and template rendering the same way an actual request
-would. As of this writing the suite has 900+ individual test methods across
-all apps. Run `grep -rc "def test_" apps/*/tests.py` from the repo root for
-an exact current count, since it only grows over time and any number given
-here should be treated as a lower bound rather than the real figure.
+files.
+
+Every test is a plain `django.test.TestCase` subclass grouped by the
+feature it covers. For example, `apps/findings/tests.py` has
+`FindingViewTests`, `CommentThreadTests`, `CatalogueTests`, and
+`CatalogueVersioningTests`, among others, each with its own `setUp()`
+building whatever engagement, finding, or user state that group of tests
+needs from scratch. Most tests exercise real views through Django's test
+`Client` rather than calling internal functions directly, so they cover
+permission checks, redirects, and template rendering the same way an
+actual request would.
+
+As of this writing the suite has 900+ individual test methods across all
+apps. Run `grep -rc "def test_" apps/*/tests.py` from the repo root for an
+exact current count. Treat any number given here as a lower bound, since
+the suite only grows over time.
 
 <Aside type="note">
 There is no linter or formatter wired into CI, no `ruff`, `black`, `flake8`,
@@ -58,12 +66,12 @@ convention and review, not by a tool. Don't go looking for a pyproject.toml
 lint section, there isn't one.
 </Aside>
 
-## No CI — run these checks yourself
+## No CI, run these checks yourself
 
 There is currently **no CI**. A `.github/workflows/test.yml` workflow ran
-these checks automatically for a while, but was removed: with no CI runner
-to diagnose failures against, a broken workflow was just producing
-failure-notification emails with no way to see why, and the suite runs
+these checks automatically for a while, but was removed, since a broken
+workflow with no CI runner to diagnose it against was only producing
+failure-notification emails with no way to see why. The suite runs
 identically well locally. Run both of these before opening a PR:
 
 ```sh
@@ -86,5 +94,5 @@ development](/dev/local-development/) already sets this up for you.
 Per [Contributing](/dev/contributing/), a PR that changes behavior should
 come with tests covering it, written in the existing style of the relevant
 app's `tests.py` rather than introducing a new testing pattern for just
-that one change. Run the suite locally before opening the PR — there's no
-CI running it again for you, so this is the only check a PR gets.
+that one change. Run the suite locally before opening the PR. There's no CI running it again
+for you, so this is the only check a PR gets.

@@ -1,80 +1,39 @@
 ---
 title: Managing client access
-description: Creating client companies and accounts, exactly what each field and admin action does, and the instance-wide toggle that turns portal access on or off.
+description: Creating client companies and accounts, what each admin action does, and the instance-wide toggle that turns portal access on or off.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-This page is for staff managing client-facing access. See [For
-clients](/client-portal/for-clients/) for what the client themselves sees.
+This page is for staff managing client-facing access. See [For clients](/client-portal/for-clients/) for what the client themselves sees.
 
 ## Client companies
 
-`/clients/` needs the `clients.manage` permission. A **Client** groups
-engagements under one customer organization.
+A client company groups engagements under one customer organization. Managing them needs its own permission; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
 
-The list page supports a free text search over the company name
-(case-insensitive substring match) and paginates at ten companies per page.
+The client list supports a free text search over company name, and paginates ten companies per page.
 
-Creating one asks for a single field: **name**, which must be unique across
-every client company on the instance. Editing adds a second field, **active**.
+Creating a client company only asks for a **name**, which has to be unique across the instance. Editing one adds a second field: whether it's **active**.
 
 <Aside type="note">
-An engagement must be linked to an existing client company at creation. You
-cannot create one against a free-typed client name and attach it to a
-proper `Client` later. Create the client company first.
+An engagement has to be linked to an existing client company at creation. You can't create one against a free-typed client name and attach it to a proper company later. Create the client company first.
 </Aside>
 
 ### What deactivating a client company actually does
 
-Turning **active** off does not touch any individual client user account,
-and it does not touch the company's engagements either. What it does is
-remove every one of that company's engagements from the portal's visibility
-query in one step, since the portal only ever lists engagements whose
-client is both linked and currently active. Every client user tied to that
-company effectively loses access to everything at once, without you having
-to deactivate each of their accounts individually. Reactivating the company
-restores that visibility immediately, with no other side effects.
+Turning a company's **active** flag off doesn't touch any individual client user account, and it doesn't touch the company's engagements either. What it does is remove every one of that company's engagements from what the portal will show, since the portal only ever lists engagements belonging to a client that's both linked and currently active. Every client user tied to that company effectively loses access to everything at once, without you having to deactivate each of their accounts individually. Reactivating the company restores that visibility immediately, with no other side effects.
 
-A company's detail page lists its engagements and every client portal
-account tied to it, so you can see both sides before deciding whether to
-deactivate it.
+A company's detail page lists its engagements and every client portal account tied to it, so you can see both sides before deciding whether to deactivate it.
 
 ## Client accounts
 
 From a client company's detail page:
 
-- **New client user** creates a login scoped to that one company. The form
-  asks for username, email, first name, last name, and which client company
-  the account belongs to (defaulted to the company you started from, but
-  changeable). The account is created with an unusable password and the
-  built in `client` role, and the same single-use twenty four hour emailed
-  setup link used for staff accounts is sent immediately, the same
-  mechanism described in [User management](/admin/user-management/).
-- **Deactivate** does two things at once: it flags the account inactive,
-  and it immediately invalidates every one of that account's active
-  sessions, signing them out everywhere right away rather than waiting for
-  their session to expire naturally. **Reactivate** only flips the flag
-  back. It does not need to touch sessions, since a deactivated account
-  could not have created a new one in the meantime.
-- **Send password reset** sends the same emailed reset link a self-service
-  "Forgot password" would, on the admin's behalf. This only works for local
-  accounts. An account provisioned through an OAuth provider has no
-  RedScribe-managed password to reset.
-- **Clear MFA** deletes the account's confirmed TOTP device, if it has one,
-  forcing re-enrollment at next login. If the account has no device
-  enrolled yet, you'll see a message saying there was nothing to clear
-  rather than a silent no-op. Like the password reset action, this only
-  applies to local accounts. See the equivalent staff-side action in [User
-  management](/admin/user-management/#account-recovery-lost-password--lost-mfa-device)
-  for the same idea applied to a lost password or lost device on a staff
-  account.
+- **New client user** creates a login scoped to that one company. You'll fill in username, email, first name, last name, and which client company the account belongs to (defaulted to the company you started from, but changeable). The account is created with a locked password and the built-in client role, and the same single-use, 24-hour emailed setup link used for staff accounts is sent immediately. See [User management](/admin/user-management/) for more on how that setup flow works.
+- **Deactivate** does two things at once: it flags the account inactive, and it immediately signs the account out everywhere, rather than waiting for their session to expire naturally. **Reactivate** only flips the flag back; it doesn't need to touch sessions, since a deactivated account couldn't have started a new one in the meantime.
+- **Send password reset** sends the same emailed reset link a self-service "Forgot password" would, on the admin's behalf. This only works for accounts that sign in with a password. An account provisioned through single sign-on has no RedScribe-managed password to reset.
+- **Clear MFA** removes the account's authenticator enrollment, forcing re-enrollment at next login. If the account never enrolled in the first place, you'll see a message saying there was nothing to clear rather than a silent no-op. Like the password reset action, this only applies to accounts that sign in with a password. See the equivalent staff-side action in [User management](/admin/user-management/#account-recovery-lost-password--lost-mfa-device) for the same idea applied to a staff account.
 
 ## Turning portal access on or off instance-wide
 
-`client_portal_enabled` (Feature Flags, Superadmin only) is a single
-instance-wide switch. When it is off, client-role accounts cannot log in at
-all, regardless of individual account status, company status, or anything
-else. Managing client companies and accounts stays available to
-Superadmin and Team Lead either way, so you can fully prepare a client's
-access before ever flipping this on. See [Feature flags](/admin/feature-flags/).
+A single instance-wide switch turns the whole client portal on or off, gated by its own permission (a Superadmin has it by default; see the [Permissions reference](/reference/permissions/) if you want to grant it elsewhere). When it's off, client accounts can't log in at all, regardless of individual account status, company status, or anything else. Managing client companies and accounts stays available either way, so you can fully prepare a client's access before ever flipping this on. See [Feature flags](/admin/feature-flags/).

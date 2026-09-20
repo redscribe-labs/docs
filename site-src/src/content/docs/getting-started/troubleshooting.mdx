@@ -1,0 +1,85 @@
+---
+title: Troubleshooting
+description: Fixes for the problems people actually hit during install and first run.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## The container won't start at all
+
+Under production settings, RedScribe deliberately refuses to start rather
+than run in a half-safe state. Two things cause this:
+
+- **Debug mode is on.** Production settings won't start with debug mode
+  enabled, since that would show full error details, including source
+  code and settings, to anyone who triggers an error. If you genuinely
+  need debug mode temporarily, there's an explicit opt-in for that; leave
+  it off otherwise.
+- **There's no root key yet.** Production settings require the instance's
+  encryption key to exist before they'll start at all. Development
+  settings only warn about this and keep running, production settings
+  hard stop. See [First run](/getting-started/first-run/) to generate one.
+
+## It starts, but warns about running in "dev" mode
+
+This means `DJANGO_SETTINGS_MODULE` is still pointed at development
+settings, which is the default in `.env.example`. That's fine for trying
+things out locally, but a real deployment needs production settings
+instead, since development mode skips HTTPS enforcement, secure cookies,
+and strict transport security entirely. See
+[Configuration](/getting-started/configuration/#development-vs-production-settings)
+for how to switch.
+
+## It starts, but warns about no root key
+
+Everything works except anything that touches encrypted content, findings,
+comments, checklist results, and so on, all of which need the instance's
+key before they can be read or written. This warning is expected the very
+first time you start RedScribe, before you've generated one. See
+[First run](/getting-started/first-run/).
+
+## Redirect loop (constant HTTPS redirects)
+
+Covered in [Configuration](/getting-started/configuration/#development-vs-production-settings)
+under "Common mistake: redirect loops". Short version: production settings
+trust a header your reverse proxy is supposed to set, and if nothing is
+actually acting as that proxy in front of the app, every request forces an
+HTTPS redirect it can never satisfy.
+
+## `/setup/` doesn't work, it redirects to the login page
+
+This page only ever works before any admin account exists on the
+instance. If it's redirecting you, someone (maybe an earlier attempt,
+maybe a teammate) has already created one. Ask whoever holds that account
+to log in and create yours from **User management** instead, or use the
+[command line method](/getting-started/first-run/) if you have shell
+access to the server.
+
+## TLS certificate never appears (Tailscale method)
+
+This method needs the host to already be joined to a Tailscale network
+with HTTPS certificates turned on for that network, before you start
+RedScribe. If that wasn't already true, certificate issuing silently has
+nothing to work with. Check `tailscale status` on the host, confirm HTTPS
+certificates are enabled for your network in the Tailscale admin console,
+then restart the stack.
+
+## TLS certificate never appears (bring your own certificate)
+
+The web server waits for **both** `certs/fullchain.pem` and
+`certs/privkey.pem` to exist, under those exact filenames, before it'll
+start serving over HTTPS at all. Double check both files actually landed
+where expected. A common slip is copying only one of the two, or copying
+them to a different path.
+
+## The command line setup asks for a password and rejects mine
+
+Local accounts need a password of 14 characters or more. Anything shorter
+gets rejected with no partial account created, just try the command
+again with a longer one.
+
+<Aside type="tip">
+Still stuck? Most first-run problems come down to one of the two things
+above, dev settings where prod was needed, or a missing root key. Confirm
+those two first before digging further.
+</Aside>

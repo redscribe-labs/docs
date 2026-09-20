@@ -12,17 +12,18 @@ what would need to change in the code to scale past a single host. It's
 written for whoever is planning a deployment for a real firm, or thinking
 about extending the concurrency model itself.
 
-## The shipped deployment model, in one paragraph
+## The shipped deployment model
 
 `docker-compose.yml` runs exactly one `web` container, one `db` (Postgres)
 container, and one `nginx` container, all on one host. See [Docker Compose
-deep dive](/deployment/docker-compose/) for the full service breakdown. Every
-official installation method assumes this single box shape. There is no
-built-in support for running multiple `web` replicas behind a load balancer,
-no task queue, and no separate cache tier. That's a deliberate scope
-decision for an early alpha product aimed at a single consultancy, not an
-oversight, but it does mean "scaling" today mostly means picking a bigger
-box, not adding more boxes.
+deep dive](/deployment/docker-compose/) for the full service breakdown.
+Every official installation method assumes this single box shape.
+
+There is no built-in support for running multiple `web` replicas behind a
+load balancer, no task queue, and no separate cache tier. That's a
+deliberate scope decision for an early alpha product aimed at a single
+consultancy, not an oversight, but it does mean "scaling" today mostly means
+picking a bigger box, not adding more boxes.
 
 ## What's actually concurrency limited, and how
 
@@ -72,8 +73,10 @@ recomputed on every request by counting real `LoginAttempt` rows in Postgres
 within the configured time window (`_recent_failed_count()`). The lock only
 narrows the window in which two near simultaneous requests for the same
 username could both pass the check before either's `LoginAttempt` row is
-written. With one gunicorn worker, that window is closed almost completely.
-With several workers or several hosts, the lock still closes it for whichever
+written.
+
+With one gunicorn worker, that window is closed almost completely. With
+several workers or several hosts, the lock still closes it for whichever
 requests happen to land on the same worker, and the underlying threshold
 enforcement is unaffected either way, since it was never relying on the lock
 for correctness in the first place. Worth knowing about, not worth losing
@@ -121,14 +124,16 @@ you'd be extending the Compose setup yourself.
 There is no Celery, no RQ, no Redis, and no background worker process
 anywhere in this codebase (check `requirements.txt`, there's nothing there).
 Every PDF or DOCX export runs synchronously inside the request that asked
-for it, occupying one full gunicorn worker (and, per WeasyPrint's
-characteristics, a meaningful chunk of RAM on image heavy reports) for
-however long rendering takes. `max_concurrent_report_jobs` caps how many of
-those can happen at once, it doesn't queue the rest, a caller past the cap
-just waits and retries. On a box sized for ordinary browsing plus a couple
-of exports, this is fine. It's the first thing that stops being fine as
-usage grows, which is exactly why the sizing table treats "report job slots"
-as its own scaling axis separate from gunicorn worker count.
+for it, occupying one full gunicorn worker, and, per WeasyPrint's
+characteristics, a meaningful chunk of RAM on image heavy reports, for
+however long rendering takes.
+
+`max_concurrent_report_jobs` caps how many of those can happen at once. It
+doesn't queue the rest; a caller past the cap just waits and retries. On a
+box sized for ordinary browsing plus a couple of exports, this is fine.
+It's the first thing that stops being fine as usage grows, which is exactly
+why the sizing table treats "report job slots" as its own scaling axis
+separate from gunicorn worker count.
 
 ## Concrete guidance for around 100 users
 
@@ -139,7 +144,7 @@ those 100 are actively working at once:
 
 - If concurrently active load stays in the 25 to 40 range, you're solidly in
   the Mid-size firm tier: 4 to 8 vCPU, 8 to 16 GB RAM, 17 gunicorn workers,
-  2 to 4 report job slots.
+  3 to 4 report job slots.
 - If concurrently active load pushes past 40, or you're regularly seeing
   report exports queue up against the job slot cap, you're in Larger firm
   territory: 8 to 16 vCPU, 16 to 32 GB RAM, 33 gunicorn workers, and 4 to 6

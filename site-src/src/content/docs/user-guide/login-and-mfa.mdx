@@ -5,65 +5,37 @@ description: Logging into RedScribe, enrolling in TOTP MFA, and account recovery
 
 import { Aside } from '@astrojs/starlight/components';
 
+Everyone, whether you work at the firm or you're a client, signs in through the same login page and the same two-factor process. Here's what to expect.
+
 ## Logging in
 
-Staff and client-portal users log in through the same page, `/login/`.
-RedScribe tells them apart by account type after authentication, not by a
-separate URL.
+Staff and client portal users log in at the same place. RedScribe figures out which kind of account you have after you authenticate, not from a separate URL.
 
-The username/password form and "Forgot your password?" link are always
-shown, whether or not OAuth is configured. If OAuth **is** configured
-(`OAUTH_PROVIDER`), "Sign in with Google" or "Sign in with Microsoft" simply
-appears as an additional option below it — restricted to accounts in your
-firm's configured email domain, and only for accounts an administrator has
-already set up (see [OAuth
-provisioning](/security/authentication/#oauth-google--microsoft); it isn't
-self-service signup).
+The username and password form is always there, along with a "Forgot your password?" link. If your instance has single sign-on set up, a "Sign in with Google" or "Sign in with Microsoft" button appears underneath as an extra option. That only works for accounts in your firm's approved email domain, and only for accounts an administrator has already created for you. It isn't self-service signup.
 
-## MFA enrollment
+## Setting up multi-factor authentication
 
-TOTP (Time-based One-Time Password) multi-factor authentication is
-**required for every local account**, and there is no way to skip it. On
-your very first login, you're walked straight into enrollment:
+By default, every local account (not signing in through Google or Microsoft) is required to enroll in TOTP based multi-factor authentication, on your very first login:
 
-1. Scan the displayed QR code with an authenticator app (Google Authenticator,
-   1Password, Authy, etc.).
-2. Enter the 6-digit code it generates to confirm enrollment.
+1. Scan the QR code on screen with an authenticator app (Google Authenticator, 1Password, Authy, or similar).
+2. Enter the 6-digit code the app generates to confirm enrollment.
 
-From then on, every login asks for your password followed by a current TOTP
-code.
+From then on, every login asks for your password followed by a current code from your authenticator app.
 
 <Aside type="tip">
-Whether MFA is *required* for your specific role (beyond the always-on
-Superadmin requirement) is an instance-wide setting a Superadmin controls.
-See [Authentication & sessions](/security/authentication/). Even where it
-isn't required, any account that has enrolled keeps being prompted for it.
+Whether MFA is required instance wide is a setting an administrator controls, and some roles (Superadmin, for instance) are always required to have it on regardless of that setting. Even where it isn't strictly required for your role, once you've enrolled, you'll keep being asked for a code every time you log in.
 </Aside>
 
-## Session behavior
+## How sessions behave
 
-- **Idle timeout** signs you out automatically after a period of no requests
-  (`SESSION_IDLE_TIMEOUT_SECONDS`, default 30 minutes). This is separate
-  from the session's fixed 4-hour cap.
-- **Single active session.** Logging in from a new device or browser revokes
-  any other active session for your account, timed to land only once MFA is
-  actually satisfied where it's required.
-- Five consecutive failed login attempts locks the account out for 24 hours
-  by default (`LOCKOUT_THRESHOLD` / `LOCKOUT_DURATION_SECONDS`), and every
-  Superadmin gets an active email alert the moment this happens, not just a
-  passive log entry.
+- **Idle timeout.** You're signed out automatically after a period with no activity, 30 minutes by default. Your session also has a fixed outer limit of 4 hours regardless of activity.
+- **One session at a time.** Logging in from a new device or browser signs you out everywhere else. That switch happens only once your new session has actually cleared MFA, so a login attempt that hasn't finished multi-factor yet doesn't kick out your existing session.
+- **Lockout after failed attempts.** Five wrong password attempts in a row locks the account for 24 hours by default. Every administrator gets an email alert the moment this happens, not just a quiet log entry.
 
 ## Forgotten password
 
-Use **Forgot password?** on the login page and you'll get a single-use,
-time-limited reset link by email (`PASSWORD_RESET_TIMEOUT_SECONDS`, default 1
-hour). New accounts (staff and client-portal alike) are set up the same way:
-a single-use, 24-hour emailed link lets the new user choose their own
-password, rather than an admin choosing it for them.
+Use **Forgot password?** on the login page and you'll get a single-use, time-limited reset link by email (an hour, by default). New accounts, staff and client portal alike, work the same way in reverse: you get a single-use link that's valid for 24 hours, letting you choose your own password. An administrator never sets or sees it.
 
 <Aside type="note" title="Lost your MFA device too?">
-There's no self-service MFA recovery. An administrator with server access
-has to clear it for you via the CLI. See [Account
-recovery](/admin/user-management/#account-recovery-lost-password--lost-mfa-device)
-in the admin guide.
+There's no self-service way to recover a lost authenticator. An administrator with access to the server has to clear your MFA enrollment for you, so you can set it up again on your next login. See [Account recovery](/admin/user-management/#account-recovery-lost-password--lost-mfa-device) in the admin guide.
 </Aside>

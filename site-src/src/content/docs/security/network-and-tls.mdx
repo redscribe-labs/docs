@@ -5,54 +5,53 @@ description: TLS cipher configuration, HSTS, Cache-Control policy, and why accur
 
 import { Aside } from '@astrojs/starlight/components';
 
+RedScribe terminates TLS at the nginx container in front of the app, and
+that's also where a handful of other network-level protections live. This
+page covers what's locked down at that layer: which TLS versions and
+ciphers are allowed, how HSTS and caching headers are set, and how nginx
+is deployed so that client IPs in login lockout and the audit log are
+trustworthy rather than spoofable.
+
 ## TLS cipher suite
 
-`nginx/templates/default.conf.template` restricts TLS to a strong-only
-configuration, following the Mozilla "Intermediate" baseline
-([ssl-config.mozilla.org](https://ssl-config.mozilla.org/); re-check
-against that generator occasionally rather than treating this as
-permanently hand-tuned):
+RedScribe's nginx configuration restricts TLS to a strong-only setup,
+following the Mozilla "Intermediate" baseline
+([ssl-config.mozilla.org](https://ssl-config.mozilla.org/); worth
+rechecking against that generator occasionally rather than treating this
+list as permanently fixed). Concretely, that means:
 
-- **`ssl_protocols TLSv1.2 TLSv1.3;`**, so no TLS 1.0 or 1.1.
-- Every listed TLS 1.2 cipher is **ECDHE/DHE** (forward secrecy) plus
-  **AEAD** (GCM or ChaCha20-Poly1305). There's no RC4, 3DES, export ciphers,
-  NULL ciphers, or static RSA/DH key exchange, and nothing CBC-mode:
-  ```
-  ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:
-  ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:
-  ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:
-  DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA256
-  ```
-- TLS 1.3's own 3 ciphersuites (AES-256-GCM, AES-128-GCM,
-  ChaCha20-Poly1305) are all AEAD by spec and aren't separately
-  configurable, so there's no weak TLS 1.3 suite to exclude.
-- `ssl_prefer_server_ciphers on;`
-- `ssl_ecdh_curve X25519:secp384r1;`, with X25519 first since it's fastest
-  and strong, and secp384r1 as a fallback for older clients that don't
-  support X25519. This doesn't yet use the post-quantum hybrid
-  `X25519MLKEM768`, since that needs OpenSSL 3.5+, and the
-  `nginx:1.27-alpine` base image here is built against OpenSSL 3.3.3 as of
-  this writing (check with `docker exec <nginx container> nginx -V`). Swap
-  the base image once one ships with a newer OpenSSL if that matters for
-  your threat model.
-- **Session tickets are disabled** (`ssl_session_tickets off;`), not just
-  left default. A single nginx instance has no ticket-key-rotation
-  infrastructure, and a static or long-lived ticket key would quietly
-  undermine the forward secrecy the cipher list above exists for. The
-  non-ticket session cache (`ssl_session_cache shared:TLS:10m;`,
-  `ssl_session_timeout 1d;`) still avoids a full handshake on reconnect.
-- **OCSP stapling** is on (`ssl_stapling on; ssl_stapling_verify on;`). It's
-  best-effort, silently skipped if the CA's OCSP responder isn't reachable
-  (for example a fully air-gapped deployment), and it never blocks a
-  handshake.
-- `server_tokens off;` drops the nginx version number from the `Server`
-  response header and from nginx-generated error pages, so an attacker
-  fingerprinting for a version-specific nginx CVE gets `nginx`, not
-  `nginx/1.27.x`. This doesn't remove the header or token entirely, since
-  that needs the third-party `headers-more-nginx-module`, which isn't
-  compiled into the stock `nginx:1.27-alpine` base image used here.
+- **TLS 1.2 and 1.3 only.** No TLS 1.0 or 1.1.
+- Every allowed TLS 1.2 cipher uses forward secrecy (ECDHE or DHE key
+  exchange) and authenticated encryption (GCM or ChaCha20-Poly1305).
+  There's no RC4, 3DES, export ciphers, NULL ciphers, static RSA/DH key
+  exchange, or CBC mode anywhere in the list.
+- TLS 1.3's three built-in ciphersuites are all authenticated encryption
+  by spec and aren't separately configurable, so there's no weak TLS 1.3
+  suite to worry about excluding.
+- The server, not the client, picks which cipher to use when negotiating a
+  connection.
+- Key exchange prefers X25519 (fastest and strong) with secp384r1 as a
+  fallback for older clients. This doesn't yet include the newer
+  post-quantum hybrid curve, since that needs a newer OpenSSL than the
+  current nginx base image ships with; the base image will move to it
+  once one's available.
+- **Session tickets are turned off deliberately**, not just left at a
+  default. A single nginx instance has no way to rotate ticket-signing
+  keys safely, and a static or long-lived one would quietly undermine the
+  forward secrecy the cipher list above is there for. A non-ticket session
+  cache still avoids a full handshake on reconnect, so this doesn't cost
+  you much.
+- **OCSP stapling** is on, so the server proves its certificate hasn't
+  been revoked without the client needing a separate round trip. It's
+  best-effort: silently skipped if the certificate authority's responder
+  isn't reachable (for example, in a fully air-gapped deployment), and it
+  never blocks a handshake if it fails.
+- The nginx version number is hidden from the `Server` response header and
+  from nginx's own error pages, so an attacker fingerprinting for a
+  version-specific nginx CVE learns only that it's nginx, not which
+  version.
 
-Verify what actually negotiates against your own deployment:
+To check what actually negotiates against your own deployment:
 
 ```sh
 openssl s_client -connect <your-domain>:443 -tls1_3 -brief </dev/null
@@ -60,82 +59,78 @@ openssl s_client -connect <your-domain>:443 -tls1_3 -brief </dev/null
 
 ## HSTS
 
-`config.settings.prod`'s `SECURE_HSTS_*` settings make Django emit
-`Strict-Transport-Security`, but nginx **hides** that Django-emitted copy
-(`proxy_hide_header Strict-Transport-Security;`) and adds its own instead.
-That way the client only ever sees one copy, with nginx as the single
-source of truth:
+RedScribe tells browsers to always use HTTPS for your domain, never
+plain HTTP, for a full year at a time, including subdomains:
 
 ```
 Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 ```
 
-One year (the standard minimum for eligibility on browser HSTS preload
-lists), including subdomains, applied to every response from the TLS server
-block, with static assets included too.
+One year is the standard minimum for eligibility on browser HSTS preload
+lists. This header is emitted once, by nginx, which is the single source
+of truth for it. It applies to every response, static assets included.
 
-## `Cache-Control: no-store` on dynamic responses
+## No caching of dynamic content
 
-The main `location /` block strips whatever `Cache-Control` Django set and
-forces `Cache-Control: no-store` on every response, so findings, engagement
-detail, decrypted content, and exported reports never get retained by a
-browser, intermediate proxy, or back-forward cache. Static assets
-(`location /static/`, served by WhiteNoise with long-lived immutable
-caching since filenames are content-hashed) are deliberately **not** covered
-by this, since caching those aggressively is both safe and the entire point
-of content-hashed filenames.
+Every dynamic response, findings, engagement detail, decrypted content,
+exported reports, is sent with `Cache-Control: no-store`, so a browser,
+intermediate proxy, or back-forward cache never retains it. Static assets
+(CSS, JS, and similar files, all served with content-hashed filenames) are
+deliberately exempt from this, since caching those aggressively is both
+safe and the entire point of hashing their names.
 
 ## Why nginx uses host networking
 
-`nginx`'s Docker Compose service runs with `network_mode: host` rather than
-a `ports: - "80:80"` mapping. See the full rationale in [Docker Compose
-deep dive](/deployment/docker-compose/#why-nginx-uses-host-networking). In
-short, a published-port mapping is relayed through a userspace
-`docker-proxy` process that substitutes its own address as the connection
-source, so without host networking, nginx would see a Docker-internal
-address instead of the real client IP for **every** request. That silently
-breaks both [login-lockout IP tracking](/security/authentication/#login-lockout--rate-limiting)
-and [audit log](/security/audit-trail/) IP recording at the source.
+RedScribe's nginx container runs with direct access to the host's network,
+rather than the more typical published-port mapping. That choice exists
+specifically so nginx sees the real client IP for every request. See the
+full rationale in [Docker Compose deep dive](/deployment/docker-compose/#why-nginx-uses-host-networking).
 
-## The X-Forwarded-For trust boundary
+In short: a published-port mapping is relayed through a helper process
+that substitutes its own address as the connection source. Without host
+networking, nginx would see a Docker-internal address instead of the real
+client IP on every request, which would silently break both
+[login-lockout IP tracking](/security/authentication/#login-lockout--rate-limiting)
+and [audit log](/security/audit-trail/) IP recording at the source, no
+matter how carefully the application code itself handled IPs.
 
-`apps.accounts.security.client_ip` and `apps.audit.middleware` both read the
-client IP as `request.META["HTTP_X_FORWARDED_FOR"].split(",")[0]`, trusting
-that nginx has already normalized this header. nginx's config sets it
-explicitly, always overwriting rather than appending:
+## The client-IP trust boundary
+
+RedScribe trusts the `X-Forwarded-For` header for client IP, but only
+because nginx is configured to always overwrite it with its own view of
+the real TCP connection, never to append to whatever the client already
+sent:
 
 ```
 proxy_set_header X-Forwarded-For $remote_addr;
 ```
 
-Deliberately `$remote_addr` (nginx's own view of the real TCP peer), not
-`$proxy_add_x_forwarded_for` (which would append onto whatever
-`X-Forwarded-For` the client itself already sent). This is a single
-reverse-proxy hop with no further trusted proxy in front of nginx, so
-there's no legitimate upstream chain to append to. Appending would let an
-external client spoof the first hop of that header and both bypass
-IP-based login lockout and pollute the audit log with a fabricated address.
+This matters because RedScribe sits behind exactly one reverse proxy hop
+(nginx itself), with nothing further upstream. If nginx instead appended
+to the incoming header, an external client could set their own fake
+`X-Forwarded-For` value ahead of the real one and have it trusted, which
+would let them bypass IP-based login lockout and plant a fabricated
+address in the audit log. Overwriting the header removes that option
+entirely: whatever nginx sees as the real TCP peer is what gets recorded,
+full stop.
 
 <Aside type="note" title="Requests from the Docker host itself">
-One case this can't (and doesn't try to) change: a request that originates
-*from the machine running Docker itself* (for example testing via
-`localhost` or that machine's own LAN/Tailscale address from a browser or
-curl running on it) still shows `127.0.0.1` as the source, since there's no
-"real" external client in that case. To verify client IPs are being
-recorded correctly, test from a genuinely different device.
+One thing this can't change: a request that originates from the machine
+running Docker itself (testing via `localhost`, or that machine's own
+LAN or Tailscale address) always shows up as the loopback address, since
+there's no "real" external client to see in that case. To verify client
+IPs are being recorded correctly, test from a genuinely separate device.
 </Aside>
 
 ### Tailscale Funnel changes the trust boundary slightly
 
 If you expose RedScribe beyond your tailnet with [Tailscale
 Funnel](/deployment/docker-compose/#exposing-it-beyond-your-tailnet-with-tailscale-funnel),
-Funnel forwards over loopback and prepends a PROXY protocol preamble
-(`--proxy-protocol=2`). nginx's config adds a **second, more specific**
-`listen 127.0.0.1:443 ssl proxy_protocol;` socket (nginx always picks the
-most specific matching listener, so this never affects the primary
-tailnet-facing one) with `set_real_ip_from 127.0.0.1;` and
-`real_ip_header proxy_protocol;`, trusting the PROXY-protocol-conveyed IP
-**only** for connections that land specifically on the loopback listener.
-This is a deliberately narrow trust boundary: only a process already
-running on the host could ever reach that listener at all, the same trust
-level host-level access already implies everywhere else in this stack.
+Funnel forwards traffic over loopback and adds its own preamble carrying
+the real client IP. nginx accepts that preamble, but only on a second,
+more specific listener bound solely to loopback, and only trusts it as
+the source IP for connections that land on that exact listener. Nothing
+reaching nginx from the public internet can use this path: only a process
+already running on the same host could ever connect to that listener in
+the first place, which is the same trust level host-level access already
+implies everywhere else in this stack.

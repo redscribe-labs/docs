@@ -5,31 +5,27 @@ description: Creating and running an engagement through its full lifecycle, cove
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-An engagement is the top-level container for one client project: a web
-application pentest, a network assessment, a vulnerability scan, or a
-remediation retest. Everything else in RedScribe (findings, checklist runs,
-scanner imports, the report) hangs off one engagement.
+An engagement is the container for one client project, a web application pentest, a network assessment, a vulnerability scan, or a remediation retest. Everything else in RedScribe (findings, checklist runs, scanner imports, the report) hangs off one engagement.
 
 ## Creating an engagement
 
-From **Engagements** (`/engagements/`) → **New**. Requires `engagements.create`.
+From **Engagements**, select **New**. You'll need the right permission to create one; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
 
-Fields: client (must already exist as a [Client
-company](/client-portal/managing-clients/), since an engagement can't be
-created against a free-typed client name), reference/project number, scope
-(free text), start/end dates, and test type (Web Application / Network /
-Vulnerability Scan).
+You'll fill in:
+
+- **Client**, which must already exist as a [client company](/client-portal/managing-clients/). You can't create an engagement against a free-typed client name.
+- **Reference or project number**.
+- **Scope**, as free text.
+- **Start and end dates**.
+- **Test type**: Web Application, Network, or Vulnerability Scan.
 
 <Aside type="note">
-Linking to an existing `Client` (rather than a free-typed name) is what makes
-[client-portal](/client-portal/for-clients/) access and cross-engagement
-[trend reporting](/user-guide/trends-and-search/) by client possible.
+Linking to a real client company, rather than just typing a name, is what makes [client portal](/client-portal/for-clients/) access and cross-engagement [trend reporting](/user-guide/trends-and-search/) by client possible.
 </Aside>
 
 ## Status lifecycle
 
-An engagement's `status` moves through a fixed sequence, changed from its
-detail page via **Transition**:
+An engagement moves through a fixed sequence of statuses, changed from its detail page:
 
 ```
 In Progress → In Review → QA → Approved → Delivered
@@ -38,61 +34,31 @@ In Progress → In Review → QA → Approved → Delivered
                                    Awaiting Remediation Test → Remediation Test → Closed
 ```
 
-Every transition is recorded in the engagement's status history (who,
-when, from and to). This history is what `{{p document_control }}` /
-`{{ document_control }}` renders into the report. Requires `engagements.manage`,
-same as editing the engagement's own metadata.
+Every status change is recorded in the engagement's history: who made it, when, and what it changed from and to. That history is what feeds the document control section of the generated report. Changing status needs the same permission as editing the engagement's own details.
 
 ## Membership
 
-Add or remove members from the engagement's detail page (`Members` section).
-Membership controls who can see and work on the engagement if you don't hold
-`engagements.view_all`, and members are exactly who `{{p assessment_team }}`
-pulls their bio/qualifications from for the report.
+Add or remove members from the engagement's detail page. Membership controls who can see and work on the engagement, unless you hold broader visibility across every engagement. Members are also exactly who the report's Assessment Team section pulls its bios and qualifications from, so keep membership current if you want the right names on the cover.
 
 <Aside type="caution">
-At most two people are expected to actively contend for one engagement's data
-at a time, by design. See [Requirements &
-sizing](/getting-started/requirements/#what-shifts-these-numbers). Membership
-isn't a hard access-control lock beyond that, just the visibility/assignment
-mechanism.
+RedScribe is built around at most two people actively working on the same engagement's data at a time. See [Requirements & sizing](/getting-started/requirements/#what-shifts-these-numbers). Membership isn't a hard access lock beyond that; it's mainly about visibility and assignment.
 </Aside>
 
 ## Scope changes
 
-Scope changes go through an approval workflow rather than silently editing
-`scope` in place, which is useful for keeping a defensible record of what
-was agreed mid-engagement:
+Scope changes go through an approval step rather than silently editing the recorded scope in place. That gives you a defensible record of what was actually agreed to mid-engagement.
 
 <Steps>
-1. From the engagement, **New scope change request**, and describe the
-   change.
-2. Someone holding `engagements.manage` **Approves** or **Rejects** it.
-3. An approved request updates the engagement's recorded scope and is kept as
-   part of its history; a rejected one is kept too, as a record that it was
-   considered and declined.
+1. From the engagement, start a **new scope change request** and describe the change.
+2. Someone with the right permission **approves** or **rejects** it.
+3. An approved request updates the engagement's recorded scope and stays part of its history. A rejected one is kept too, as a record that it was considered and declined.
 </Steps>
 
 ## Archiving and deletion
 
-- **Archive** (needs `engagements.manage`) soft-deletes an engagement. It
-  drops out of default lists and view-all queries, but nothing is destroyed.
-  **Unarchive** reverses it.
-- **Permanent delete** is Superadmin-only, and only available on an
-  already-archived engagement. It's the one deliberate exception to
-  RedScribe's archive-not-delete, append-only-audit design, meant for
-  genuine data-retention purge rather than everyday cleanup. It removes the
-  engagement from the live database only — a backup taken before the
-  deletion still contains it until that backup is separately pruned or
-  overwritten. See [Backup &
-  restore](/admin/backup-and-restore/#permanently-deleted-data-can-still-exist-in-a-backup)
-  if a retention or disposal obligation means it needs to be gone from
-  every copy.
+- **Archive** soft-deletes an engagement. It drops out of the default engagement list, but nothing is actually destroyed. **Unarchive** reverses it.
+- **Permanent delete** is reserved for the highest level of administrator, and only works on an engagement that's already archived. It's the one deliberate exception to RedScribe's usual archive-instead-of-delete approach, meant for genuine data retention purges rather than everyday cleanup. It removes the engagement from the live database only; a backup taken before the deletion still contains it until that backup is separately pruned or overwritten. See [Backup & restore](/admin/backup-and-restore/#permanently-deleted-data-can-still-exist-in-a-backup) if a retention or disposal requirement means it needs to be gone from every copy.
 
 ## Releasing to the client portal
 
-Findings never appear in the [Client Portal](/client-portal/for-clients/)
-just by existing. An engagement has to be explicitly **released to client**
-(needs `engagements.release_to_client`), and even then, only findings that
-have individually cleared QA are shown. **Revoke client release** reverses
-it, immediately hiding the engagement from the portal again.
+Findings never show up in the [client portal](/client-portal/for-clients/) just because they exist. An engagement has to be explicitly **released to the client**, and even then, only findings that have individually cleared QA are shown. **Revoke client release** reverses it, hiding the engagement from the portal again immediately.

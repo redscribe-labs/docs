@@ -44,11 +44,15 @@ ReportDocument
     └── children: list[Section]  (nested subsections)
 ```
 
-A `Block` is one of: `RichTextBlock` (pre-rendered HTML), `TableBlock`,
-`ListBlock`, `ImageBlock`, `CodeBlock`, `BarGraphBlock` (a severity chart
-with a `TableBlock` fallback for renderers that can't draw it), or the two
-marker blocks `CoverPageBlock`/`TableOfContentsBlock` that tell a renderer
-"draw your own cover/TOC here" rather than carrying content themselves.
+A `Block` is one of:
+
+- `RichTextBlock`: pre-rendered HTML
+- `TableBlock`, `ListBlock`, `ImageBlock`, `CodeBlock`
+- `BarGraphBlock`: a severity chart, with a `TableBlock` fallback for
+  renderers that can't draw it
+- `CoverPageBlock` / `TableOfContentsBlock`: marker blocks that tell a
+  renderer "draw your own cover/TOC here" rather than carrying content
+  themselves
 
 `assign_numbers()` walks the finished section tree once to compute each
 section's number (`"1"`, `"1.1"`, `"1.2"`, `"2"`, ...). Sections built with
@@ -87,17 +91,19 @@ document (the **Document** tab) node by node:
 
 ### Adding a new structural tag
 
-To add a new `{{ my_new_tag }}` structural tag: write a function
-`(context: BlockContext) -> Fragment | None` in `block_registry.py`
-following the existing entries' shape (e.g. `_scan_imports`, the simplest
-one: fetch data via a builder function threaded through `BlockContext`,
-wrap it in a `Fragment`), register it in the `BLOCK_REGISTRY` dict at the
-bottom of that file, and, if it needs data `BlockContext` doesn't already
-carry, add a field to the `BlockContext` dataclass and thread the actual
-value through from `assembly.build_report_document()`. Then document the new
-tag in `docs/report-template-tags.md` (source for the [Report template
-tags](/reference/report-template-tags/) reference page), the same file that
-page is built from.
+To add a new `{{ my_new_tag }}` structural tag:
+
+1. Write a function `(context: BlockContext) -> Fragment | None` in
+   `block_registry.py`, following the existing entries' shape. `_scan_imports`
+   is the simplest one to copy from: fetch data via a builder function
+   threaded through `BlockContext`, then wrap it in a `Fragment`.
+2. Register it in the `BLOCK_REGISTRY` dict at the bottom of that file.
+3. If it needs data `BlockContext` doesn't already carry, add a field to the
+   `BlockContext` dataclass and thread the actual value through from
+   `assembly.build_report_document()`.
+4. Document the new tag in `docs/report-template-tags.md`, the source for
+   the [Report template tags](/reference/report-template-tags/) reference
+   page.
 
 ## Rich text: two renderers for one Tiptap JSON format
 
@@ -135,11 +141,13 @@ lock on `ReportSettings`, it sweeps any `ReportJob` row stale for more than
 `STALE_JOB_TIMEOUT_SECONDS` (600 seconds, so a crashed worker's job row
 doesn't permanently eat a slot), counts active jobs, and only creates a new
 `ReportJob` (thereby claiming a slot) if the count is under
-`max_concurrent_report_jobs`. Callers get `False` back, meaning no slot,
-when every slot is busy, and should surface that as "try again shortly"
-rather than queuing (there is no queue; this is a concurrency *cap*, not a
-job queue). See [Requirements & sizing](/getting-started/requirements/) for
-how slot counts scale with instance tier.
+`max_concurrent_report_jobs`.
+
+Callers get `False` back, meaning no slot, when every slot is busy, and
+should surface that as "try again shortly" rather than queuing. There is no
+queue; this is a concurrency *cap*, not a job queue. See [Requirements &
+sizing](/getting-started/requirements/) for how slot counts scale with
+instance tier.
 
 ## Pagination gotcha: WeasyPrint's own default stylesheet fights this
 
@@ -148,24 +156,25 @@ with no explicit break configured, check `pdf_export.py`'s print CSS before
 assuming it's app-authored CSS at fault. WeasyPrint ships its own default UA
 stylesheet (`weasyprint/css/html5_ua.css`) that gives every heading
 `break-after: avoid; break-inside: avoid`, and every list `break-before:
-avoid` — meant to stop a heading/list from being orphaned alone at the
+avoid`, meant to stop a heading/list from being orphaned alone at the
 bottom of a page. For a report whose sections scale with data, that default
 causes exactly the "whole box relocates to a fresh page" problem
 `_PRINT_CSS_TEMPLATE`'s own long comment already documents for
-`.report-table`/`.report-section`: if the content right after a heading
+`.report-table`/`.report-section`. If the content right after a heading
 doesn't fit the remaining page, WeasyPrint's only way to honor "don't break
-here" is to push the heading — and everything after it — onto a new page.
-`pdf_export.py` explicitly overrides this back to `auto` for `h1`–`h6` and
-lists. Don't remove that override without re-checking this exact failure
-mode; the tradeoff it accepts is a heading occasionally landing alone at the
-bottom of a page, which is judged better than an unexplained jump.
+here" is to push the heading, and everything after it, onto a new page.
+`pdf_export.py` explicitly overrides this back to `auto` for `h1` through
+`h6` and lists. Don't remove that override without re-checking this exact
+failure mode; the tradeoff it accepts is a heading occasionally landing
+alone at the bottom of a page, which is judged better than an unexplained
+jump.
 
-This is orthogonal to explicit breaks — the Table of Contents
-(`report-toc`), `Section.page_break_before` (the "start each finding on a
-new page" toggle), and a manually-inserted page-break marker all use
-`break-before: page` on their own element, a different property from what
-the override above touches, so they keep working (and take priority)
-regardless.
+This is orthogonal to explicit breaks. The Table of Contents (`report-toc`),
+`Section.page_break_before` (the "start each finding on a new page"
+toggle), and a manually-inserted page-break marker all end up with the
+`report-page-break` CSS class, which sets `break-before: page` on that
+element. That's a different property from what the override above touches,
+so they keep working, and take priority, regardless.
 
 ## Where to look next
 

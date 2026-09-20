@@ -1,59 +1,56 @@
 ---
 title: Audit trail & tamper evidence
-description: How RedScribe's append-only, hash-chained audit log is built, covering what's logged, what's redacted, the HMAC chain, and how tampering is detected.
+description: How RedScribe's append-only, hash-chained audit log is built, covering what's logged, what's redacted, the hash chain, and how tampering is detected.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-Every request is recorded in an append-only, hash-chained audit log. This
-page covers *how it works*; for the operational side (viewing entries,
-running a purge, cron setup), see [Audit log](/admin/audit-log/).
+Every request against RedScribe is recorded in an audit log that's built
+so that tampering with it, even by someone with direct database access,
+leaves detectable evidence behind. This page explains how that works. For
+the operational side, viewing entries, running a purge, setting up cron,
+see [Audit log](/admin/audit-log/).
 
 ## What gets logged
 
-`AuditLogMiddleware` logs **every request whose method isn't `HEAD` or
-`OPTIONS`**, so ordinary `GET`/view traffic is included and not just
-state-changing requests. There are three narrow exceptions carved out by view
-name: the report live-preview endpoint (`reports:preview`, which would
-otherwise flood the log on every keystroke of report configuration), the
-health check (`health`), and the CSP violation-report endpoint
-(`csp_report`). Every login attempt (success or failure) is recorded
-separately via `accounts.LoginAttempt`, referenced from [Authentication &
-sessions](/security/authentication/).
+Almost every request is logged, not just the ones that change data.
+Ordinary page views and API reads are recorded too. A small number of
+high-frequency or non-sensitive endpoints are excluded by design: the
+report live-preview endpoint (which would otherwise flood the log on every
+keystroke of report configuration), the health check, and the CSP
+violation-report endpoint. Every login attempt, successful or not, is
+recorded separately; see [Authentication & sessions](/security/authentication/)
+for how that feeds into lockout.
 
-Each entry records: actor (user, username, and role at the time, kept even
-if the user is later deleted, via `SET_NULL` plus the cached username/role
-strings), the resolved Django view name as `action`, HTTP method, path,
-status code, engagement ID (indexed, for fast per-engagement audit queries),
-a free-form `object_ref`, client IP, query string, referer, user agent, and
-request duration in milliseconds.
+Each entry records who did it (user, username, and their role at the time,
+kept even if the user is later deleted), what they did (the action, HTTP
+method, path, and status code), which engagement it touched, the client
+IP, query string, referer, user agent, and how long the request took.
 
 ### What's redacted before it's ever written
 
-`apps/audit/redaction.py` sanitizes several fields *before* they reach the
-hash chain, so a sensitive value is never at rest in the log in the first
-place (not redacted after the fact):
+A handful of fields are sanitized before an entry is written, so a
+sensitive value is never at rest in the log in the first place, rather
+than being redacted after the fact:
 
-- **Password-reset and account-setup links**: their `token`/`uidb64` URL
-  kwargs are replaced with `[redacted]` in the stored `path`, for the
-  `accounts:password_reset_confirm` and `accounts:account_setup_confirm`
-  views specifically.
-- **Query string parameters** whose *name* matches
-  `token|password|secret|key|otp|auth|signature|credential` (case-insensitive)
-  have their *value* replaced with `[redacted]`.
-- **Referer header** path segments that look like a bearer token (16+
-  characters of `[A-Za-z0-9_-]`) are redacted the same way, and its query
-  string goes through the same param-name sanitization.
-- Query string, referer, and user agent are each capped at 500 / 500 / 300
-  characters respectively, regardless of redaction.
+- Password-reset and account-setup links have their token stripped out of
+  the stored path.
+- Any query string parameter whose name looks like `token`, `password`,
+  `secret`, `key`, `otp`, `auth`, `signature`, or `credential` has its
+  value replaced, regardless of what the parameter is actually for.
+- A referer URL that contains something that looks like a bearer token
+  gets that segment redacted the same way.
+- Query string, referer, and user agent are all capped at a few hundred
+  characters each, redacted or not, so a single request can't bloat an
+  entry.
 
 ## The hash chain
 
-Every entry's `entry_hash` is computed by
-`apps.audit.integrity.compute_entry_hash` as an **HMAC-SHA256**. It's keyed
-with `settings.SECRET_KEY`, not a plain unkeyed hash, and computed over a
-canonical pipe-joined string of the entry's own fields **plus the previous
-entry's hash**:
+Each audit entry's integrity hash is computed by folding together its own
+fields, plus the hash of the entry immediately before it, using a keyed
+HMAC (not a plain hash) so the hash can't be recomputed by someone without
+access to the server's own signing key. The example below shows what goes
+into that computation, in order, for a single entry:
 
 ```python
 canonical = "|".join([
@@ -61,34 +58,33 @@ canonical = "|".join([
     action, method, path, status_code, engagement_id, object_ref,
     ip_address, query_string, referer, user_agent, duration_ms,
 ])
-entry_hash = HMAC-SHA256(key=SECRET_KEY, msg=canonical)
+entry_hash = HMAC-SHA256(key=<server signing key>, msg=canonical)
 ```
 
-The very first entry ever written chains onto a fixed **genesis hash**
-(`"0" * 64`). Because each hash folds in the previous one, changing *any*
-field on *any* row, including via direct database access rather than the
-app, changes that row's recomputed hash, and that hash no longer matches
-every subsequent row's stored `prev_hash` input either. The tamper is
-detectable anywhere downstream of the edit, not just on the edited row
-itself.
+The very first entry ever written chains onto a fixed, well-known starting
+value. Because each entry's hash folds in the one before it, changing
+*any* field on *any* row, including by editing the database directly
+rather than going through the app, changes that row's hash. That, in turn,
+breaks the chain for every row written after it. The tamper is detectable
+anywhere downstream of the edit, not just on the row that was actually
+changed.
 
-<Aside type="caution" title="The chain is keyed with SECRET_KEY">
-Because the HMAC key is `settings.SECRET_KEY`, rotating `DJANGO_SECRET_KEY`
-invalidates verification of every entry written under the old key.
-`verify_audit_log` (below) would report every existing row as failing, since
-it always verifies against the *current* `SECRET_KEY`. This is a property to
-be aware of, not a bug: don't rotate `DJANGO_SECRET_KEY` on a running
-instance without accounting for its effect on historical audit verification.
+<Aside type="caution" title="Rotating the server's secret key breaks verification of old entries">
+The hash chain is keyed with the same secret Django uses for other signing
+purposes. If you rotate that secret on a running instance, every
+previously written entry will fail verification, because verification
+always checks against the *current* key. That's expected, not a bug, but
+it means you should think about the effect on historical audit
+verification before rotating it.
 </Aside>
 
 ### Concurrency safety
 
-`append_with_chain` wraps the read-last-entry / compute-hash / insert
-sequence in a database transaction that first takes a **Postgres advisory
-lock** (`pg_advisory_xact_lock`, a fixed lock key). This serializes chain
-appends across concurrent requests, so two requests can't both read the same
-"last entry," compute a hash against the same `prev_hash`, and insert two
-entries that both claim to follow the same predecessor.
+Appending a new entry takes a database-level lock first, so that two
+requests arriving at the same time can't both read the same "last entry,"
+compute a hash against it, and insert two entries that both claim to
+follow the same predecessor. Writes to the chain are serialized, even
+under concurrent load.
 
 ## Verifying the chain
 
@@ -96,42 +92,36 @@ entries that both claim to follow the same predecessor.
 docker compose exec web python manage.py verify_audit_log
 ```
 
-Walks every entry in primary-key order, recomputing each one's expected hash
-from its own fields and the previous row's *stored* hash, and fails loudly
-(non-zero exit, `CommandError`) the moment a stored hash doesn't match its
-recomputed value, naming the first entry where it happened.
+This walks every entry in order, recomputing each one's expected hash and
+comparing it to what's stored. It fails loudly, with a non-zero exit code,
+the moment a stored hash doesn't match, and names the first entry where
+that happened.
 
-The **oldest surviving row** is a special case, since there's nothing before
-it to verify its `prev_hash` input against. The command reports it as an
-**anchor** rather than a failure, and distinguishes two cases in its own
-output:
+The oldest surviving row is a special case, since there's nothing earlier
+to check its `prev_hash` against. The command reports it as an anchor
+rather than a failure, and tells you which of two things is going on:
 
-- If that row's hash matches what you'd get chaining onto the genesis hash,
-  it's printed as `(genesis)`, meaning this really is the first entry ever
-  written.
-- Otherwise, it's printed as `(oldest surviving row, earlier history may
-  have been purged, not a failure)`. That's expected after a legitimate
-  [retention purge](/admin/audit-log/#retention) has removed
-  everything before it.
+- If its hash matches what you'd get from the fixed starting value, it's
+  genuinely the first entry ever written.
+- Otherwise, it's flagged as an oldest surviving row whose earlier history
+  may have been purged, which is expected after a legitimate
+  [retention purge](/admin/audit-log/#retention), not a sign of tampering.
 
 ## Partitioning and retention
 
-`AuditLogEntry` is a Postgres **range-partitioned table**, one child
-partition per calendar year (`audit_auditlogentry_<year>`), created ahead of
-time with:
+The audit log is stored as one partition per calendar year, created ahead
+of time:
 
 ```sh
 python manage.py create_audit_partition            # creates next year's partition
 python manage.py create_audit_partition --year 2028 # or a specific year
 ```
 
-Purging (`purge_audit_log`, see [Audit log](/admin/audit-log/) for the
-operational command) exploits this directly: any partition that's *entirely*
-older than the retention cutoff is dropped as a whole table
-(`ALTER TABLE ... DETACH PARTITION` + `DROP TABLE`) rather than deleted
-row-by-row, before falling back to an ordinary row-level `DELETE` for
-whatever's left in a partially-expired partition. The same purge also
-removes `LoginAttempt` rows older than the same cutoff. `AUDIT_LOG_RETENTION_DAYS`
-(default `2190`, or 6 years, HIPAA's general documentation-retention figure)
-controls the cutoff. See [Audit log](/admin/audit-log/) for tuning it to
-your own compliance obligations.
+That structure makes retention cheap: purging drops an entire year's
+partition at once when it's fully past the retention cutoff, rather than
+deleting rows one at a time, and only falls back to row-by-row deletion
+for a partition that's partially expired. The same purge also removes old
+login-attempt records on the same schedule. By default, entries are kept
+for 6 years, matching HIPAA's general documentation-retention guidance.
+See [Audit log](/admin/audit-log/) for tuning that to your own compliance
+obligations.
