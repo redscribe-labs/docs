@@ -55,7 +55,7 @@ chain from multiple concurrent writers needs its own serialization or two
 requests could both read the same "previous hash" and produce two entries
 that both claim to follow it. This is also enforced with a Postgres level
 lock, not an in-process one, so it too stays correct across multiple `web`
-processes or hosts. See [Audit trail & tamper evidence](/security/audit-trail/).
+processes or hosts. See [Audit trail & integrity](/security/audit-trail/).
 
 **The login attempt lock.** This is the one that doesn't generalize past a
 single process. `apps/accounts/security.py`'s `_LoginAttemptLock` serializes

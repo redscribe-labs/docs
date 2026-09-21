@@ -101,7 +101,7 @@ docker compose exec web python manage.py emergency_account_recovery \
 
 ## Audit log
 
-See [Audit log](/admin/audit-log/) for the full retention/tamper-evidence
+See [Audit log](/admin/audit-log/) for the full retention/chain-integrity
 model these commands operate on.
 
 ### `purge_audit_log`
@@ -205,12 +205,12 @@ much encrypted content exists.
 
 | Argument | Required | Purpose |
 |---|---|---|
-| `--new-key` | Yes | Base64-encoded 32-byte AES key, e.g. straight from `generate_root_key`'s output |
+| `--new-key` | No | Base64-encoded 32-byte AES key, e.g. straight from `generate_root_key`'s output. Omit it and you'll be prompted interactively instead (not echoed, never in shell history or `ps`/`/proc/<pid>/cmdline`) — the safer default on any shared host. Pass it explicitly only for scripted/unattended use. |
 | `--dry-run` | No | Validate and report what would change without writing anything |
 
 ```sh
-docker compose exec web python manage.py rotate_root_key --new-key <base64-key> --dry-run
-docker compose exec web python manage.py rotate_root_key --new-key <base64-key>
+docker compose exec web python manage.py rotate_root_key --dry-run   # prompts for the new key
+docker compose exec web python manage.py rotate_root_key             # prompts for the new key
 ```
 
 <Aside type="danger" title="Run this before updating the deployed key, then restart immediately after">

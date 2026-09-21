@@ -61,6 +61,19 @@ those steps are already built into it.
    authentication, a QR code plus a confirmation code. Every local account
    goes through this, with no way to skip it.
 
+   <Aside type="caution" title="Claim /setup/ promptly on a shared network">
+   `/setup/` has no login of its own, there's no admin yet to log in as, so
+   it works for whoever reaches it first, not necessarily you. That's fine
+   moments after `docker compose up` on a machine only you can reach; on a
+   network reachable by other people before you've completed the form,
+   someone else could get there first and become the Superadmin instead.
+   No engagement data exists yet at that point, but if the instance is
+   coming up on a network you don't fully trust yet, use the CLI command
+   above instead, it needs no exposed page at all. See [Known
+   limitations](/start/alpha-status/#known-limitations) for the full
+   picture.
+   </Aside>
+
 4. Head to `/login/` (or you're probably already there).
 
 </Steps>

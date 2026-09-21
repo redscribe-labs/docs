@@ -25,7 +25,9 @@ machine only you need to reach.
 
 ## Before you start
 
-Every method needs the same two secrets set in a `.env` file first.
+Every method needs the same two secrets in place first, as file-based
+Docker secrets rather than `.env` values (see [Environment
+variables](/reference/environment-variables/) for why).
 
 <Steps>
 1. Copy the template:
@@ -34,17 +36,28 @@ Every method needs the same two secrets set in a `.env` file first.
    cp .env.example .env
    ```
 2. Generate a random signing key for Django's own session and CSRF
-   protection:
+   protection, straight into its secret file:
 
    ```sh
-   python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(50)))"
+   python3 -c "import secrets, string; print(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(50)))" > secrets/django_secret_key.txt
    ```
-3. In `.env`, set `DJANGO_SECRET_KEY` to that value, and `POSTGRES_PASSWORD`
-   to a password of your own choosing.
+3. Put a database password of your own choosing into its own secret file:
+
+   ```sh
+   openssl rand -base64 32 > secrets/postgres_password.txt
+   ```
+4. Create an empty placeholder for the instance's root encryption key, so
+   Compose has a file to mount. You'll fill in the real value in [First
+   run](/getting-started/first-run/), after the app is up:
+
+   ```sh
+   touch secrets/root_key.txt
+   ```
 </Steps>
 
-The instance's master encryption key, `REDSCRIBE_ROOT_KEY`, isn't set here.
-It needs RedScribe's own generator command, so it's covered in
+The instance's master encryption key, `REDSCRIBE_ROOT_KEY`, isn't
+generated here (only the empty placeholder file above). It needs
+RedScribe's own generator command, so it's covered in
 [First run](/getting-started/first-run/) instead, after the app is up.
 
 ## Method 1: Docker Compose + Tailscale (recommended)

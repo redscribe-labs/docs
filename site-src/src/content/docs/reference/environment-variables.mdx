@@ -12,12 +12,27 @@ specifically, see [Encryption model](/security/encryption/), [Audit
 log](/admin/audit-log/), and [Backup & restore](/admin/backup-and-restore/).
 This page is just the "what," and those are the "why."
 
+<Aside type="tip" title="File-based secrets">
+Every variable marked **secret** below can also be delivered as a
+Docker secret instead of a plain `.env` value: set `<NAME>_FILE` to a
+path, and its contents (trimmed of surrounding whitespace) win over the
+plain `<NAME>` var. Under Docker Compose, `REDSCRIBE_ROOT_KEY`,
+`DJANGO_SECRET_KEY`, and `POSTGRES_PASSWORD` are delivered this way by
+default (`secrets/root_key.txt`, `secrets/django_secret_key.txt`,
+`secrets/postgres_password.txt`), since an env var is readable via
+`docker inspect`/`/proc/<pid>/environ` by any root/same-UID process on the
+host, while a mounted secret file's access is controlled by the mount
+itself. See `secrets/README.md` in the repo for the full list and how to
+apply the same pattern to an optional secret (OAuth, SMTP) that isn't
+mounted by default.
+</Aside>
+
 ## Django core
 
 | Variable | Purpose | Default |
 |---|---|---|
 | `DJANGO_SETTINGS_MODULE` | Which settings module to run, `config.settings.dev` or `config.settings.prod`. See [Configuration](/getting-started/configuration/#development-vs-production-settings). | `config.settings.dev` |
-| `DJANGO_SECRET_KEY` | Session/CSRF signing key. Generate a random 50-char value; never reuse the placeholder. | `change-me-to-a-random-50-char-value` |
+| `DJANGO_SECRET_KEY` | **Secret.** Session/CSRF signing key. Generate a random 50-char value; never reuse the placeholder. Under Docker Compose, delivered as a file-based secret by default (`secrets/django_secret_key.txt`) — see the tip above. | `change-me-to-a-random-50-char-value` |
 | `DJANGO_DEBUG` | Django debug mode: verbose error pages, no static file caching. Never enable in a real deployment. | `true` |
 | `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames Django will serve; must include whatever `NGINX_SERVER_NAME` is set to. | `localhost,127.0.0.1` |
 | `REDSCRIBE_ALLOW_DEBUG_IN_PROD` | Explicit opt-in escape hatch: `config.settings.prod` normally refuses to start at all with `DJANGO_DEBUG=true`. Set to `1` only for a specific debugging session, never leave it set. See [Local development](/dev/local-development/#dev-vs-prod-settings). | *(unset)* |
@@ -30,13 +45,29 @@ This page is just the "what," and those are the "why."
 | `NGINX_SERVER_NAME` | Your domain: the tailnet hostname for [Method 1](/getting-started/installation/#method-1-docker-compose--tailscale-recommended), or your own domain for [Method 2](/getting-started/installation/#method-2-docker-compose--your-own-tls-certificate). Leave unset for nginx's `_` catch-all default ([Method 3](/getting-started/installation/#method-3-docker-compose-plain-http)). | *(unset)* |
 | `GUNICORN_WORKERS` | Gunicorn worker process count. Leave unset to auto-size to `(2 * cpu cores) + 1` at container startup. | *(auto-sized)* |
 
+### Per-container resource limits
+
+`docker-compose.yml` caps each service's memory and CPU. Defaults match
+the "Small firm" tier from [Requirements & sizing](/getting-started/requirements/);
+raise these for a bigger tier, or set them very high to effectively remove
+the cap.
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `WEB_MEM_LIMIT` | Memory cap for the `web` container. Gets the larger share, since report export (WeasyPrint/docxtpl) is the most memory-hungry thing this app does. | `5g` |
+| `WEB_CPUS` | CPU cap for `web`, in cores (fractional allowed). | `3` |
+| `DB_MEM_LIMIT` | Memory cap for the `db` container. | `2g` |
+| `DB_CPUS` | CPU cap for `db`. | `1.5` |
+| `NGINX_MEM_LIMIT` | Memory cap for `nginx`. | `256m` |
+| `NGINX_CPUS` | CPU cap for `nginx`. | `0.5` |
+
 ## Database
 
 | Variable | Purpose | Default |
 |---|---|---|
 | `POSTGRES_DB` | Database name. | `redscribe` |
 | `POSTGRES_USER` | Database user. | `redscribe` |
-| `POSTGRES_PASSWORD` | Database password. Set this to something of your own choosing. | `change-me` |
+| `POSTGRES_PASSWORD` | **Secret.** Database password. Set this to something of your own choosing. Under Docker Compose, delivered as a file-based secret by default (`secrets/postgres_password.txt`) — see the tip above. | `change-me` |
 | `POSTGRES_HOST` | Database hostname: `db` under Docker Compose, `localhost` for [Method 4](/getting-started/installation/#method-4-local-development-without-docker). | `db` |
 | `POSTGRES_PORT` | Database port. | `5432` |
 | `POSTGRES_SSLMODE` | TLS mode for the Postgres connection (`prefer`, `require`, `verify-ca`, `verify-full`, ...). The shipped default is safe for the same-host Docker Compose topology, where `db` and `web` only ever talk over the Docker-internal network, but `prefer` silently allows a plaintext fallback and never validates the server certificate. Set this to `verify-full` if `POSTGRES_HOST` ever points at a separate host. | `prefer` |
@@ -46,7 +77,7 @@ This page is just the "what," and those are the "why."
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `REDSCRIBE_ROOT_KEY` | Instance root key wrapping every engagement's own per-project data key. Generate with `python manage.py generate_root_key`. **Required in production**, since `config.settings.prod` refuses to start without it. Under Docker Compose this is mounted as a Docker secret from `secrets/root_key.txt` instead, and this var is left unset; only set it directly for a non-Docker/bare-metal run or CI. Never commit the real value. | *(unset)* |
+| `REDSCRIBE_ROOT_KEY` | **Secret.** Instance root key wrapping every engagement's own per-project data key. Generate with `python manage.py generate_root_key`. **Required in production**, since `config.settings.prod` refuses to start without it. Under Docker Compose this is mounted as a Docker secret from `secrets/root_key.txt` instead, and this var is left unset; only set it directly for a non-Docker/bare-metal run or CI. Never commit the real value. | *(unset)* |
 
 ## Authentication & rate limiting
 
@@ -70,9 +101,9 @@ Only required when `OAUTH_PROVIDER` selects that provider.
 | Variable | Purpose | Default |
 |---|---|---|
 | `GOOGLE_OAUTH_CLIENT_ID` | Required only when `OAUTH_PROVIDER=google`. Create at [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials): an OAuth 2.0 Client ID of type "Web application," with an authorized redirect URI of `https://<your-domain>/accounts/social/google/login/callback/`. | *(unset)* |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | Paired secret for the above. | *(unset)* |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | **Secret.** Paired secret for the above. File-based delivery available (see the tip above); not mounted by default since OAuth is opt-in. | *(unset)* |
 | `MICROSOFT_OAUTH_CLIENT_ID` | Required only when `OAUTH_PROVIDER=microsoft`. Create at [entra.microsoft.com](https://entra.microsoft.com) under App registrations, with a redirect URI of `https://<your-domain>/accounts/social/microsoft/login/callback/`. | *(unset)* |
-| `MICROSOFT_OAUTH_CLIENT_SECRET` | Paired secret for the above. | *(unset)* |
+| `MICROSOFT_OAUTH_CLIENT_SECRET` | **Secret.** Paired secret for the above. File-based delivery available (see the tip above); not mounted by default since OAuth is opt-in. | *(unset)* |
 | `MICROSOFT_OAUTH_TENANT_ID` | Leave as `organizations` unless the consultancy needs a specific Entra ID tenant restricted at the login-screen level too, in which case set it to that tenant's ID. This is a stricter belt-and-braces measure alongside `OAUTH_ALLOWED_DOMAIN`, not a replacement for it. | `organizations` |
 
 <Aside type="caution">
@@ -92,7 +123,7 @@ local/dev, but not for production.
 | `EMAIL_HOST` | SMTP host. | *(empty, console backend)* |
 | `EMAIL_PORT` | SMTP port. | `587` |
 | `EMAIL_HOST_USER` | SMTP username. | *(empty)* |
-| `EMAIL_HOST_PASSWORD` | SMTP password. | *(empty)* |
+| `EMAIL_HOST_PASSWORD` | **Secret.** SMTP password. File-based delivery available (see the tip above); not mounted by default since SMTP is opt-in (console backend otherwise). | *(empty)* |
 | `EMAIL_USE_TLS` | Use TLS for the SMTP connection. | `true` |
 | `DEFAULT_FROM_EMAIL` | From-address on outgoing mail. | `RedScribe <no-reply@redscribe.local>` |
 | `PASSWORD_RESET_TIMEOUT_SECONDS` | How long a password reset link stays valid. | `3600` (1h) |

@@ -24,10 +24,13 @@ place, see [Installation](/getting-started/installation/).
 
 A few things worth knowing about how these fit together:
 
-- `web`'s root encryption key is mounted as a Docker **secret**
-  (`redscribe_root_key`, backed by `./secrets/root_key.txt`), not an
-  environment variable. See [Encryption model](/security/encryption/) for
-  why that matters.
+- `web`'s root encryption key, Django signing key, and database password
+  are all mounted as Docker **secrets** (`redscribe_root_key`,
+  `django_secret_key`, `postgres_password`, backed by the matching file
+  under `./secrets/`), not environment variables — `db` gets the same
+  database-password secret via Postgres's own `POSTGRES_PASSWORD_FILE`
+  convention. See [Encryption model](/security/encryption/) and
+  `secrets/README.md` for why that matters.
 - `db` and `web` both have healthchecks, so `web` waits until `db` is
   actually ready (not just running) before it starts, and `nginx` waits on
   `web` the same way. `web`'s healthcheck pings a small `/health/` endpoint
@@ -118,6 +121,31 @@ This setting only affects the app process; `nginx`'s own worker count comes
 from its base image and isn't something this project configures. See
 [Requirements & sizing](/getting-started/requirements/) for how worker
 counts map to instance tiers.
+
+## Resource limits
+
+Each service in `docker-compose.yml` has a memory and CPU ceiling —
+`mem_limit`/`cpus`, the plain Compose Specification keys, not
+`deploy.resources.limits`, since this stack doesn't run under Swarm.
+Defaults match the "Small firm" tier from [Requirements &
+sizing](/getting-started/requirements/):
+
+| Variable | Default | Service |
+|---|---|---|
+| `WEB_MEM_LIMIT` / `WEB_CPUS` | `5g` / `3` | `web` |
+| `DB_MEM_LIMIT` / `DB_CPUS` | `2g` / `1.5` | `db` |
+| `NGINX_MEM_LIMIT` / `NGINX_CPUS` | `256m` / `0.5` | `nginx` |
+
+`web` gets the larger share, since report export (WeasyPrint/docxtpl) is
+the most memory-hungry thing this app does, and it's a synchronous,
+in-request operation (see [Scaling & concurrency
+model](/dev/scaling/#the-real-bottleneck-report-export-has-no-queue)) with
+no queue to smooth out a burst of exports. Raise these in `.env` for a
+bigger tier before you actually need it, a container hitting its own
+memory limit is killed outright (`OOMKilled`), not throttled gracefully.
+Set a value very high (or remove the corresponding lines from
+`docker-compose.yml`) to effectively run uncapped, matching the behaviour
+before these limits existed.
 
 ## Exposing it beyond your tailnet with Tailscale Funnel
 

@@ -1,15 +1,19 @@
 ---
-title: Audit trail & tamper evidence
-description: How RedScribe's append-only, hash-chained audit log is built, covering what's logged, what's redacted, the hash chain, and how tampering is detected.
+title: Audit trail & integrity
+description: How RedScribe's append-only, hash-chained audit log is built, covering what's logged, what's redacted, the hash chain, and what it does and doesn't catch.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-Every request against RedScribe is recorded in an audit log that's built
-so that tampering with it, even by someone with direct database access,
-leaves detectable evidence behind. This page explains how that works. For
-the operational side, viewing entries, running a purge, setting up cron,
-see [Audit log](/admin/audit-log/).
+Every request against RedScribe is recorded in an audit log built around a
+hash chain: editing a stored entry, including directly through the
+database rather than the app, is detectable, because it invalidates every
+hash that comes after it. That's a real, useful property, and this page
+explains how it works. It's also a narrower guarantee than "tamper
+evident" suggests — see [Limitations](#limitations) below for the ways a
+person with direct database access can alter history without it being
+caught. For the operational side, viewing entries, running a purge,
+setting up cron, see [Audit log](/admin/audit-log/).
 
 ## What gets logged
 
@@ -106,6 +110,47 @@ rather than a failure, and tells you which of two things is going on:
 - Otherwise, it's flagged as an oldest surviving row whose earlier history
   may have been purged, which is expected after a legitimate
   [retention purge](/admin/audit-log/#retention), not a sign of tampering.
+
+## Limitations
+
+The hash chain catches one specific thing well: **an edit to a row that's
+still in the table**, wherever it happens in the chain, including an edit
+made directly through the database rather than the app. It's weaker
+against a few other things a person could do with direct database access,
+worth understanding plainly rather than assuming away:
+
+- **Deleting the newest entries leaves no trace.** Nothing in a later row
+  depends on rows that were never written, so deleting, say, the last ten
+  entries right after doing something and having verification run
+  afterwards reports the (now-shorter) chain as fully intact. There's
+  nothing downstream of a deleted tail to invalidate.
+- **Deleting a contiguous span from the front looks identical to a
+  legitimate retention purge.** As covered above, the oldest surviving row
+  is always trusted as a new anchor, precisely so routine
+  [retention purging](#partitioning-and-retention) doesn't get flagged as
+  tampering. That design choice means an attacker who deletes, say, the
+  first 10,000 rows gets the same "anchor, not a failure" result a real
+  purge would.
+- **Verification uses the same secret the app signs sessions and CSRF
+  tokens with** ([`SECRET_KEY`](/reference/environment-variables/#django-core)).
+  Anyone who has that secret, which in practice usually means anyone with
+  meaningful access to the running instance or its environment, can
+  recompute a fully self-consistent chain after editing *any* row, not
+  just the newest or oldest ones.
+- **Login-attempt records aren't part of the chain at all.** `LoginAttempt`
+  rows are retained and purged on the same schedule as the audit log (see
+  [Audit log](/admin/audit-log/)), and it's easy to assume they carry the
+  same integrity guarantee as a result. They don't — they're a plain
+  table, with no hash chain of their own.
+
+None of this makes the hash chain pointless. It's a real deterrent against
+casual or accidental edits, and against anyone who can reach the database
+but not the app's signing secret. It just isn't a defence against a
+determined actor who already has both — for that threat, the honest answer
+is infrastructure controls outside RedScribe itself: restricting who
+holds direct database credentials, shipping audit events to a separate
+system in near-real-time, or a database configured so the application's
+own role can't delete from this table at all.
 
 ## Partitioning and retention
 

@@ -100,7 +100,7 @@ whatever the earlier middleware decided, like a forced MFA redirect).
 | Checklist runs | `apps/checklist/services.py`, `item_views.py` |
 | Report IR & exporters | `apps/reports/report_ir.py`, `assembly.py`, `block_registry.py`, `{md,html,pdf,docx}_export.py` (see [Report rendering pipeline](/dev/report-pipeline/)) |
 | Per-engagement encryption | `apps/crypto/services.py`, `root_key.py` |
-| Audit log / tamper evidence | `apps/audit/integrity.py`, `middleware.py`, `retention.py` |
+| Audit log / chain integrity | `apps/audit/integrity.py`, `middleware.py`, `retention.py` |
 | Backup/restore | `apps/backup/pg.py`, `crypto.py`, `impact.py` |
 | License key verification | `apps/licensing/verify.py`, `status.py` |
 

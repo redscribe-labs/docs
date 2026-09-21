@@ -1,14 +1,16 @@
 ---
 title: Audit log
-description: The append-only, hash-chained audit log covering every request and login attempt, its retention policy, and tamper verification.
+description: The append-only, hash-chained audit log covering every request and login attempt, its retention policy, and chain verification.
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-RedScribe keeps a tamper-evident record of everything that happens on your
+RedScribe keeps a hash-chained record of everything that happens on your
 instance, request by request, and login attempt by login attempt. This
 page covers what's in it, how to browse it, how long it's kept, and how to
-prove it hasn't been altered.
+check its chain hasn't been altered. See [Audit trail &
+integrity](/security/audit-trail/#limitations) for exactly what that chain
+does and doesn't catch.
 
 **Audit Log** in the sidebar needs its own permission to manage. It
 records **every request**, including plain page views and not just the
@@ -19,11 +21,11 @@ object, their IP address, query string, referring page, browser, and how
 long the request took.
 
 Almost everything is logged. The only exceptions are a short, fixed list
-of things that would just add noise: the live report preview, the health
-check endpoint, and the CSP report endpoint, plus bare `HEAD`/`OPTIONS`
-requests. Two sensitive URLs, the password reset and account setup
-confirmation links, have their path redacted in the log, since the URL
-itself contains a single-use token that shouldn't sit around readable.
+of things that would just add noise: the health check endpoint and the CSP
+report endpoint, plus bare `HEAD`/`OPTIONS` requests. Two sensitive URLs,
+the password reset and account setup confirmation links, have their path
+redacted in the log, since the URL itself contains a single-use token
+that shouldn't sit around readable.
 
 ## Browsing and filtering
 
@@ -68,21 +70,24 @@ records older than the same cutoff are purged in the same pass.
 Separate from the age-based purge above, the Audit Log page also offers
 **Clear all logs**, an unconditional wipe of every audit log and
 login-attempt row, regardless of age. Because this is destructive,
-irreversible, and the one action that could undo the log's own
-tamper-evidence guarantee, it needs two things, not one: the exact phrase
-`DELETE ALL LOGS` typed into a confirmation field, **and** a second,
-currently active Superadmin's own username and password entered on the
-same page. That second Superadmin has to be a genuinely different account
-from whoever is doing the clearing; nothing is deleted otherwise. There's
-no equivalent one-step shortcut for it.
+irreversible, and the one action that erases audit history outright, it
+needs two things, not one: the exact phrase `DELETE ALL LOGS` typed into a
+confirmation field, **and** a second, currently active Superadmin's own
+username and password entered on the same page. That second Superadmin
+has to be a genuinely different account from whoever is doing the
+clearing; nothing is deleted otherwise. There's no equivalent one-step
+shortcut for it.
 
-## Tamper-evidence
+## Chain integrity
 
 Every entry is cryptographically chained to the one before it, so
 changing a stored row anywhere in the chain, including through direct
 database access rather than the app, invalidates every hash that comes
 after it. A brand-new instance's very first entry chains from a fixed
-starting value.
+starting value. See [Audit trail &
+integrity](/security/audit-trail/#limitations) for what this does and
+doesn't catch, deleting rows is a different case from editing one in
+place.
 
 Check the whole chain at any time with:
 
