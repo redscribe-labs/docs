@@ -95,7 +95,12 @@ CONTENT_SECTIONS = [   {   'slug': 'vulnerability-description',
         'is_protected': False}]
 
 for section in CONTENT_SECTIONS:
-    ContentSectionDefinition.objects.get_or_create(
+    # update_or_create, not get_or_create: migration 0021_add_affects_content_section
+    # already creates the built-in "affects" row (at order=10) on every instance
+    # before this script ever runs, so get_or_create would find it and silently
+    # skip applying this script's order=30 -- exactly the section-ordering bug
+    # this line fixes.
+    ContentSectionDefinition.objects.update_or_create(
         slug=section["slug"],
         defaults={
             "label": section["label"],
