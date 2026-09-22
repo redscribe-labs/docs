@@ -151,13 +151,24 @@ server at all. Continue at [First run](/getting-started/first-run/).
 For working on RedScribe's own code, without a full container rebuild
 every time something changes:
 
+<Aside type="note" title="No Docker secrets here, so everything is a plain .env value">
+Methods 1-3 mount `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, and
+`REDSCRIBE_ROOT_KEY` as file-based Docker secrets (see [Before you
+start](#before-you-start)) — `_FILE`-suffixed env vars that point at a
+file Compose mounts read-only at `/run/secrets/...`. There's no Compose
+service here to mount anything, so that mechanism has nothing to read: set
+all three as plain values directly in `.env` instead, the same fallback
+path `env_secret()` already supports for bare-metal/CI (see [Environment
+variables](/reference/environment-variables/)).
+</Aside>
+
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 docker compose up -d db          # just the database
-cp .env.example .env             # fill in secrets as above, POSTGRES_HOST=localhost
+cp .env.example .env             # fill in DJANGO_SECRET_KEY/POSTGRES_PASSWORD as plain values, POSTGRES_HOST=localhost
 python manage.py migrate
-python manage.py generate_root_key   # put the output in .env
+python manage.py generate_root_key   # put the output in .env as REDSCRIBE_ROOT_KEY
 python manage.py bootstrap_superadmin --username admin --email admin@example.com
 python manage.py runserver
 ```
