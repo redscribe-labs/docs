@@ -2474,6 +2474,22 @@ TESTING_PHASES = [   {   'title': 'Scope and Target Identification',
                    'prioritizing high risk systemic issues to assist organizational development '
                    'teams with effective security hardening and patch implementation."}]}]}'}]
 
+# apps.reports.assembly.seeded_content() only sorts by severity (falling
+# back to created_at within a severity) when included_ids is None -- an
+# explicit included_ids list like this one is taken as-is, in whatever
+# order it's given. created_findings is in FINDINGS' authoring order,
+# which doesn't track severity, so it must be sorted here to match that
+# same convention -- otherwise every PDF/DOCX export renders findings in
+# an arbitrary order within (and even across) severity bands.
+_SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"]
+included_findings = sorted(
+    created_findings,
+    key=lambda finding: (
+        _SEVERITY_ORDER.index(finding.severity) if finding.severity in _SEVERITY_ORDER else 99,
+        finding.created_at,
+    ),
+)
+
 report_config, _created = ReportConfig.objects.get_or_create(
     engagement=engagement, is_template=False, defaults={"name": "Draft"},
 )
@@ -2488,7 +2504,7 @@ report_config.content = {
     "findings": {
         "statuses": None,
         "severities": None,
-        "included_ids": [str(finding.pk) for finding in created_findings],
+        "included_ids": [str(finding.pk) for finding in included_findings],
     },
     "breakdown": {
         "intro": json.dumps({"type": "doc", "content": [
