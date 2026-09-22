@@ -48,16 +48,19 @@ mounted by default.
 ### Per-container resource limits
 
 `docker-compose.yml` caps each service's memory and CPU. Defaults match
-the "Small firm" tier from [Requirements & sizing](/getting-started/requirements/);
-raise these for a bigger tier, or set them very high to effectively remove
-the cap.
+the "Solo" tier from [Requirements & sizing](/getting-started/requirements/)
+— the documented floor for "just trying it out". Docker's own `cpus:`
+refuses to start a container at all if the value exceeds the host's
+actual CPU count, so the shipped default has to work unmodified on that
+floor, not just on a beefier host; raise these for a bigger tier, or set
+them very high to effectively remove the cap.
 
 | Variable | Purpose | Default |
 |---|---|---|
 | `WEB_MEM_LIMIT` | Memory cap for the `web` container. Gets the larger share, since report export (WeasyPrint/docxtpl) is the most memory-hungry thing this app does. | `5g` |
-| `WEB_CPUS` | CPU cap for `web`, in cores (fractional allowed). | `3` |
+| `WEB_CPUS` | CPU cap for `web`, in cores (fractional allowed). | `1` |
 | `DB_MEM_LIMIT` | Memory cap for the `db` container. | `2g` |
-| `DB_CPUS` | CPU cap for `db`. | `1.5` |
+| `DB_CPUS` | CPU cap for `db`. | `0.5` |
 | `NGINX_MEM_LIMIT` | Memory cap for `nginx`. | `256m` |
 | `NGINX_CPUS` | CPU cap for `nginx`. | `0.5` |
 

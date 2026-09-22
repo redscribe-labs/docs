@@ -127,13 +127,16 @@ counts map to instance tiers.
 Each service in `docker-compose.yml` has a memory and CPU ceiling —
 `mem_limit`/`cpus`, the plain Compose Specification keys, not
 `deploy.resources.limits`, since this stack doesn't run under Swarm.
-Defaults match the "Small firm" tier from [Requirements &
-sizing](/getting-started/requirements/):
+Defaults match the "Solo" tier from [Requirements &
+sizing](/getting-started/requirements/) — the documented floor for "just
+trying it out". Docker's own `cpus:` refuses to start a container at all
+if the value exceeds the host's actual CPU count, so the shipped default
+has to work unmodified on that floor, not just on a beefier host:
 
 | Variable | Default | Service |
 |---|---|---|
-| `WEB_MEM_LIMIT` / `WEB_CPUS` | `5g` / `3` | `web` |
-| `DB_MEM_LIMIT` / `DB_CPUS` | `2g` / `1.5` | `db` |
+| `WEB_MEM_LIMIT` / `WEB_CPUS` | `5g` / `1` | `web` |
+| `DB_MEM_LIMIT` / `DB_CPUS` | `2g` / `0.5` | `db` |
 | `NGINX_MEM_LIMIT` / `NGINX_CPUS` | `256m` / `0.5` | `nginx` |
 
 `web` gets the larger share, since report export (WeasyPrint/docxtpl) is
