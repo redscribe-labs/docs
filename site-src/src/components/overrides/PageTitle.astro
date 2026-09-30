@@ -1,0 +1,16 @@
+---
+// Page title with the sidebar section as an eyebrow and the page description as a lead.
+const PAGE_TITLE_ID = '_top'; // Starlight's page-title anchor (not exported publicly)
+
+const { entry, sidebar } = Astro.locals.starlightRoute;
+type Entry = { type: string; label: string; isCurrent?: boolean; entries?: Entry[] };
+const contains = (e: Entry): boolean => (e.type === 'link' ? !!e.isCurrent : (e.entries ?? []).some(contains));
+const section = (sidebar as Entry[]).find((e) => e.type === 'group' && contains(e))?.label;
+const { title, description } = entry.data;
+---
+
+<header class="rs-page-head">
+	{section && <span class="rs-page-head__eyebrow">{section}</span>}
+	<h1 id={PAGE_TITLE_ID}>{title}</h1>
+	{description && <p class="rs-page-head__lead">{description}</p>}
+</header>

@@ -4,6 +4,9 @@ description: What a client company user sees in the RedScribe client portal, and
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotClientPortalHome from '../../../assets/screenshots/client-portal-home.png';
+import shotClientPortal from '../../../assets/screenshots/client-portal.png';
 
 If your assessment firm uses RedScribe, you may have been given a client portal account. This page explains exactly what you can see and do with it.
 
@@ -16,6 +19,8 @@ New client accounts are set up through a single-use, 24-hour emailed link that l
 ## The dashboard
 
 Your landing page after login lists every engagement currently visible to you, with three summary tiles above the list: total engagement count, total published findings across all of them, and a count of Critical or High severity findings that still need attention (shown in red once that count is above zero). Each engagement row shows its status, reference number, test type, start and end dates, and a row of severity chips summarizing its published findings. If nothing is visible yet, you'll simply see a message saying so rather than an error.
+
+<Screenshot src={shotClientPortalHome} alt="The client portal dashboard listing released engagements with severity counts" />
 
 ## What determines whether you can see an engagement at all
 
@@ -31,6 +36,8 @@ If you try to open an engagement or finding link directly that fails any of thes
 ## What you can see within a released engagement
 
 Only findings that have reached QA Approved in the review workflow are shown, regardless of the engagement's own release status. A finding still sitting in Draft, Reviewed, or Changes Requested never appears, even after its engagement has been released. This is enforced directly by what the portal fetches, not by hiding an already-loaded row, so there's no draft content that can leak through.
+
+<Screenshot src={shotClientPortal} alt="A released engagement in the client portal, listing published findings" />
 
 Within a finding you're allowed to see, only the sections your firm has marked as portal visible are shown, in the order they've configured. A section that exists but isn't portal visible, remediation testing notes, for example, which default to staff-only, is simply absent from the page, not shown empty or redacted.
 

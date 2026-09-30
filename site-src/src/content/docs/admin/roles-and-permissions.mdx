@@ -4,6 +4,8 @@ description: RedScribe's dynamic role/permission model, covering built-in roles,
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotRoles from '../../../assets/screenshots/roles.png';
 
 Every staff account has exactly one role, and that role decides everything
 they can see and do. This page explains how roles work and how to build
@@ -96,3 +98,5 @@ on the combination, so it's worth sanity checking a new role against what
 it's actually meant to do before handing it to someone, especially anything
 touching user management, roles, or finding review across the whole
 instance.
+
+<Screenshot src={shotRoles} alt="The role editor with the Require MFA option and grouped permission checkboxes" />

@@ -4,6 +4,10 @@ description: A full sample penetration-test report, and the Report Profile, Find
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotSampleReportPages from '../../../assets/screenshots/sample-report-pages.png';
+import shotReportProfileAppearance from '../../../assets/screenshots/report-profile-appearance.png';
+import shotReportProfileTextBlocks from '../../../assets/screenshots/report-profile-text-blocks.png';
 
 [**Download the sample PDF report**](/sample-report.pdf), a full,
 38-page web application penetration test report for a fictional client,
@@ -17,6 +21,8 @@ evidence, all of it is fictional and written to exercise every part of a
 report, not a real assessment. Use it to see what RedScribe produces and how
 a report is configured, not as a template to copy findings text from.
 </Aside>
+
+<Screenshot src={shotSampleReportPages} alt="Three pages of the sample PDF report: the cover, the findings-by-severity chart and overview table, and the first finding" />
 
 ## What's in it
 
@@ -79,6 +85,8 @@ tags. A different profile is free to use entirely different slugs.
 
 ### Appearance
 
+<Screenshot src={shotReportProfileAppearance} alt="The Appearance tab of a report profile with font, bullet, and colour settings" />
+
 Set on the profile's [Appearance
 tab](/admin/report-profiles/#appearance):
 
@@ -130,6 +138,8 @@ It isn't rich text you author, it's positioned here but backed directly by
 each finding's own **Affects** field.
 
 ### Text blocks
+
+<Screenshot src={shotReportProfileTextBlocks} alt="The Text blocks tab of a report profile listing each named block and its placeholder tag" />
 
 Eight profile-scoped [text blocks](/admin/report-profiles/#text-blocks)
 supply the narrative prose the Document template above pulls in:

@@ -4,6 +4,9 @@ description: Generating and exporting a report in Word, PDF, HTML, or Markdown, 
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotReportExport from '../../../assets/screenshots/report-export.png';
+import shotReportConfigure from '../../../assets/screenshots/report-configure.png';
 
 Every export format comes from the same underlying report content, so what you see in the live preview is exactly what ends up in your PDF, Word document, HTML file, or Markdown export: cover, document control, amendment history, disclaimers, table of contents, every body section, and back matter.
 
@@ -19,6 +22,8 @@ A profile with no Word template uploaded simply doesn't offer a Word export opti
 
 From an engagement, open **Report**.
 
+<Screenshot src={shotReportExport} alt="The Export report page with PDF, Markdown, and HTML options and an optional PDF password" />
+
 <Steps>
 1. **Configure** the report. Pick a Report Profile, and set any per-engagement overrides: which observations and testing phases to include, and any text block content that doesn't fit this particular report.
 2. **Preview** the report. This is a live render of the same content export uses, so what you see is what you get.
@@ -31,6 +36,8 @@ From an engagement, open **Report**.
    | PDF | Rendered directly by RedScribe, with an optional password to encrypt the output |
    | Word (.docx) | Fills in the profile's uploaded Word template, only offered if one is uploaded |
 </Steps>
+
+<Screenshot src={shotReportConfigure} alt="The Configure report page with per-report overrides and a live preview of the PDF" caption="Configure report: edit on the left, live preview on the right." />
 
 ### PDF password protection
 

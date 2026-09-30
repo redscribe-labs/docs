@@ -4,6 +4,10 @@ description: Creating and configuring Report Profiles, the appearance and labels
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotReportProfiles from '../../../assets/screenshots/report-profiles.png';
+import shotReportProfileAppearance from '../../../assets/screenshots/report-profile-appearance.png';
+import shotReportProfileTextBlocks from '../../../assets/screenshots/report-profile-text-blocks.png';
 
 A **Report Profile** is where you configure how a report looks and what
 it contains by default. This page walks through the admin side of that
@@ -20,6 +24,8 @@ generating or viewing reports themselves.
 
 Opening **Report Profiles** in the sidebar shows every profile on the
 instance.
+
+<Screenshot src={shotReportProfiles} alt="The Report profiles page with a profile card and the export concurrency limit" />
 
 - **Create** a new profile by giving it a name. It starts empty; build it
   out from its Document template.
@@ -49,6 +55,8 @@ for the full reference.
 
 Fonts, colors, and small pieces of text that change how a report looks
 without touching its content.
+
+<Screenshot src={shotReportProfileAppearance} alt="The Appearance tab of a report profile with font, bullet, and colour settings" />
 
 - **Cover title**, **classification label** (for example "Strictly
   Confidential"), and **finding ID prefix** (for example the `F` in
@@ -80,6 +88,8 @@ at localization or house style rather than day to day use.
 Your own author defined prose sections, the way you add things like an
 executive summary, a disclaimer, or a methodology writeup without
 touching any code.
+
+<Screenshot src={shotReportProfileTextBlocks} alt="The Text blocks tab of a report profile listing each named block and its placeholder tag" />
 
 <Steps>
 1. **Create a text block** from the profile's Text Blocks section, giving

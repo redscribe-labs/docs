@@ -4,6 +4,8 @@ description: The append-only, hash-chained audit log covering every request and 
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotAuditLog from '../../../assets/screenshots/audit-log.png';
 
 RedScribe keeps a hash-chained record of everything that happens on your
 instance, request by request, and login attempt by login attempt. This
@@ -33,6 +35,8 @@ The Audit Log page is filterable by free-text search (matches actor
 username, action, path, object reference, IP, browser, or referring page),
 HTTP method, actor, status-code bucket (2xx/3xx/4xx/5xx), and a from/to
 date range, with a configurable page size.
+
+<Screenshot src={shotAuditLog} alt="The audit log filtered to POST requests, showing time, actor, action, status, and object" caption="Filtered to state-changing (POST) requests." />
 
 ## Retention
 

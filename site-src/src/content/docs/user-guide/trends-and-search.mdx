@@ -4,12 +4,17 @@ description: How severity trends, mean time to remediate, repeat findings, and g
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotTrends from '../../../assets/screenshots/trends.png';
+import shotSearch from '../../../assets/screenshots/search.png';
 
 Trends and search both let you look across engagements instead of working inside just one. Both need to be turned on for your instance, and what you can see through either one is always limited to the engagements you already have access to.
 
 ## Trends
 
 Trends reports across whichever engagements you can already see: a Superadmin sees every engagement on the instance, including archived ones, while everyone else sees the same set they'd see anywhere else in the app. Archived engagements never show up in trends for anyone other than a Superadmin, even if the underlying numbers already exist.
+
+<Screenshot src={shotTrends} alt="Trend reporting with severity over time, mean time to remediate by severity, and repeat findings by client" />
 
 ### Severity over time
 
@@ -34,6 +39,8 @@ This groups findings by client and classification tag, and only surfaces a pairi
 Results are sorted by how many distinct engagements a pairing spans first, then by total finding count, then alphabetically by client name. There's no severity weighting: a client with the same low severity observation recurring across five engagements will outrank a client with a single critical finding that never repeated. That's intentional, this view is for spotting systemic process gaps, not acute risk.
 
 ## Search
+
+<Screenshot src={shotSearch} alt="Global search results for the query 'injection'" />
 
 Type a query into **Search** and it checks exactly two things:
 

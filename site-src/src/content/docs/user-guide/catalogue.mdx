@@ -4,6 +4,8 @@ description: The catalogue's draft, pending QA, and approved workflow, including
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotCatalogue from '../../../assets/screenshots/catalogue.png';
 
 The catalogue is a shared library of pre-written vulnerability templates your whole team draws from, so common findings don't get rewritten from scratch on every engagement.
 
@@ -16,6 +18,8 @@ Anyone signed in can create a draft catalogue entry, and anyone can edit or dele
 ```
 Draft ──submit for QA──▶ Pending QA ──approve──▶ Approved
 ```
+
+<Screenshot src={shotCatalogue} alt="The vulnerability catalogue listing entries in Draft, Pending QA, and Approved states" />
 
 Only an entry that's currently **Approved**, or one that used to be approved and still has that approved version on file, can be imported into a finding. See [Creating a finding](/user-guide/findings/#creating-a-finding).
 

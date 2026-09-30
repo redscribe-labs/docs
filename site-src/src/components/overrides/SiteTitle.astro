@@ -1,0 +1,46 @@
+---
+// Wordmark as on redscribe.app, plus a "Docs" pill so it's clear which site you're on.
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<a href={siteTitleHref} class="rs-site-title">
+	<svg viewBox="0 0 40 40" width="28" height="28" aria-hidden="true">
+		<rect width="40" height="40" rx="9" fill="#181a1b" />
+		<rect x="9" y="11" width="22" height="4" rx="2" fill="#669966" />
+		<rect x="9" y="18" width="15" height="4" rx="2" fill="#7a8185" />
+		<rect x="9" y="25" width="9" height="4" rx="2" fill="#494d50" />
+	</svg>
+	<span class="rs-site-title__name" translate="no">RedScribe</span>
+	<span class="rs-site-title__pill">Docs</span>
+</a>
+
+<style>
+	.rs-site-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		text-decoration: none;
+		white-space: nowrap;
+		min-width: 0;
+	}
+	svg {
+		flex: none;
+		border-radius: 7px;
+		box-shadow: inset 0 0 0 1px #313435;
+	}
+	.rs-site-title__name {
+		font-family: var(--sl-font-mono);
+		font-weight: 600;
+		font-size: 1rem;
+		color: #f2f2f3;
+	}
+	.rs-site-title__pill {
+		padding: 0.15rem 0.55rem;
+		border-radius: 999px;
+		background: #293d29;
+		color: #c2d6c2;
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+</style>

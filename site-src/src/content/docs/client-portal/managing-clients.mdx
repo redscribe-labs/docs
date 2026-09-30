@@ -4,12 +4,16 @@ description: Creating client companies and accounts, what each admin action does
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotClients from '../../../assets/screenshots/clients.png';
 
 This page is for staff managing client-facing access. See [For clients](/client-portal/for-clients/) for what the client themselves sees.
 
 ## Client companies
 
 A client company groups engagements under one customer organization. Managing them needs its own permission; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
+
+<Screenshot src={shotClients} alt="The Manage clients page listing client companies" />
 
 The client list supports a free text search over company name, and paginates ten companies per page.
 

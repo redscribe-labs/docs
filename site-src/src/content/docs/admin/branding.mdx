@@ -4,6 +4,8 @@ description: Setting the firm name and logo shown on the login page, sidebar, cl
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotBranding from '../../../assets/screenshots/branding.png';
 
 **Firm Branding** in the sidebar sets two things for your whole instance:
 a company name, and a logo. Wherever RedScribe would otherwise show its
@@ -24,6 +26,8 @@ they really are a decodable image in one of those three formats. A file
 that lies about its type (say a `.png` extension on something that isn't
 actually a PNG) is rejected at that second check, since it never gets
 stored on the strength of its filename or declared type alone.
+
+<Screenshot src={shotBranding} alt="The Firm branding page with a company name field and logo upload" />
 
 **Remove logo** clears it back to no logo, falling back to the text name
 (or plain "RedScribe" if that's blank too) everywhere the logo would have

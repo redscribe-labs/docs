@@ -4,6 +4,9 @@ description: Logging into RedScribe, enrolling in TOTP MFA, and account recovery
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotLogin from '../../../assets/screenshots/login.png';
+import shotLoginMfa from '../../../assets/screenshots/login-mfa.png';
 
 Everyone, whether you work at the firm or you're a client, signs in through the same login page and the same two-factor process. Here's what to expect.
 
@@ -11,9 +14,13 @@ Everyone, whether you work at the firm or you're a client, signs in through the 
 
 Staff and client portal users log in at the same place. RedScribe figures out which kind of account you have after you authenticate, not from a separate URL.
 
+<Screenshot src={shotLogin} alt="The RedScribe sign-in page" narrow />
+
 The username and password form is always there, along with a "Forgot your password?" link. If your instance has single sign-on set up, a "Sign in with Google" or "Sign in with Microsoft" button appears underneath as an extra option. That only works for accounts in your firm's approved email domain, and only for accounts an administrator has already created for you. It isn't self-service signup.
 
 ## Setting up multi-factor authentication
+
+<Screenshot src={shotLoginMfa} alt="The MFA enrollment page with a QR code and a field for the 6-digit code" caption="Enrolling an authenticator app on first login." narrow />
 
 By default, every local account (not signing in through Google or Microsoft) is required to enroll in TOTP based multi-factor authentication, on your very first login:
 

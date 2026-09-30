@@ -4,12 +4,18 @@ description: Creating and running an engagement through its full lifecycle, cove
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotEngagementCreate from '../../../assets/screenshots/engagement-create.png';
+import shotEngagementDetail from '../../../assets/screenshots/engagement-detail.png';
+import shotEngagementScopeChange from '../../../assets/screenshots/engagement-scope-change.png';
 
 An engagement is the container for one client project, a web application pentest, a network assessment, a vulnerability scan, or a remediation retest. Everything else in RedScribe (findings, checklist runs, scanner imports, the report) hangs off one engagement.
 
 ## Creating an engagement
 
 From **Engagements**, select **New**. You'll need the right permission to create one; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
+
+<Screenshot src={shotEngagementCreate} alt="The new engagement form with client, reference number, scope, dates, and default reviewer and QA" />
 
 You'll fill in:
 
@@ -24,6 +30,8 @@ Linking to a real client company, rather than just typing a name, is what makes 
 </Aside>
 
 ## Status lifecycle
+
+<Screenshot src={shotEngagementDetail} alt="An engagement's overview page showing its Delivered status and the next lifecycle actions" caption="The overview page shows the current status and offers the next transitions." />
 
 An engagement moves through a fixed sequence of statuses, changed from its detail page:
 
@@ -53,6 +61,8 @@ Scope changes go through an approval step rather than silently editing the recor
 2. Someone with the right permission **approves** or **rejects** it.
 3. An approved request updates the engagement's recorded scope and stays part of its history. A rejected one is kept too, as a record that it was considered and declined.
 </Steps>
+
+<Screenshot src={shotEngagementScopeChange} alt="A pending scope change request with Approve and Reject buttons" caption="A pending scope change, as a Team Lead sees it." />
 
 ## Archiving and deletion
 

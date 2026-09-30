@@ -4,12 +4,16 @@ description: Bulk-creating draft findings from Nmap, Burp Suite, and Nuclei outp
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotScannerImport from '../../../assets/screenshots/scanner-import.png';
 
 If you've already run Nmap, Burp Suite, or Nuclei against a target, you don't have to retype every result by hand. From an engagement, open **Findings** then **Import**, and upload the scanner's raw output file to bulk create draft findings instead of entering them one at a time.
 
 This option only appears if your administrator has turned on scanner import for the instance. If it's off, you won't see the screen at all.
 
 The upload form accepts any file up to 75MB, and doesn't check the file's extension or content beyond that size limit. That means the format you pick from the dropdown is what actually decides how the file gets parsed. Uploading a Burp XML file while "Nuclei JSON Lines" is selected will fail with a parse error rather than a helpful "wrong tool" message, since RedScribe has no way to know what you meant to upload.
+
+<Screenshot src={shotScannerImport} alt="The scan import form with a format picker for Nmap, Burp Suite, and Nuclei" />
 
 ## What each parser extracts
 

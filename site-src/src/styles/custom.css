@@ -14,8 +14,6 @@
  * page's surface area.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 :root {
 	--sl-font: 'Plus Jakarta Sans', var(--sl-font-system);
 	--sl-font-mono: 'JetBrains Mono', var(--sl-font-system-mono);
@@ -111,7 +109,279 @@
 	--sl-color-black: #111213; /* twilight-950 — search box fill */
 }
 
-/* Inline code / code blocks read from the mono stack; keep a hint of `mist` in blockquote/aside borders. */
+/* ==========================================================================
+ * Refresh (matches redscribe.app): same tokens as above, bolder type, softer
+ * rounded surfaces, brand-tinted states. Nothing below introduces a new color;
+ * every value is a token above or a color-mix of two of them.
+ * ======================================================================== */
+
+:root {
+	--rs-brand-200: #c2d6c2;
+	--rs-brand-300: #a3c2a3;
+	--rs-brand-400: #85ad85;
+	--rs-brand-500: #669966;
+	--rs-brand-700: #3d5c3d;
+	--rs-brand-800: #293d29;
+	--rs-brand-950: #0e150e;
+	--rs-navy-500: #68609f;
+	--rs-mist-300: #a7bebc;
+	--rs-mist-500: #6c9390;
+	--rs-navy-300: #a49fc6;
+	--rs-radius: 12px;
+	--sl-line-height-headings: 1.15;
+	--sl-text-h1: clamp(2.1rem, 1.6rem + 1.6vw, 2.9rem);
+	--sl-text-h2: 1.75rem;
+	--sl-text-h3: 1.3rem;
+}
+
+/* ---------------------------------------------------------------- type */
+
+.sl-markdown-content :is(h1, h2, h3, h4, h5),
+h1#_top {
+	font-weight: 700;
+	letter-spacing: -0.025em;
+}
+.sl-markdown-content h2 {
+	margin-top: 2.75rem;
+	padding-top: 0.25rem;
+}
+.sl-markdown-content h3 {
+	margin-top: 2rem;
+}
+.sl-markdown-content a:not(:where(.not-content *)) {
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.2em;
+	text-decoration-color: color-mix(in srgb, var(--sl-color-accent) 45%, transparent);
+	transition: text-decoration-color 150ms ease, color 150ms ease;
+}
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+	text-decoration-color: currentColor;
+}
+.sl-markdown-content :not(pre) > code {
+	padding: 0.12em 0.4em;
+	border-radius: 6px;
+	border: 1px solid var(--sl-color-gray-5);
+	background: color-mix(in srgb, var(--sl-color-gray-6) 70%, transparent);
+	font-size: 0.875em;
+}
 code {
 	font-feature-settings: 'liga' 0;
+}
+::selection {
+	background: color-mix(in srgb, var(--rs-brand-500) 40%, transparent);
+}
+
+/* ---------------------------------------------------------------- header */
+
+.header {
+	/* Solid: a translucent dark bar over the light theme's white page reads as muddy grey. */
+	background: #111213;
+	border-bottom-color: #26292a;
+}
+site-search button[data-open-modal] {
+	border-radius: 999px;
+	border-color: #313435;
+	background: #181a1b;
+}
+site-search button[data-open-modal]:hover {
+	border-color: #494d50;
+}
+site-search kbd {
+	border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------- sidebar */
+
+.sidebar-content {
+	--sl-sidebar-item-padding-inline: 0.75rem;
+}
+.sidebar-content summary .group-label .large,
+.sidebar-content > ul > li > a.large {
+	font-family: var(--sl-font-mono);
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #959a9d;
+}
+.sidebar-content summary:hover .group-label .large {
+	color: #f2f2f3;
+}
+.sidebar-content a {
+	border-radius: 8px;
+	transition: background 120ms ease, color 120ms ease;
+}
+.sidebar-content a:hover {
+	background: #181a1b;
+}
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+	background: color-mix(in srgb, var(--rs-brand-800) 75%, transparent);
+	color: var(--rs-brand-200);
+	font-weight: 600;
+	box-shadow: inset 2px 0 0 var(--rs-brand-400);
+}
+.sidebar-content ul ul {
+	border-inline-start-color: #26292a;
+}
+
+/* ---------------------------------------------------------------- page title (PageTitle override) */
+
+.rs-page-head {
+	margin-top: 1rem;
+}
+.rs-page-head__eyebrow {
+	display: inline-block;
+	font-family: var(--sl-font-mono);
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--sl-color-accent);
+}
+.rs-page-head h1 {
+	margin-top: 0.5rem;
+	font-size: var(--sl-text-h1);
+	line-height: 1.08;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	color: var(--sl-color-white);
+}
+.rs-page-head__lead {
+	margin-top: 0.85rem;
+	font-size: var(--sl-text-lg);
+	line-height: 1.55;
+	color: var(--sl-color-gray-3);
+	max-width: 42rem;
+}
+
+/* Soft brand glow at the top of every page, as on redscribe.app. */
+.main-frame {
+	background:
+		radial-gradient(60rem 20rem at 30% -6rem, color-mix(in srgb, var(--rs-brand-500) 14%, transparent), transparent 70%)
+		no-repeat;
+}
+:root[data-theme='light'] .main-frame {
+	background:
+		radial-gradient(60rem 20rem at 30% -6rem, color-mix(in srgb, var(--rs-brand-500) 10%, transparent), transparent 70%)
+		no-repeat;
+}
+
+/* ---------------------------------------------------------------- content blocks */
+
+.starlight-aside {
+	border-radius: var(--rs-radius);
+	border: 1px solid color-mix(in srgb, var(--sl-color-asides-border) 45%, transparent);
+	border-inline-start: 3px solid var(--sl-color-asides-border);
+	background: color-mix(in srgb, var(--sl-color-asides-text-accent) 7%, transparent);
+	padding: 1rem 1.15rem;
+}
+.starlight-aside__title {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.sl-markdown-content table:not(:where(.not-content *)) {
+	display: table;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: var(--rs-radius);
+	overflow: hidden;
+	font-size: var(--sl-text-sm);
+}
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+	border-bottom: 1px solid var(--sl-color-gray-5);
+	padding: 0.65rem 0.9rem;
+}
+.sl-markdown-content tr:last-child td:not(:where(.not-content *)) {
+	border-bottom: 0;
+}
+.sl-markdown-content th:not(:where(.not-content *)) {
+	background: color-mix(in srgb, var(--sl-color-gray-6) 80%, transparent);
+	color: var(--sl-color-white);
+	font-weight: 600;
+	text-align: start;
+}
+@media (max-width: 50rem) {
+	.sl-markdown-content table:not(:where(.not-content *)) {
+		display: block;
+		overflow-x: auto;
+	}
+}
+
+.sl-steps {
+	--bullet-size: 1.9rem;
+}
+.sl-steps > li::before {
+	background: var(--rs-brand-800) !important;
+	color: var(--rs-brand-200) !important;
+	font-family: var(--sl-font-mono);
+	font-weight: 600;
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--rs-brand-500) 14%, transparent);
+}
+:root[data-theme='light'] .sl-steps > li::before {
+	background: var(--rs-brand-700) !important;
+	color: #fff !important;
+}
+.sl-steps > li::after {
+	background: var(--sl-color-gray-5) !important;
+}
+
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+	border-inline-start: 3px solid var(--rs-mist-500);
+	border-radius: 0 var(--rs-radius) var(--rs-radius) 0;
+	background: color-mix(in srgb, var(--rs-mist-500) 8%, transparent);
+	padding: 0.75rem 1rem;
+	font-style: normal;
+}
+
+/* ---------------------------------------------------------------- page footer */
+
+.pagination-links a {
+	border-radius: var(--rs-radius);
+	border-color: var(--sl-color-gray-5);
+	box-shadow: none;
+	transition: border-color 150ms ease, transform 150ms ease, background 150ms ease;
+}
+.pagination-links a:hover {
+	border-color: var(--sl-color-accent);
+	background: color-mix(in srgb, var(--sl-color-accent) 6%, transparent);
+	transform: translateY(-1px);
+}
+.pagination-links .link-title {
+	font-weight: 700;
+	letter-spacing: -0.015em;
+}
+
+starlight-toc a[aria-current='true'],
+starlight-toc a[aria-current='true']:hover {
+	color: var(--sl-color-accent);
+	font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- product screenshots (Screenshot.astro) */
+
+.sl-markdown-content .rs-shot {
+	margin-block: 1.75rem;
+}
+.sl-markdown-content .rs-shot img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: var(--rs-radius);
+	box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.55);
+}
+.sl-markdown-content .rs-shot--narrow {
+	max-width: 32rem;
+	margin-inline: auto;
+}
+.sl-markdown-content .rs-shot figcaption {
+	margin-top: 0.6rem;
+	font-size: var(--sl-text-sm);
+	color: var(--sl-color-gray-3);
+	text-align: center;
 }

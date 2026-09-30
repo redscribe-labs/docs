@@ -4,6 +4,8 @@ description: Checklist templates and per-engagement checklist runs, with sequent
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotChecklistRun from '../../../assets/screenshots/checklist-run.png';
 
 RedScribe separates **templates**, reusable test lists you manage once, from **runs**, one working copy of a template against a specific engagement.
 
@@ -22,6 +24,8 @@ A fresh instance ships with zero templates. Nothing is pre-loaded, so pick your 
 ## Runs
 
 From an engagement, open **Checklist**. An engagement can have multiple independent runs going at once, for example OWASP WSTG against a web app alongside the OWASP API Top 10 against its API, on the same engagement.
+
+<Screenshot src={shotChecklistRun} alt="An OWASP WSTG checklist run showing progress, suggested next checks, and item statuses" />
 
 Each item's status is one of:
 

@@ -4,6 +4,8 @@ description: Generating the instance root key and creating the first Superadmin 
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotSetup from '../../../assets/screenshots/setup.png';
 
 Two things need to happen before RedScribe is actually usable: it needs
 its encryption key, and you need an account to log in with. This page
@@ -77,6 +79,8 @@ those steps are already built into it.
 4. Head to `/login/` (or you're probably already there).
 
 </Steps>
+
+<Screenshot src={shotSetup} alt="The first-run setup form for creating the Superadmin account" caption="The /setup/ page on a fresh instance." narrow />
 
 ## What's next
 

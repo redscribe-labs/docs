@@ -15,125 +15,58 @@ versioning](/start/alpha-status/) for how that's applied pre-1.0.
 
 ## [Unreleased]
 
-### Fixed
+## [0.2.0-alpha.3] - 2026-09-30
 
-- `docker compose` no longer fails with a `NGINX_SERVER_NAME` interpolation
-  error on any invocation without `--profile tailscale` (Methods 2, 3, and
-  plain `down`).
-- `config.settings.prod` (Methods 1-2) no longer crashes on first boot —
-  `DJANGO_DEBUG` now defaults to `false` in `.env.example`.
-- Bare-metal/CI `manage.py` commands (Method 4) now load `.env`
-  automatically, via new `python-dotenv` dependency.
-- `docker compose up` no longer fails with a CPU-range error on a 1 vCPU
-  host. `WEB_CPUS`/`DB_CPUS` defaults lowered to match the documented
-  "Solo" tier floor; raise them in `.env` for a bigger tier — see
-  [Requirements & sizing](/getting-started/requirements/).
-- Gunicorn worker count now sizes off the container's actual `WEB_CPUS`
-  quota instead of `nproc`, which reported the host's full core count
-  regardless of that quota.
+A security and maintenance update. Upgrading is recommended for everyone.
 
 ### Security
 
-- `BACKUP_ENCRYPTION_PASSPHRASE` now uses the same `_FILE`-first secret
-  convention (`env_secret()`) as every other real secret.
+- Updated the sign-in libraries to fix known vulnerabilities.
+- Moved to a supported version of nginx.
+- Added a missing security header to nginx's own error pages.
+
+### Changed
+
+- Routine updates to other dependencies.
+
+## [0.2.0-alpha.2] - 2026-09-29
+
+A bug-fix release for report fonts, User Management, and Docker setup.
+
+### Fixed
+
+- Report profile fonts now show up in the app and the report preview.
+- Client portal users no longer appear in User Management.
+- Fixed several problems that stopped RedScribe from starting, including on
+  single-CPU hosts.
+
+### Security
+
+- The backup passphrase can now be stored as a secret file.
 
 ## [0.2.0-alpha.1] - 2026-09-22
 
+A security hardening release. MFA is now on by default.
+
+**Upgrading:** create `secrets/django_secret_key.txt` and
+`secrets/postgres_password.txt` before starting this version. See
+[`secrets/README.md`](https://github.com/redscribe-labs/redscribe/blob/main/secrets/README.md).
+
 ### Security
 
-- `mfa_required` now defaults to **on** instead of off. Every local account
-  is enrolled in TOTP MFA from first login unless an admin turns off the
-  instance-wide flag in Feature Flags (useful for a local or disposable
-  dev/test instance). Existing instances get migrated to the new default on
-  upgrade.
-- Added an `emergency_account_recovery` management command. Resetting a
-  locked-out local account used to mean a raw `manage.py shell` or
-  `changepassword` session that left no trace in RedScribe's audit log, the
-  one access path that matters most during an incident. The new command
-  requires a `--reason` and writes an audit log entry for what it did.
-- The permanent-engagement-delete confirmation page now says plainly that a
-  database backup taken before the deletion still holds that engagement's
-  data until the backup itself ages out or gets cleaned up. Deletion only
-  ever touched the live database, but the page used to imply otherwise. See
-  [Backup & restore](/admin/backup-and-restore/) for more.
-- Fixed a server-side template injection vulnerability in Word (`.docx`)
-  report export. Uploaded `.docx` templates were rendered through an
-  unrestricted `jinja2.Environment` (via `docxtpl`), so a crafted template
-  could reach Python internals and potentially run arbitrary code on the
-  server. Both render paths (upload-time validation and the real export)
-  now use `jinja2.sandbox.SandboxedEnvironment` instead.
-- Clearing all audit logs now requires a second, currently active
-  Superadmin's username and password at confirmation time, not just the
-  `audit_log.manage` permission on its own. A full purge is the one action
-  that could undo the audit log's tamper-evidence guarantee, so it's no
-  longer left to a single person acting alone.
-- The uploaded `.docx` report template now has an explicit 20MB size cap,
-  plus a check on the archive's declared uncompressed size and member count
-  before it's opened by `python-docx`/`docxtpl`. This closes a zip-bomb
-  style resource-exhaustion path the size cap alone didn't cover.
-- A `.docx` template's original filename is now sanitized before it's used
-  in a download's `Content-Disposition` header, closing a header-injection
-  path for filenames containing an unescaped `"`.
-- Added `.dockerignore` (`.env`, `secrets/*.txt`, `certs/*.pem`, `.git/`,
-  and similar). The `Dockerfile`'s `COPY . .` had no exclusions, so any of
-  these present in the build context at `docker build` time would get
-  baked into the image layer despite being `.gitignore`d, since gitignore
-  has no effect on Docker's build context.
-- Postgres connections now set `sslmode` explicitly (default `prefer`,
-  matching the shipped same-host Compose setup, configurable via
-  `POSTGRES_SSLMODE`/`POSTGRES_SSLROOTCERT`) instead of relying on
-  psycopg's undocumented default. This matters once `POSTGRES_HOST` points
-  at a separate host.
-- **Fixed a stored-XSS path in rich text link marks.** Finding and
-  checklist rich text fields already stripped image `src` values down to
-  an allowlist (own encrypted blobs, or nothing); the equivalent check was
-  missing for link `href` values, so a `content_json` payload POSTed
-  directly (bypassing the Tiptap editor's own client-side protocol
-  allowlist) could carry a `javascript:` link that survived to a
-  higher-privileged reviewer or the client portal. `RichTextField` now
-  strips any link whose `href` isn't `http://`, `https://`, or `mailto:`,
-  the same allowlist the read-only renderer already enforces.
-- `reports:preview` (the live report-preview endpoint, which serves
-  fully-assembled decrypted report content) is no longer excluded from the
-  audit log. It was originally excluded to avoid flooding the log on every
-  keystroke of report configuration; that traded away a record of the one
-  endpoint that serves decrypted report content on demand, so it's logged
-  like every other view now.
-- `rotate_root_key` no longer requires `--new-key` on the command line.
-  Omitting it now prompts interactively via `getpass` (not echoed, never
-  in argv or shell history), matching `restore_backup`'s existing pattern
-  for the same class of secret.
-- `DJANGO_SECRET_KEY` and `POSTGRES_PASSWORD` are now delivered the same
-  way `REDSCRIBE_ROOT_KEY` already was under Docker Compose: as file-based
-  Docker secrets (`secrets/django_secret_key.txt`,
-  `secrets/postgres_password.txt`) rather than plain `.env` values, via a
-  new `env_secret()` settings helper (`<NAME>_FILE` beats `<NAME>`, same
-  convention `RootKeyProvider` already used). The same mechanism is now
-  also available for `GOOGLE_OAUTH_CLIENT_SECRET`,
-  `MICROSOFT_OAUTH_CLIENT_SECRET`, and `EMAIL_HOST_PASSWORD`, though
-  Compose doesn't mount a secret for those by default since they're
-  opt-in features. **Existing `.env`-only deployments upgrading to this
-  release need to create `secrets/django_secret_key.txt` and
-  `secrets/postgres_password.txt`** — see [Environment
-  variables](/reference/environment-variables/). The plain env vars remain
-  a supported fallback for non-Docker/bare-metal deployments and CI.
-- `docker-compose.yml` now caps memory/CPU per service (`WEB_MEM_LIMIT`/
-  `WEB_CPUS`, `DB_MEM_LIMIT`/`DB_CPUS`, `NGINX_MEM_LIMIT`/`NGINX_CPUS`),
-  defaulting to the "Small firm" tier from [Requirements &
-  sizing](/getting-started/requirements/). Previously unbounded, which on
-  a host without its own container-level limits meant a single large
-  report export (or a burst of them) had no ceiling on how much of the
-  box it could consume. Existing deployments sized for a bigger tier
-  should raise these explicitly in `.env`.
-- Corrected "tamper detection"/"tamper-evident" language describing the
-  audit log in the README, `SECURITY.md`, and across this site. The hash
-  chain reliably detects an edit to a row that's still in the table, but
-  does **not** protect against someone with direct database write access
-  deleting the newest entries, or an already-purged prefix being extended
-  further than a legitimate retention purge would — both leave the chain
-  verifying as intact. See [Audit trail &
-  integrity](/security/audit-trail/) for the full scope of what the hash
-  chain does and doesn't catch.
+- Fixed two serious vulnerabilities in Word report templates and rich-text
+  links.
+- Passwords and keys are now kept in secret files instead of `.env`.
+- Tightened the audit log, uploaded templates, and Docker builds.
+
+### Added
+
+- A command to recover a locked-out account.
+
+### Changed
+
+- MFA is on by default for every local account.
+- Docker Compose now limits how much memory and CPU each service can use.
 
 ## [0.1.0-alpha.1] - 2026-09-17
 

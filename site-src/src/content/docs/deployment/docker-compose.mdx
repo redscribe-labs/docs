@@ -19,8 +19,8 @@ place, see [Installation](/getting-started/installation/).
 |---|---|---|
 | `db` | `postgres:17-alpine` | The database. Bound to `127.0.0.1:5432` on the host, for local admin access (`psql`, running migrations from the host). Never reachable off box. |
 | `web` | Built from the repo's `Dockerfile` | The app itself, running under gunicorn. Bound to `127.0.0.1:8000` for direct host-side debugging, but `nginx` is the real public entry point. Mounts `./backups:/app/backups` as a plain host directory (not a named volume) so you can point `rsync` or `rclone` at it directly. |
-| `nginx` | `nginx:1.27-alpine` | Handles TLS and reverse proxies to `web`. Runs with `network_mode: host`, see [below](#why-nginx-uses-host-networking) for why. |
-| `cert-renew` | `tailscale/tailscale:v1.102.3` | Optional. Issues and renews a TLS certificate automatically via Tailscale. Only starts if you add `--profile tailscale`. |
+| `nginx` | `nginx:1.30-alpine` | Handles TLS and reverse proxies to `web`. Runs with `network_mode: host`, see [below](#why-nginx-uses-host-networking) for why. |
+| `cert-renew` | `tailscale/tailscale:v1.102.5` | Optional. Issues and renews a TLS certificate automatically via Tailscale. Only starts if you add `--profile tailscale`. |
 
 A few things worth knowing about how these fit together:
 

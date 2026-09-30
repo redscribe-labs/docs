@@ -4,6 +4,11 @@ description: Creating findings, the draft → review → QA workflow, CVSS scori
 ---
 
 import { Aside, Steps, Badge } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotFindingEditor from '../../../assets/screenshots/finding-editor.png';
+import shotFindingDetail from '../../../assets/screenshots/finding-detail.png';
+import shotReviewQueue from '../../../assets/screenshots/review-queue.png';
+import shotFindingReview from '../../../assets/screenshots/finding-review.png';
 
 A finding is where the actual work of an engagement lives: one
 vulnerability, written up, scored, and walked through review before it
@@ -19,6 +24,8 @@ point instead of writing from scratch. Nothing stops you editing it
 further afterward.
 
 ### What you fill in
+
+<Screenshot src={shotFindingEditor} alt="The finding editor with a rich-text description, severity and status, and the CVSS v4.0 calculator" />
 
 - **Title**, **severity** (Critical, High, Medium, Low, or Informational),
   and **status** (Open or Closed, whether the vulnerability itself is
@@ -40,6 +47,8 @@ further afterward.
   automatically when it creates a finding for you.
 
 ## The review workflow
+
+<Screenshot src={shotFindingDetail} alt="A QA-approved finding with its Review / QA progress panel" caption="A finding that has passed review and QA, and is ready to publish." />
 
 Every finding moves through its own review stage, separate from whether
 it's open or closed:
@@ -67,6 +76,8 @@ can have one without the other. A narrower version of each exists too, for
 reviewing only your own findings rather than everyone's. See the
 [Permissions reference](/reference/permissions/) for the exact grants if
 you're setting up roles.
+
+<Screenshot src={shotReviewQueue} alt="The My review queue page listing findings awaiting review and QA" caption="My Queue: only the findings explicitly assigned to you." />
 
 One useful exception: a permission exists that lets someone submit
 *anyone's* review or QA decision, regardless of who it's actually assigned
@@ -105,6 +116,8 @@ the exact text they're about. Select the relevant sentence, start a
 thread, reply, and mark it resolved once it's addressed. This is how
 review and QA feedback usually gets attached to the specific thing it's
 about, instead of living in a separate note nobody reads in context.
+
+<Screenshot src={shotFindingReview} alt="A finding under QA with an anchored comment thread on its description" caption="An inline comment thread anchored to highlighted text." />
 
 ## Scanner import
 

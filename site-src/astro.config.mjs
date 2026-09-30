@@ -29,7 +29,19 @@ export default defineConfig({
 			favicon: '/favicon.svg',
 			lastUpdated: true,
 			pagination: true,
-			customCss: ['./src/styles/custom.css'],
+			customCss: ['./src/styles/fonts.css', './src/styles/custom.css'],
+			// Restyled chrome to match redscribe.app; see src/components/overrides/.
+			components: {
+				SiteTitle: './src/components/overrides/SiteTitle.astro',
+				PageTitle: './src/components/overrides/PageTitle.astro',
+			},
+			expressiveCode: {
+				styleOverrides: {
+					borderRadius: '12px',
+					codeFontFamily: "'JetBrains Mono', ui-monospace, monospace",
+					uiFontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+				},
+			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/redscribe-labs/redscribe' },
 			],
@@ -63,7 +75,7 @@ export default defineConfig({
 				{
 					label: 'Start here',
 					items: [
-						{ label: 'What is RedScribe?', slug: 'index' },
+						{ label: 'Overview', slug: 'index' },
 						{ label: 'Concepts & terminology', slug: 'start/concepts' },
 						{
 							label: 'Alpha status & versioning',

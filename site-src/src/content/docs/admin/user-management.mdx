@@ -4,6 +4,9 @@ description: Creating and managing staff accounts, and recovering a lost passwor
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotUserManagement from '../../../assets/screenshots/user-management.png';
+import shotUserDetail from '../../../assets/screenshots/user-detail.png';
 
 This is where you create staff accounts, change roles, and handle
 deactivation and account recovery. It's separate from the [client
@@ -20,6 +23,8 @@ here at all.
 From **User Management**, choose **New user**, and set a username, email,
 and [role](/admin/roles-and-permissions/). What happens next depends on how
 your instance handles login.
+
+<Screenshot src={shotUserManagement} alt="The User management page listing staff accounts with their roles and sign-in method" />
 
 - **Local login (the default):** the account is provisioned through the
   same single-use, 24-hour emailed setup link used everywhere else in
@@ -42,6 +47,8 @@ A pending invite shows an amber "Invited — awaiting first login" badge
 until it's claimed.
 
 ## Managing an existing user
+
+<Screenshot src={shotUserDetail} alt="A user's detail page showing their role, sign-in method, and MFA status, account dates, recent login attempts, and the Edit, Send password reset link, Clear MFA, and Deactivate account actions" caption="A user's detail page. Account actions sit on the right; which ones appear depends on the account." />
 
 From a user's detail page:
 
