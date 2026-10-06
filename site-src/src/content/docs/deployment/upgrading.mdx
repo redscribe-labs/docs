@@ -27,12 +27,20 @@ it's already gone wrong.
    docker compose exec -T web python manage.py create_backup
    ```
 
-2. **Pull the new version and restart as usual:**
+2. **Pull the new version, refresh the base images, and restart:**
 
    ```sh
    git pull
-   docker compose up -d --build
+   docker compose pull --ignore-buildable
+   docker compose build --pull
+   docker compose up -d
    ```
+
+   The two middle commands fetch the latest PostgreSQL, nginx, and Python
+   base images, so OS and library security fixes arrive with every upgrade.
+   A plain `docker compose up -d --build` keeps reusing whatever base images
+   are already on the host. If you run the Tailscale profile, add
+   `--profile tailscale` to the `pull` and `up` commands.
 
 3. **If something's broken**, roll the code back first:
 
