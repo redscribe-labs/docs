@@ -14,7 +14,7 @@ check its chain hasn't been altered. See [Audit trail &
 integrity](/security/audit-trail/#limitations) for exactly what that chain
 does and doesn't catch.
 
-**Audit Log** in the sidebar needs its own permission to manage. It
+**Settings → Audit log** needs its own permission to manage. It
 records **every request**, including plain page views and not just the
 ones that change something, plus every login attempt. Each entry captures
 who did it (user, username, and their role at the time), what they did,
@@ -36,7 +36,22 @@ username, action, path, object reference, IP, browser, or referring page),
 HTTP method, actor, status-code bucket (2xx/3xx/4xx/5xx), and a from/to
 date range, with a configurable page size.
 
-<Screenshot src={shotAuditLog} alt="The audit log filtered to POST requests, showing time, actor, action, status, and object" caption="Filtered to state-changing (POST) requests." />
+<Screenshot src={shotAuditLog} alt="The audit log with search and filters across the top, Export CSV and purge buttons, and a table of entries showing time, actor, action, method, status, path, and IP" />
+
+### Exporting to CSV
+
+**Export CSV** downloads the entries that match your current filters as a
+CSV file, with the time (UTC), user, role, action, method, path, query,
+status, engagement, object, IP address, browser, referring page,
+duration, and each entry's chain hash. It covers every matching entry,
+not just the page you're looking at, and is streamed, so a large export
+doesn't need to fit in memory.
+
+Values that a spreadsheet would treat as a formula (anything starting with
+`=`, `+`, `-`, or `@`) are prefixed with `'`, so opening the file in Excel
+or Google Sheets can't run anything an attacker typed into a URL or
+browser string. The export itself is a request like any other, so it's
+recorded in the log too.
 
 ## Retention
 

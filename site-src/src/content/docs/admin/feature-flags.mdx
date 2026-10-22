@@ -5,7 +5,7 @@ description: The instance-wide toggles that turn optional RedScribe features on 
 
 import { Aside } from '@astrojs/starlight/components';
 
-**Feature Flags** in the sidebar (Superadmin only) turns optional parts of
+**Settings → Feature flags** (Superadmin only) turns optional parts of
 RedScribe on or off, instance wide. There's exactly one set of flags per
 instance; there's no per-user or per-engagement version of any of them.
 
@@ -14,7 +14,7 @@ instance; there's no per-user or per-engagement version of any of them.
 | Retest workflow | Retest and remediation tracking on findings (Fixed, Not Fixed, Partially Fixed, Risk Accepted, plus history) | On |
 | Notifications | Reviewer and QA assignment notifications, both in-app and email. A user's own email opt-out (see [Notifications & profile](/user-guide/notifications-and-profile/)) still applies on top of this | On |
 | Recurrence & trends | Recurring-vulnerability detection on the finding page, and the cross-engagement [Trends](/user-guide/trends-and-search/) page | On |
-| CVSS calculator | The CVSS v3.1/v4.0 calculator widget on the finding and catalogue create/edit forms | On |
+| CVSS calculator | The **Open CVSS calculator** button and its v3.1/v4.0 calculator on the finding and catalogue create/edit forms | On |
 | Global search | [Search](/user-guide/trends-and-search/#search) across every engagement and finding the user has access to | On |
 | Scan import | [Scanner import](/user-guide/scanner-import/) (Nmap, Burp Suite, Nuclei) from the findings list | On |
 | Require MFA | Requires two factor authentication for every local account, not just Superadmin, which always requires it regardless of this flag | On |
@@ -36,8 +36,8 @@ down.
 These narrow what's available without blocking a whole page or feature
 outright:
 
-- **CVSS calculator off** removes only the calculator widget's supporting
-  script from the finding and catalogue forms. The score and vector fields
+- **CVSS calculator off** removes only the **Open CVSS calculator** button
+  and its script from the finding and catalogue forms. The score and vector fields
   themselves stay on the form either way, since they're plain text fields
   underneath; you'd just be typing the vector by hand instead of using the
   calculator.
@@ -58,16 +58,15 @@ outright:
 These stop the underlying page or action from running at all, not just
 hide the way into it:
 
-- **Scan import off** removes the Import link from the findings list, and
+- **Scan import off** removes the **Import scan** button from the findings list, and
   blocks the import request directly if someone tries to reach it anyway.
-- **Global search off** removes the search box from the sidebar and
-  dashboard, and blocks the search page itself the same way.
+- **Global search off** removes **Search** from the sidebar and Home, and blocks the search page itself the same way.
 - **Retest workflow off** hides the retest logging UI on a finding's page,
   and independently blocks logging a new retest result if something tries
   anyway. Retest history already recorded on a finding stays visible
   either way; this only blocks logging new results.
 - **Recurrence & trends off** hides the recurring-vulnerability panel on
-  the finding page, hides the Trends link from the sidebar and dashboard
+  the finding page, hides the Trends link from the sidebar and Home
   (which also needs the trend reporting permission; both have to be true
   for the link to show), and blocks the Trends page itself the same way if
   reached directly.

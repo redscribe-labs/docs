@@ -10,7 +10,7 @@ Every finding is built out of a set of rich text sections, things like
 which sections exist, what order they appear in, and where else they show
 up, across every finding and catalogue template on your instance.
 
-You'll find this screen in the sidebar under **Finding Structure**. It
+You'll find this screen under **Settings → Finding structure**. It
 needs its own permission to manage, separate from managing findings
 themselves, and changes here never delete data already saved in a section,
 only hide it.
@@ -32,8 +32,11 @@ a handful of properties you control:
   finding.
 - **Include in remediation report only**, restricts it to remediation
   report exports, hidden from the initial report.
-- **Import target**, whether [Scanner import](/user-guide/scanner-import/)
-  drops a parsed description into this specific section automatically.
+- **Scan import**, whether [Scanner import](/user-guide/scanner-import/)
+  writes each result's details into this section. Only one section can have
+  it, and it can't be Affected Assets, which scanner import already fills
+  from each result's host or URL. With none ticked, imported findings arrive
+  without their details, and the import page says so.
 
 ## Affected Assets is a built-in, protected section
 
@@ -80,9 +83,9 @@ tags](/reference/report-template-tags/) page covers that syntax.
 ## Managing sections
 
 <Steps>
-1. **Add a section.** Give it a label and set the flags above. Its slug and
-   order are assigned automatically, and a new section always goes to the
-   end.
+1. **Add a section.** Select **Add section** at the top of the page, give
+   it a label, and set the flags above. Its slug and order are assigned
+   automatically, and a new section always goes to the end.
 2. **Reorder** by moving a section up or down relative to its neighbors.
 3. **Turn Active off** to hide a section instance wide without losing
    anything already saved in it on existing findings. It just stops

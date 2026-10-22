@@ -11,11 +11,15 @@ import shotEngagementScopeChange from '../../../assets/screenshots/engagement-sc
 
 An engagement is the container for one client project, a web application pentest, a network assessment, a vulnerability scan, or a remediation retest. Everything else in RedScribe (findings, checklist runs, scanner imports, the report) hangs off one engagement.
 
+## The engagements list
+
+**Engagements** lists every engagement you can see, with tabs for each status and how many engagements are in it. Each row shows the client and reference, test type, status, testing window, open findings by severity, and checklist coverage. Search matches client names and reference numbers.
+
 ## Creating an engagement
 
-From **Engagements**, select **New**. You'll need the right permission to create one; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
+From **Engagements**, select **New engagement**. You'll need the right permission to create one; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
 
-<Screenshot src={shotEngagementCreate} alt="The new engagement form with client, reference number, scope, dates, and default reviewer and QA" />
+<Screenshot src={shotEngagementCreate} alt="The new engagement form with client, reference number, test type, scope, dates, default reviewer, QA and approver" />
 
 You'll fill in:
 
@@ -24,6 +28,10 @@ You'll fill in:
 - **Scope**, as free text.
 - **Start and end dates**.
 - **Test type**: Web Application, Network, or Vulnerability Scan.
+- **Default reviewer, QA, and approver** (optional), assigned automatically as findings move through review.
+- **Testing checklist**: the checklist template to start a run from straight away. It's pre-set to your default template; choose **Don't start a checklist yet** to skip it. See [Checklists](/user-guide/checklists/).
+
+Everything except the client can be changed later on the engagement's **Settings** tab.
 
 <Aside type="note">
 Linking to a real client company, rather than just typing a name, is what makes [client portal](/client-portal/for-clients/) access and cross-engagement [trend reporting](/user-guide/trends-and-search/) by client possible.
@@ -31,9 +39,9 @@ Linking to a real client company, rather than just typing a name, is what makes 
 
 ## Status lifecycle
 
-<Screenshot src={shotEngagementDetail} alt="An engagement's overview page showing its Delivered status and the next lifecycle actions" caption="The overview page shows the current status and offers the next transitions." />
+<Screenshot src={shotEngagementDetail} alt="An engagement's overview: a status bar across every stage, the next status changes as buttons, a Ready to publish checklist, coverage figures, scope, team, who has access, and the client portal card" caption="The overview shows where the engagement is in its lifecycle and what's left before it can be published." />
 
-An engagement moves through a fixed sequence of statuses, changed from its detail page:
+An engagement moves through a fixed sequence of statuses. The overview shows them as a bar with the current stage highlighted, and offers the next status changes as buttons at the top; each asks you to confirm before it changes anything:
 
 ```
 In Progress → In Review → QA → Approved → Delivered
@@ -42,11 +50,13 @@ In Progress → In Review → QA → Approved → Delivered
                                    Awaiting Remediation Test → Remediation Test → Closed
 ```
 
+**Ready to publish?** on the overview tracks the three things that usually gate delivery: every finding is ready to publish, the checklist has an outcome for every check, and the engagement is released to the client portal.
+
 Every status change is recorded in the engagement's history: who made it, when, and what it changed from and to. That history is what feeds the document control section of the generated report. Changing status needs the same permission as editing the engagement's own details.
 
 ## Membership
 
-Add or remove members from the engagement's detail page. Membership controls who can see and work on the engagement, unless you hold broader visibility across every engagement. Members are also exactly who the report's Assessment Team section pulls its bios and qualifications from, so keep membership current if you want the right names on the cover.
+Add or remove members under **Who has access** on the engagement's overview. The **Team** card shows the default reviewer, QA, and approver. Membership controls who can see and work on the engagement, unless you hold broader visibility across every engagement. Members are also exactly who the report's Assessment Team section pulls its bios and qualifications from, so keep membership current if you want the right names on the cover.
 
 <Aside type="caution">
 RedScribe is built around at most two people actively working on the same engagement's data at a time. See [Requirements & sizing](/getting-started/requirements/#what-shifts-these-numbers). Membership isn't a hard access lock beyond that; it's mainly about visibility and assignment.
@@ -57,12 +67,12 @@ RedScribe is built around at most two people actively working on the same engage
 Scope changes go through an approval step rather than silently editing the recorded scope in place. That gives you a defensible record of what was actually agreed to mid-engagement.
 
 <Steps>
-1. From the engagement, start a **new scope change request** and describe the change.
+1. On the engagement's overview, under **Scope**, open **Propose a scope change**, enter the new scope, and select **Submit for Team Lead approval**.
 2. Someone with the right permission **approves** or **rejects** it.
 3. An approved request updates the engagement's recorded scope and stays part of its history. A rejected one is kept too, as a record that it was considered and declined.
 </Steps>
 
-<Screenshot src={shotEngagementScopeChange} alt="A pending scope change request with Approve and Reject buttons" caption="A pending scope change, as a Team Lead sees it." />
+<Screenshot src={shotEngagementScopeChange} alt="The Scope card: the current scope, the Propose a scope change form, and a pending request from Robin Chen listing the proposed scope" caption="The Scope card, with a pending request underneath. Someone who can approve it sees Approve and Reject buttons on it." />
 
 ## Archiving and deletion
 
@@ -71,4 +81,4 @@ Scope changes go through an approval step rather than silently editing the recor
 
 ## Releasing to the client portal
 
-Findings never show up in the [client portal](/client-portal/for-clients/) just because they exist. An engagement has to be explicitly **released to the client**, and even then, only findings that have individually cleared QA are shown. **Revoke client release** reverses it, hiding the engagement from the portal again immediately.
+Findings never show up in the [client portal](/client-portal/for-clients/) just because they exist. An engagement has to be explicitly released with **Release to client portal**, on the **Client portal** card of its overview, and even then, only findings that have individually cleared QA are shown. **Revoke client release** reverses it, hiding the engagement from the portal again immediately.

@@ -32,13 +32,19 @@ restriction.
 ## Activating a license key
 
 If your organization has a commercial license, you'll be given a license
-key, a signed, tamper-evident text string. Activate it from **Licensing**
-in the sidebar (needs the permission to manage licensing): paste the key
-into the field and save.
+key, a signed, tamper-evident text string. Activate it from **Settings → Licensing** (needs the permission to manage
+licensing): paste the key into the field and save.
 
-Pasting an invalid, tampered, or expired-in-the-past key doesn't error or
-break anything. It's checked instantly, and the footer simply falls back
-to the plain, unlicensed display if it doesn't verify.
+A key is checked when you save it, and an invalid or tampered one is
+rejected with an error. Once a valid key is saved, the page shows its
+details: who it's licensed to, the licence type, when it was issued, when
+it expires and how many days are left, and who last changed the key.
+
+If a saved key later stops verifying, for example because the instance's
+signing public key (`LICENSE_SIGNING_PUBLIC_KEY`) was changed or removed,
+the page says **License key not recognised** rather than pretending no key
+is set, and the footer falls back to the plain, unlicensed display.
+Nothing is blocked either way.
 
 ## What the footer shows
 

@@ -3,7 +3,7 @@ title: Alpha status & versioning
 description: What "early alpha" means for RedScribe, current known limitations, and how versioning and releases work.
 ---
 
-RedScribe is early alpha (`0.2.0-alpha.4` as of this writing). Expect rough
+RedScribe is early alpha (`0.6.0-alpha` as of this writing). Expect rough
 edges and breaking changes between releases, and read this page before
 relying on it for a real client engagement.
 
@@ -29,10 +29,10 @@ relying on it for a real client engagement.
 ## Versioning
 
 RedScribe follows [Semantic Versioning](https://semver.org/):
-`MAJOR.MINOR.PATCH`, with a `-alpha.N` / `-beta.N` / `-rc.N` pre-release
+`MAJOR.MINOR.PATCH`, with a `-alpha` / `-beta` / `-rc` pre-release
 suffix before the first `1.0.0`. The current version lives in the repo's
 `VERSION` file (a single line, no `v` prefix) and is tagged in git as
-`v<version>` (for example `v0.1.0-alpha.1`).
+`v<version>` (for example `v0.1.0-alpha`).
 
 Pre-1.0, **expect breaking changes on minor bumps** (`0.1.0` to `0.2.0`).
 That's normal during alpha, not a mistake. Once RedScribe reaches `1.0.0`,
@@ -49,6 +49,6 @@ the current history.
 ```
 # 1. Update VERSION and move [Unreleased] CHANGELOG entries into a new dated section.
 # 2. Commit, then tag:
-git tag -a v0.2.0-alpha.4 -m "v0.2.0-alpha.4"
-git push origin v0.2.0-alpha.4
+git tag -a v0.6.0-alpha -m "v0.6.0-alpha"
+git push origin v0.6.0-alpha
 ```

@@ -4,6 +4,8 @@ description: Every notification RedScribe sends, how the email/in-app split work
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import Screenshot from '../../../components/Screenshot.astro';
+import shotProfile from '../../../assets/screenshots/profile.png';
 
 ## Notifications
 
@@ -21,10 +23,10 @@ import { Aside } from '@astrojs/starlight/components';
 | A scope change request you submitted was approved | "Your scope change for ... was approved." |
 | A scope change request you submitted was rejected | "Your scope change for ... was rejected." |
 
-Opening a notification marks it read and takes you straight to whatever it's about, rather than just marking it read in place. **Mark all read** clears the unread count in the sidebar bell without navigating anywhere.
+Opening a notification marks it read and takes you straight to whatever it's about, rather than just marking it read in place. **Mark all read** clears the unread count next to **Notifications** in the sidebar without navigating anywhere.
 
 <Aside type="note" title="Lockout alerts aren't notifications">
-If an account gets locked out or rate limited, every active Superadmin gets a direct email about it immediately. That alert is separate from the notification system on this page: there's no in-app record of it and no bell count involvement. Check the [Audit Log](/admin/audit-log/) if you need a historical record of lockout events instead.
+If an account gets locked out or rate limited, every active Superadmin gets a direct email about it immediately. That alert is separate from the notification system on this page: there's no in-app record of it and it doesn't add to the unread count. Check the [Audit Log](/admin/audit-log/) if you need a historical record of lockout events instead.
 </Aside>
 
 ### Bulk actions still notify individually, in-app
@@ -39,19 +41,24 @@ Notification emails are queued after your action completes rather than sent whil
 
 ### Your notification preference
 
-**Profile** → **Notification preferences** is a single all-or-nothing switch, "Also send me an email," not a per-notification-type toggle. In-app notifications are always on and can't be turned off. Turning the email switch off stops every notification type (and its bulk equivalent) from emailing you, while still creating the in-app entries as normal. This works the same whether you sign in with a password or through single sign-on.
+**Profile and security** → **Preferences** (or **Email copies** → **Change** on the Notifications page) is a single all-or-nothing switch, "Also send me an email," not a per-notification-type toggle. In-app notifications are always on and can't be turned off. Turning the email switch off stops every notification type (and its bulk equivalent) from emailing you, while still creating the in-app entries as normal. This works the same whether you sign in with a password or through single sign-on.
 
-## Your profile
+## Profile and security
 
-Your **Profile** page is deliberately narrow. It edits exactly two things:
+**Profile and security**, at the bottom of the sidebar, has three parts.
+
+<Screenshot src={shotProfile} alt="Profile and security: the Profile section with qualifications and background editors, the Security section with password and two-factor status, and Preferences" />
+
+**Profile** is deliberately narrow. It edits exactly two things:
 
 - **Qualifications / certifications**, written as a rich text field. Write it as a bulleted list (for example "OSCP" on one line, "OSWE" on the next) and it renders the same way in the report.
 - **Background**, a short professional bio, also rich text.
 
 Both feed directly into the Assessment Team section of a generated report, shown under your name for any engagement you're a member of. Nothing else about your account, your username, email, display name, or role, can be changed from this page.
 
-- **Change password** from the same area.
-- **MFA**: re-enrollment and device management follow the same process as initial setup. See [Logging in & MFA](/user-guide/login-and-mfa/).
+**Security** shows your sign-in method with **Change password**, and when two-factor authentication was set up. Re-enrollment follows the same process as initial setup; see [Logging in & MFA](/user-guide/login-and-mfa/).
+
+**Preferences** holds the email notification switch described above.
 
 <Aside type="note">
 There's no self-service way to change your own username, email, or role. That's an administrative action. See [User management](/admin/user-management/).

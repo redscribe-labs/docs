@@ -6,6 +6,7 @@ description: The catalogue's draft, pending QA, and approved workflow, including
 import { Aside } from '@astrojs/starlight/components';
 import Screenshot from '../../../components/Screenshot.astro';
 import shotCatalogue from '../../../assets/screenshots/catalogue.png';
+import shotCatalogueEntry from '../../../assets/screenshots/catalogue-entry.png';
 
 The catalogue is a shared library of pre-written vulnerability templates your whole team draws from, so common findings don't get rewritten from scratch on every engagement.
 
@@ -19,13 +20,23 @@ Anyone signed in can create a draft catalogue entry, and anyone can edit or dele
 Draft ──submit for QA──▶ Pending QA ──approve──▶ Approved
 ```
 
-<Screenshot src={shotCatalogue} alt="The vulnerability catalogue listing entries in Draft, Pending QA, and Approved states" />
+<Screenshot src={shotCatalogue} alt="The finding catalogue: tabs for All, Draft, Pending QA, and Approved with counts, filters, and a table of entries with severity, classification, status, how many findings used each, and when it was updated" />
+
+**Library → Finding catalogue** lists every entry, with tabs for each status and how many entries are in it, plus filters for severity, taxonomy, author, and date. The **Used** column counts the findings that were started from each entry.
 
 Only an entry that's currently **Approved**, or one that used to be approved and still has that approved version on file, can be imported into a finding. See [Creating a finding](/user-guide/findings/#creating-a-finding).
 
 ### What a catalogue entry stores
 
 A title, a default severity, an optional default CVSS score and vector, one or more classification tags, and a block of rich text for each active [content section](/admin/finding-structure/) your instance uses (vulnerability description, business impact, and so on). There's no separate "notes" or "author" field beyond that. Whoever created the entry is tracked for permission purposes, but it isn't shown as a byline anywhere.
+
+## An entry's page
+
+<Screenshot src={shotCatalogueEntry} alt="A catalogue entry: its title, severity, status and CVSS score, its content sections, and a Use this template panel for starting a finding in a chosen engagement" />
+
+An entry's page shows its content and, if it can be used, a **Use this template** panel: pick an engagement and select **Use template** to start a new Draft finding from it.
+
+When an entry has edits waiting for QA, its page says so and highlights which fields and sections changed since the approved version. Switch between **Pending changes** and **Approved version (in use)** to compare them; the approved version is what findings currently get. The changed fields are listed with the approved value struck through.
 
 ## Editing an entry that isn't a fresh draft
 
@@ -43,13 +54,15 @@ Explicitly reverting an entry from Approved back to Draft (rather than just edit
 
 Export produces a single JSON file with one entry per catalogue template, including title, severity, CVSS fields, classification tags, and each content section's rich text. It's meant for moving a catalogue between RedScribe instances or keeping an external backup, not as something you'd hand-edit day to day.
 
+**Import** (from the catalogue's top bar) shows what the file would create before anything is saved: one row per entry with its title, default severity, how many sections it has, and its first classifications. An entry whose title matches one already in the catalogue (ignoring case) is flagged **Title already in the catalogue** and starts unticked. Untick anything you don't want, then select **Import N selected**.
+
 Importing checks every entry before creating anything: a title is required, severity has to be one of RedScribe's real severity values, any CVSS vector has to parse correctly, and every classification needs both a taxonomy and a value. A single bad entry anywhere in the file rejects the whole import, naming which entry and field failed, so nothing partial gets created.
 
 <Aside type="danger" title="Import never updates or merges existing entries, it always creates new ones">
-There's no matching on title or anything else. Importing the same file twice produces two full sets of duplicate entries. If you're re-importing an updated version of a catalogue you exported earlier, expect duplicates rather than an in-place update, and clean up the old entries yourself if that's not what you want.
+Import never changes an existing entry. The preview flags entries whose titles are already in the catalogue so you can leave them out, but anything you leave ticked is created as a new entry alongside the old one. If you're re-importing an updated version of a catalogue you exported earlier, untick the duplicates or clean up the old entries yourself afterwards.
 </Aside>
 
-A content section in the imported file that doesn't match any section your instance currently uses is silently skipped, so importing a catalogue exported from a differently configured instance can quietly drop content you'd expect to see, without telling you it happened. Every imported entry lands as a fresh **Draft** regardless of whether the export captured it as Approved, so imported content always goes through your instance's own review process from scratch.
+Sections are matched by their internal name (slug), not their label. Content for a section your instance doesn't have is skipped, and content for a retired section is imported but stays hidden until the section is turned back on. The preview lists both above the entries, with how many entries each affects, so you can add or re-activate sections in [Finding structure](/admin/finding-structure/) before importing. Every imported entry lands as a fresh **Draft** regardless of whether the export captured it as Approved, so imported content always goes through your instance's own review process from scratch.
 
 <Aside type="note">
 A fresh RedScribe instance ships with an empty catalogue. Nothing is pre-loaded, so build it up over time or import one.

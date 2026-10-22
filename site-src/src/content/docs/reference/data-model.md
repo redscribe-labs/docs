@@ -94,6 +94,10 @@ for the full transition diagram.
 
 Default: `NOT_RETESTED`. See [Findings](/user-guide/findings/#retesting).
 
+`Finding.source_template` links a finding to the catalogue entry it was
+started from, if any. It's a record of origin only: editing or deleting the
+entry doesn't change the finding (deleting it clears the link).
+
 ## Vulnerability catalogue
 
 ### `VulnerabilityTemplate.status`
@@ -116,8 +120,24 @@ Default: `DRAFT`. See [Vulnerability catalogue](/user-guide/catalogue/#the-workf
 | `TESTED_NO_FINDING` | Tested — No Finding |
 | `TESTED_FINDING_RAISED` | Tested — Finding Raised |
 | `NOT_APPLICABLE` | Not Applicable |
+| `BLOCKED` | Blocked |
 
-Default: `NOT_TESTED`. See [Checklists](/user-guide/checklists/#runs).
+Default: `NOT_TESTED`. `BLOCKED` requires a reason. See
+[Checklists](/user-guide/checklists/#the-testing-posture-page).
+
+### `ChecklistItemEvent.kind`
+
+One row per change to a checklist item, shown as its Activity list.
+Encrypted fields are recorded as "changed" without their content.
+
+| Stored value | Recorded when |
+|---|---|
+| `STATUS` | The outcome changes (old and new labels stored) |
+| `ASSIGNEE` | The assignee changes (old and new names stored) |
+| `EVIDENCE` | Test results and evidence are edited |
+| `SCOPE` | *What was tested* is edited |
+| `FINDINGS` | Linked findings change (old and new counts stored) |
+| `COMMENT` | A comment is added |
 
 ## Accounts
 

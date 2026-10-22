@@ -6,6 +6,8 @@ description: Creating findings, the draft → review → QA workflow, CVSS scori
 import { Aside, Steps, Badge } from '@astrojs/starlight/components';
 import Screenshot from '../../../components/Screenshot.astro';
 import shotFindingEditor from '../../../assets/screenshots/finding-editor.png';
+import shotCvssCalculator from '../../../assets/screenshots/cvss-calculator.png';
+import shotFindingsList from '../../../assets/screenshots/findings-list.png';
 import shotFindingDetail from '../../../assets/screenshots/finding-detail.png';
 import shotReviewQueue from '../../../assets/screenshots/review-queue.png';
 import shotFindingReview from '../../../assets/screenshots/finding-review.png';
@@ -15,23 +17,50 @@ vulnerability, written up, scored, and walked through review before it
 ever reaches a client. This page covers creating one, the review workflow
 it moves through, and what happens when you retest it later.
 
+## The findings list
+
+An engagement's **Findings** tab lists its findings with severity, CVSS
+score, review stage, and the assigned reviewer and QA. Filter by
+severity and review stage, search by title or CVE ID, or tick
+**Needs me** to see only the findings waiting on you.
+
+<Screenshot src={shotFindingsList} alt="An engagement's findings list with filters, and a preview of the selected finding on the right" />
+
+**Preview** on a row shows that finding's details alongside the list, so
+you can scan several without leaving the page; **Open finding** goes to
+the full page. When findings are waiting for a reviewer or QA, panels
+above the list assign one person to all of them at once.
+
 ## Creating a finding
 
-From an engagement, go to **Findings** → **New**. You can also **import
-from the catalogue** while creating one, pulling in an approved
-[vulnerability catalogue](/user-guide/catalogue/) entry as a starting
-point instead of writing from scratch. Nothing stops you editing it
-further afterward.
+From an engagement's **Findings** tab, select **New finding**. You can
+also start from somewhere else:
+
+- **From catalogue** opens the approved
+  [vulnerability catalogue](/user-guide/catalogue/) entries; **Use
+  template** on one starts a finding pre-filled from it. The finding
+  remembers which entry it came from ("Started from catalogue entry"),
+  but it's a copy: later changes to the entry don't change the finding.
+- **+ Raise from this check** on a [checklist item](/user-guide/checklists/#raising-a-finding-from-a-check)
+  starts a finding from that check and links the two when you save.
+- [Scanner import](/user-guide/scanner-import/) creates Draft findings
+  from Nmap, Burp Suite, or Nuclei results.
+
+Nothing stops you editing a pre-filled finding further.
 
 ### What you fill in
 
-<Screenshot src={shotFindingEditor} alt="The finding editor with a rich-text description, severity and status, and the CVSS v4.0 calculator" />
+<Screenshot src={shotFindingEditor} alt="The finding editor: the title across the top, content sections on the left, and severity, CVSS score and vector, and an Open CVSS calculator button on the right" />
+
+The editor puts the write-up on the left and the finding's properties
+(severity, CVSS, status, CVE ID, classifications, affected assets) on the
+right.
 
 - **Title**, **severity** (Critical, High, Medium, Low, or Informational),
   and **status** (Open or Closed, whether the vulnerability itself is
   still present, separate from where it stands in review, below).
-- **CVSS score and vector**, typed directly or worked out with the
-  built-in CVSS v3.1 and v4.0 calculators.
+- **CVSS score and vector**, typed or pasted directly, or worked out with
+  the built-in CVSS v3.1 and v4.0 calculator (see below).
 - **CVE ID**, if one applies.
 - **Classifications**, tagging the finding against one or more taxonomies,
   for example `OWASP Top 10 2021` → `A01:2021-Broken Access Control`. Type
@@ -45,6 +74,22 @@ further afterward.
 - **Affected assets**, the hosts or URLs the finding applies to, one per
   line. [Scanner import](/user-guide/scanner-import/) fills this in
   automatically when it creates a finding for you.
+
+### The CVSS calculator
+
+<Screenshot src={shotCvssCalculator} alt="The CVSS calculator pop-up set to v4.0: a live score of 5.1 with a Medium badge and the vector, above rows of metric buttons grouped as Exploitability, Vulnerable system impact, and Subsequent system impact, with Apply and Cancel at the bottom" />
+
+Select **Open CVSS calculator**, under Severity, to work out a score. Pick
+v3.1 or v4.0 at the top, then choose one button per metric. The metrics
+are grouped as they are on FIRST's own calculators, and hovering a metric
+or a value explains it. The score, its severity, and the vector update as
+you go.
+
+Nothing changes on the finding until you select **Apply**, which fills in
+the CVSS score and vector and sets the severity to match. **Cancel** leaves
+the finding as it was. If the vector field already holds a v3.1 or v4.0
+vector, typed or pasted, the calculator opens with it loaded. Catalogue
+entries use the same calculator for their default CVSS.
 
 ## The review workflow
 
@@ -77,7 +122,7 @@ reviewing only your own findings rather than everyone's. See the
 [Permissions reference](/reference/permissions/) for the exact grants if
 you're setting up roles.
 
-<Screenshot src={shotReviewQueue} alt="The My review queue page listing findings awaiting review and QA" caption="My Queue: only the findings explicitly assigned to you." />
+<Screenshot src={shotReviewQueue} alt="My review queue: findings waiting for your review, findings waiting for your QA, and changes requested on your own findings" caption="My queue: only the findings explicitly assigned to you, plus your own findings that came back with changes." />
 
 One useful exception: a permission exists that lets someone submit
 *anyone's* review or QA decision, regardless of who it's actually assigned
@@ -85,13 +130,14 @@ to. That's meant for a Team Lead covering for someone who's out, not for
 everyday use.
 
 You can also **reopen a finding to Draft** manually at any point,
-regardless of its current stage, and act on several findings at once from
-the findings list rather than one at a time.
+regardless of its current stage, and assign a reviewer or QA to several
+findings at once from the findings list rather than one at a time.
 
-<Aside type="tip" title="My Queue">
-**My Queue** in the sidebar lists every finding currently assigned to you
-for review or QA, across every engagement you have access to. It's the
-fastest way to see your outstanding work in one place.
+<Aside type="tip" title="My queue">
+**My queue** in the sidebar groups everything waiting on you across every
+engagement you can access: findings waiting for your review, findings
+waiting for your QA, and your own findings that came back with changes
+requested. The same items appear under **Needs you** on Home.
 </Aside>
 
 ## Archiving

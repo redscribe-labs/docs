@@ -1,34 +1,66 @@
 ---
-title: Dashboard & navigation
-description: Orienting yourself in the RedScribe UI after logging in.
+title: Home & navigation
+description: Orienting yourself in the RedScribe UI after signing in.
 ---
 
 import Screenshot from '../../../components/Screenshot.astro';
 import shotDashboard from '../../../assets/screenshots/dashboard.png';
 import shotDashboardDark from '../../../assets/screenshots/dashboard-dark.png';
+import shotShortcuts from '../../../assets/screenshots/shortcuts.png';
 
-Your dashboard is the first thing you see after logging in, and it's personalized rather than a generic homepage. This page is a quick tour of what's there and how the sidebar is organized.
+**Home** is the first page you see after signing in. It's built around what needs you today rather than being a generic overview. This page covers what's on it and how the sidebar is organized.
 
-## What's on your dashboard
+## What's on Home
 
-<Screenshot src={shotDashboard} alt="The RedScribe dashboard with engagement counts, personal findings charts, recent engagements, and team overview" />
+<Screenshot src={shotDashboard} alt="The Home page: counts for engagements and findings, a Needs you list of findings waiting on the user, personal findings charts, and active engagement cards" />
 
 What you see depends on your role, but it generally includes:
 
-- The engagements you're a member of (or, if you have broad visibility permissions, every active engagement on the instance).
-- Findings currently assigned to you for review or QA, the same list that backs **My Queue**.
-- Your recent notifications.
+- **Counts** for the engagements you can access, the findings you've drafted, and the findings waiting for your review and your QA. Each count links to the matching list.
+- **Needs you**: one list of everything waiting on you, combining findings to review, findings to QA, and your own findings that came back with changes requested. It's the same work as **My queue**, newest first.
+- **Your findings** by severity and by workflow stage.
+- **Active engagements**: a card per engagement that isn't closed, showing its stage, open findings, checklist coverage, and end date.
+- **Team overview** (team leads and Superadmins): findings by severity across every engagement you can see, plus drafts with no reviewer and reviewed findings with no QA.
 
 ## The sidebar
 
-The sidebar is your main way of getting around, organized around engagements, the catalogue, checklists, reports, and administration. What you see there depends on your role and permissions, so a section missing from your sidebar usually just means you haven't been granted access to it. See [Roles & permissions](/admin/roles-and-permissions/) for exactly what each permission unlocks and which built-in role has it by default, and the [Permissions reference](/reference/permissions/) for the full list.
+The sidebar is your main way of getting around:
+
+- **Search** at the top (if global search is turned on).
+- **Home**, **Engagements**, **My queue**, and **Notifications**.
+- **Library**: the **Finding catalogue** and **Checklist templates**.
+- **Reporting**: **Trends**, **Report profiles**, and **Firm branding**.
+- **Admin**: one **Settings** entry. It opens a settings area with its own menu for users, roles, clients, finding structure, feature flags, licensing, and the audit log.
+- At the bottom: your name, the theme toggle, **Profile and security**, and **Sign out**.
+
+What appears depends on your role and permissions, so a missing entry usually just means you haven't been given access to it. See [Roles & permissions](/admin/roles-and-permissions/) for what each permission unlocks, and the [Permissions reference](/reference/permissions/) for the full list.
+
+### Collapsing the sidebar
+
+The arrow at the top of the sidebar collapses it to a narrow strip of icons; hover an icon to see its name. Pressing <kbd>[</kbd> does the same.
+
+The checklist item page and the report builder start with the sidebar collapsed, to give the work more room. If you expand it on one of those pages, it stays expanded on those pages. Other pages keep their own setting.
 
 ## Theme
 
-A light and dark toggle sits in the sidebar, and also floats on the login and setup screens. It's a per-browser preference, not something tied to your account, so it won't follow you to a different computer.
+A light and dark toggle sits next to your name at the bottom of the sidebar, and also floats on the sign-in and setup screens. It's a per-browser preference, not tied to your account, so it won't follow you to a different computer.
 
-<Screenshot src={shotDashboardDark} alt="The RedScribe dashboard in dark mode" />
+<Screenshot src={shotDashboardDark} alt="The Home page in dark mode" />
 
-## Notifications bell
+## Keyboard shortcuts
 
-The bell in the top bar shows your unread in-app notifications: review and QA assignments, review and QA outcomes, scope change decisions, and new account setup links. See [Notifications & profile](/user-guide/notifications-and-profile/) for the full list of what triggers a notification.
+Press <kbd>?</kbd> on any page to see the shortcuts that page offers.
+
+<Screenshot src={shotShortcuts} alt="The keyboard shortcuts dialog on a checklist item, listing keys for outcomes, next and previous check, save and next, search, and the sidebar" />
+
+| Key | Does |
+|---|---|
+| <kbd>Ctrl</kbd> <kbd>K</kbd> (<kbd>⌘</kbd> <kbd>K</kbd> on a Mac) | Open Search |
+| <kbd>[</kbd> | Collapse or expand the sidebar |
+| <kbd>?</kbd> | Show the shortcuts for this page |
+
+The [checklist item page](/user-guide/checklists/#working-a-check) adds its own keys for outcomes and moving between checks. Single-key shortcuts are ignored while you're typing in a field; the <kbd>Ctrl</kbd>/<kbd>⌘</kbd> ones work everywhere.
+
+## Notifications
+
+**Notifications** in the sidebar shows a count of unread in-app notifications: review and QA assignments, review and QA outcomes, scope change decisions, and new account setup links. See [Notifications & profile](/user-guide/notifications-and-profile/) for the full list.

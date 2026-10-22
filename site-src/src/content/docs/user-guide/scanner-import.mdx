@@ -7,13 +7,23 @@ import { Aside } from '@astrojs/starlight/components';
 import Screenshot from '../../../components/Screenshot.astro';
 import shotScannerImport from '../../../assets/screenshots/scanner-import.png';
 
-If you've already run Nmap, Burp Suite, or Nuclei against a target, you don't have to retype every result by hand. From an engagement, open **Findings** then **Import**, and upload the scanner's raw output file to bulk create draft findings instead of entering them one at a time.
+If you've already run Nmap, Burp Suite, or Nuclei against a target, you don't have to retype every result by hand. From an engagement, open **Findings** then **Import scan**, and upload the scanner's raw output file to bulk create draft findings instead of entering them one at a time.
 
 This option only appears if your administrator has turned on scanner import for the instance. If it's off, you won't see the screen at all.
 
 The upload form accepts any file up to 75MB, and doesn't check the file's extension or content beyond that size limit. That means the format you pick from the dropdown is what actually decides how the file gets parsed. Uploading a Burp XML file while "Nuclei JSON Lines" is selected will fail with a parse error rather than a helpful "wrong tool" message, since RedScribe has no way to know what you meant to upload.
 
-<Screenshot src={shotScannerImport} alt="The scan import form with a format picker for Nmap, Burp Suite, and Nuclei" />
+<Screenshot src={shotScannerImport} alt="The scan import form after choosing an Nmap file: a note that results go into the Description section, then a table of the two results it would create, each ticked, with its title, affected asset, and severity, and an Import 2 selected button" />
+
+## Checking what will be imported
+
+As soon as you choose a file, RedScribe reads it and shows what it would create, before anything is saved: one row per result with its title, affected assets, CVE ID, and severity.
+
+- A result whose title and affected assets match a finding already in this engagement is flagged **Already in this engagement** and starts unticked, so re-importing a scan doesn't duplicate what you already have.
+- Untick anything you don't want. The button shows how many will be imported, for example **Import 3 selected**.
+- If the file can't be parsed, the error appears straight away and **Import** stays disabled.
+
+Changing the format re-reads the file. The file stays in your browser until you import; nothing is kept on the server from the preview. In a browser without JavaScript there's no preview step, and every result is imported.
 
 ## What each parser extracts
 
@@ -48,7 +58,9 @@ If any single line fails to parse, the whole import is rejected with an error na
 
 ## Where the description text lands
 
-Every parser's technical details text is written into whichever [content section](/admin/finding-structure/) your instance has marked as the import target, if any. If no section is marked that way, the parsed detail text is simply discarded: the finding is still created with its title, severity, affected assets, CVE ID, and tags, just with an empty body. If your imports keep showing up with no description, this is the first thing to check with your administrator.
+Every parser's technical details text is written into the one [content section](/admin/finding-structure/) your instance has set for **Scan import**, and the import page names it above the form.
+
+If no active section is set, the page warns you before you import: the details would be dropped, and each finding would be created with its title, severity, affected assets, CVE ID, and tags but an empty body. An administrator can fix this by ticking **Scan import** on a section in Finding structure.
 
 ## Every import lands as Draft
 

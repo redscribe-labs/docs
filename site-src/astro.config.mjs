@@ -102,7 +102,7 @@ export default defineConfig({
 					collapsed: true,
 					items: [
 						{ label: 'Logging in & MFA', slug: 'user-guide/login-and-mfa' },
-						{ label: 'Dashboard & navigation', slug: 'user-guide/dashboard' },
+						{ label: 'Home & navigation', slug: 'user-guide/dashboard' },
 						{ label: 'Engagements', slug: 'user-guide/engagements' },
 						{ label: 'Findings', slug: 'user-guide/findings' },
 						{ label: 'Vulnerability catalogue', slug: 'user-guide/catalogue' },
