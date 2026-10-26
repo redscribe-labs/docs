@@ -10,14 +10,27 @@ file to bulk-import, instead of entering items one at a time in the UI.
 
 ## JSON format
 
-The top-level value must be a **list** of item objects.
+The top-level value is either a **template object** (what **Export** produces) or a bare **list** of item objects. Both import the same way.
+
+### Template object
+
+| Field | Required | Notes |
+|---|---|---|
+| `format` | No | `redscribe-checklist-template`. If present it must match |
+| `version` | No | `1`. A file with a higher version is rejected, so a newer export is never half-read |
+| `name` | No | Used when the **Name** box on the import form is left blank. If a template with that name already exists, the import is refused until you type the name into the **Name** box yourself, so a file can't replace a template without you confirming it |
+| `description` | No | Used when the **Description** box is left blank |
+| `is_default` | No | Written by export for reference, **ignored on import**. Choose the default on the import form or the template list |
+| `items` | Yes | A list of item objects, described next |
+
+### Item objects
 
 | Field | Required | Type | Notes |
 |---|---|---|---|
 | `category` | Yes | string | Groups items in the run UI and in report output (`{{ checklist_coverage }}`) |
 | `title` | Yes | string | The item's short name |
 | `code` | No | string | A short reference code (e.g. `WSTG-INFO-01`). This is free text and isn't validated against any external scheme |
-| `reference_info` | No | string | The item's objectives/description. Plain text is auto-wrapped into a single paragraph; you can also pass a full Tiptap `{"type":"doc","content":[...]}` JSON string directly if you need richer formatting (multiple paragraphs, links) |
+| `reference_info` | No | string or object | The item's objectives/description. Plain text is auto-wrapped into a single paragraph. For richer formatting (multiple paragraphs, links) pass a Tiptap document: either as a nested `{"type":"doc","content":[...]}` object, which is what export writes, or as that same JSON in a string |
 
 ```json
 [
@@ -36,7 +49,7 @@ The top-level value must be a **list** of item objects.
 ]
 ```
 
-Item order in the run follows the array's order. There's no separate
+A bad item stops the whole import with a message naming its row, and nothing is changed. Text fields have the same limits as in the UI: `category` 255 characters, `code` 32, `title` 500, and the template name 255. Item order in the run follows the array's order. There's no separate
 `order` field to set, so reorder items by reordering the array (or
 afterward in the UI via **move**).
 
@@ -64,9 +77,9 @@ Both formats go through the same underlying logic: the named template is
 created if it doesn't already exist (matched by name), its description and
 uploader are updated, and **every existing item on that template is deleted
 and replaced** by the imported rows. A bulk import is a full replace, not a
-merge. `reference_info` content is sanitized (embedded image references
-stripped) the same way any other rich-text input is, regardless of import
-format.
+merge. `reference_info` content is sanitized the same way any other rich-text input
+is, regardless of import format: embedded images are removed, and links other
+than `http`, `https` and `mailto` are removed (the link text stays).
 
 <Aside type="caution">
 Re-importing into an existing template name discards its current items
@@ -77,10 +90,21 @@ import format above) to capture its current state before re-importing.
 
 ## Export format
 
-**Export** on a template produces JSON in exactly the import shape above
-(`category`, `code`, `title`, `reference_info` per item, in the template's
-current order), so a round-trip export followed by import is lossless, and
-an exported template from one instance can be imported into another.
+**Export** on a template writes the template object described above: its name,
+description and default flag, plus every item (`category`, `code`, `title`,
+`reference_info` as a nested document) in the template's current order.
+Importing that file on this or another instance recreates the same items and
+formatting, and fills in the name and description for you.
+
+What a round trip doesn't carry over:
+
+- **The default flag.** Importing never changes which template is the default.
+- **Item identity.** Items are recreated, so they get new internal IDs. Checklists already started from the template keep their own copy and aren't affected.
+- **Images, and links other than `http`, `https` and `mailto`.** These are removed on import. The template editor can't add images to a Reference, so in practice this only affects hand-written files.
+- **Rich text in CSV.** CSV has no way to express formatting, so it's only suitable for plain-text references. Use JSON to keep formatting.
+
+An item with no reference exports as an empty string and comes back as an
+empty document, which looks the same.
 
 ## See also
 

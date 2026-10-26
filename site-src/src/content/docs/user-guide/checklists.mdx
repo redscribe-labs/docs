@@ -74,11 +74,12 @@ Select a check, or **Continue testing** to open the next untested one.
 <Steps>
 1. **Find your place.** The left-hand list shows every check in the run, grouped by category, with each one's outcome and assignee. **Only mine** narrows it to checks assigned to you. Arrows at the top right, and **Save & next**, move through the run in order.
 2. **Assign it** to someone with access to the engagement, if your team splits the work.
-3. **Choose the outcome.** If you choose **Blocked**, say why; the reason is required, encrypted, and listed in the report's coverage section.
-4. **Record what was tested**: one endpoint, URL, or parameter per line. It's encrypted, and it becomes the finding's affected assets if you raise a finding from this check.
-5. **Record test results and evidence.** Like other sensitive engagement content, these are encrypted at rest; see [Encryption model](/security/encryption/).
-6. **Link findings** this check raised, or use **+ Raise from this check** to write a new one (see below).
-7. Leave a **comment** if useful context doesn't belong in the result itself.
+3. **Read the reference.** The **Reference** panel shows the guidance copied from the template when the run started. It's read-only here; to change the guidance, edit the item on the template (**Library → Checklist templates**), which affects runs started afterwards.
+4. **Choose the outcome.** If you choose **Blocked**, say why; the reason is required, encrypted, and listed in the report's coverage section.
+5. **Record what was tested**: one endpoint, URL, or parameter per line. It's encrypted, and it becomes the finding's affected assets if you raise a finding from this check.
+6. **Record test results and evidence.** Like other sensitive engagement content, these are encrypted at rest; see [Encryption model](/security/encryption/).
+7. **Link findings** this check raised, or use **+ Raise from this check** to write a new one (see below).
+8. Leave a **comment** if useful context doesn't belong in the result itself.
 </Steps>
 
 The line under the title shows who set the current outcome and when. **Activity** on the right lists every change to the check: outcome, assignee, evidence and scope edits, linked findings, and comments. Activity says *that* encrypted text changed, never what it says. Repeated edits by the same person within ten minutes show as one entry.
