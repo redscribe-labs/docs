@@ -35,7 +35,7 @@ Assigning a reviewer or QA approver across every eligible finding in an engageme
 
 ### Notification emails are deliberately generic
 
-Every notification email uses the same generic subject line, and its body is one of a small set of fixed, generic summary lines, "You've been assigned as a reviewer on a finding," "A finding you authored was reviewed," and so on, or a bulk equivalent with just a count. None of them ever include a client name, finding title, or engagement reference. That's on purpose: a compromised mailbox shouldn't expose which clients or vulnerabilities an account was working on. The in-app version of the same notification stays fully detailed, since viewing it already requires being logged in.
+Every notification email uses the same generic subject line, and its body is one of a small set of fixed, generic summary lines, "You've been assigned as a reviewer on a finding," "A finding you authored was reviewed," and so on, or a bulk equivalent with just a count. None of them ever include a client name, finding title, or engagement reference. That's on purpose: a compromised mailbox shouldn't expose which clients or findings an account was working on. The in-app version of the same notification stays fully detailed, since viewing it already requires being logged in.
 
 Notification emails are queued after your action completes rather than sent while you wait, so a bulk action doesn't stall while dozens of emails go out one by one. If email seems to be silently failing, ask your administrator to check the application log.
 

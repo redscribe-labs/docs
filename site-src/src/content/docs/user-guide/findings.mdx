@@ -12,10 +12,10 @@ import shotFindingDetail from '../../../assets/screenshots/finding-detail.png';
 import shotReviewQueue from '../../../assets/screenshots/review-queue.png';
 import shotFindingReview from '../../../assets/screenshots/finding-review.png';
 
-A finding is where the actual work of an engagement lives: one
-vulnerability, written up, scored, and walked through review before it
-ever reaches a client. This page covers creating one, the review workflow
-it moves through, and what happens when you retest it later.
+A finding is where the actual work of an engagement lives: a single issue,
+written up, scored, and walked through review before it ever reaches a
+client. This page covers creating one, the review workflow it moves
+through, and what happens when you retest it later.
 
 ## The findings list
 
@@ -37,7 +37,7 @@ From an engagement's **Findings** tab, select **New finding**. You can
 also start from somewhere else:
 
 - **From catalogue** opens the approved
-  [vulnerability catalogue](/user-guide/catalogue/) entries; **Use
+  [finding catalogue](/user-guide/catalogue/) entries; **Use
   template** on one starts a finding pre-filled from it. The finding
   remembers which entry it came from ("Started from catalogue entry"),
   but it's a copy: later changes to the entry don't change the finding.
@@ -57,17 +57,22 @@ The editor puts the write-up on the left and the finding's properties
 right.
 
 - **Title**, **severity** (Critical, High, Medium, Low, or Informational),
-  and **status** (Open or Closed, whether the vulnerability itself is
+  and **status** (Open or Closed, whether the issue itself is
   still present, separate from where it stands in review, below).
 - **CVSS score and vector**, typed or pasted directly, or worked out with
-  the built-in CVSS v3.1 and v4.0 calculator (see below).
+  the built-in CVSS v3.1 and v4.0 calculator (see below). On save, the
+  score, vector, and severity are cross-checked: the severity has to fall
+  in the score's band, and a base-only CVSS:3.1 vector has to compute to
+  the score you entered. A mismatch blocks the save and says which part
+  disagrees, so the three can't drift apart silently.
 - **CVE ID**, if one applies.
 - **Classifications**, tagging the finding against one or more taxonomies,
   for example `OWASP Top 10 2021` → `A01:2021-Broken Access Control`. Type
   a new pair once and it's offered as a suggestion everywhere else
-  afterward.
-- **Content sections**, a set of rich text fields such as a vulnerability
-  description, technical details, or business impact. Which sections
+  afterward. Classifications are optional: you can create a finding or a
+  catalogue entry without any and add them later.
+- **Content sections**, a set of rich text fields such as a description,
+  technical details, or business impact. Which sections
   exist and in what order is set per instance, not fixed. See
   [Finding structure](/admin/finding-structure/) if you want to change
   them.
@@ -117,10 +122,13 @@ Draft ──submit for review──▶ Reviewed ──submit for QA──▶ QA 
 ### Who can review and QA
 
 Reviewing and QA-ing findings each need their own permission, and someone
-can have one without the other. A narrower version of each exists too, for
-reviewing only your own findings rather than everyone's. See the
-[Permissions reference](/reference/permissions/) for the exact grants if
-you're setting up roles.
+can have one without the other. By default a finding's author can't review
+or QA their own work: independence is enforced, and the author is left out
+of the eligible reviewers and QA for anything they wrote. A separate pair
+of permissions lifts that block — one for reviewing your own findings, one
+for QA-ing them — so a small team can self-serve where a larger one keeps
+the two roles apart. See the [Permissions reference](/reference/permissions/)
+for the exact grants if you're setting up roles.
 
 <Screenshot src={shotReviewQueue} alt="My review queue: findings waiting for your review, findings waiting for your QA, and changes requested on your own findings" caption="My queue: only the findings explicitly assigned to you, plus your own findings that came back with changes." />
 
@@ -143,8 +151,16 @@ requested. The same items appear under **Needs you** on Home.
 ## Archiving
 
 **Archive** and **Unarchive** work the same as they do on an engagement: a
-soft delete that removes a finding from the default list view without
-destroying anything.
+soft delete that sets a finding aside without destroying anything. The
+findings list splits into **Active** and **Archived** tabs, each with its
+own count; archiving moves a finding from one to the other rather than
+hiding it from a single list. Archiving is confirmed in a pop-up.
+
+An archived finding is kept out of everything downstream: it never appears
+in a report export, never reaches the [Client Portal](/client-portal/for-clients/),
+and doesn't count toward the trend figures or the QA-approval gate on an
+engagement. It also can't be retested while archived. Unarchive it to bring
+it back into all of that.
 
 ## Retesting
 
@@ -154,6 +170,17 @@ finding: <Badge text="Not Retested" variant="note" /> →
 <Badge text="Partially Fixed" variant="caution" /> / <Badge text="Risk Accepted" variant="note" />.
 That history renders straight into a remediation report automatically, and
 simply doesn't appear on a report at all until there's something to show.
+
+Logging an outcome also moves the finding's own Open/Closed status to
+match, so the two never disagree: **Fixed** closes the finding,
+**Not Fixed** or **Partially Fixed** reopens it, and **Risk Accepted**
+leaves the status untouched — it's a decision, not a fix.
+
+Retest results can only be logged while the engagement is Awaiting
+Remediation Test or in Remediation Test. Retesting is optional per
+engagement: from Delivered, either start the remediation test or close the
+engagement to skip it. A finding's Retest history section only appears once
+it has results or can take one.
 
 ## Comments
 

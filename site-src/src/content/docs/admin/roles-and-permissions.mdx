@@ -43,7 +43,7 @@ can see at a glance what each one starts with.
 ## Every permission
 
 Permissions are grouped into categories, roughly matching the areas of the
-app they govern: engagements, the vulnerability catalogue, checklists,
+app they govern: engagements, the finding catalogue, checklists,
 reports, finding review, client portal access, and instance
 administration. A role's access is just the sum of whichever permissions
 it holds, nothing more.
@@ -53,11 +53,16 @@ they're broader than they might sound.
 
 ### Reviewing your own work vs. covering for someone else
 
-Two related but different needs come up around finding review and QA:
+By default, RedScribe keeps review and QA independent of authorship: whoever
+wrote a finding is left out of the reviewers and QA eligible for it and
+can't sign off their own work. Two permissions relax that, for two
+different reasons:
 
 - Letting someone review or QA a finding **they wrote themselves**. This
-  matters most on a small team, where requiring a second, completely
-  separate person for every single finding just isn't practical.
+  lifts the independence block for that person, and matters most on a small
+  team, where requiring a second, completely separate person for every
+  single finding just isn't practical. It's a separate grant for review and
+  for QA, so you can allow one without the other.
 - Letting someone act on **any** finding's review or QA decision,
   regardless of who it's actually assigned to. This is meant for a Team
   Lead covering for a reviewer who's out sick or on leave, not for

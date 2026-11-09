@@ -16,10 +16,12 @@ which has the narrative explanation. This page is just the tables.
 | `engagements.manage` | Engagements | Manage engagement membership, metadata, and scope-change approval (non-archived engagements) |
 | `engagements.view_all` | Engagements | View every non-archived engagement without needing explicit membership |
 | `engagements.release_to_client` | Engagements | Approve releasing an engagement's findings to the client portal |
-| `catalogue.manage` | Catalogue | Create, edit, and delete vulnerability catalogue templates |
-| `catalogue.approve` | Catalogue | Approve draft vulnerability catalogue entries |
+| `engagements.access_archived` | Engagements | Access and list archived engagements (otherwise archived engagements are hidden) |
+| `engagements.delete_permanent` | Engagements | ⚠️ Permanently delete an engagement and all of its data (irreversible) |
+| `catalogue.manage` | Catalogue | Create, edit, and delete finding catalogue templates |
+| `catalogue.approve` | Catalogue | Approve draft finding catalogue entries |
 | `catalogue.delete_any` | Catalogue | Delete any catalogue entry, including ones created by someone else |
-| `catalogue.bulk_manage` | Catalogue | Export/import the whole vulnerability catalogue at once |
+| `catalogue.bulk_manage` | Catalogue | Export/import the whole finding catalogue at once |
 | `checklist_templates.manage` | Checklist | Manage checklist templates |
 | `report_settings.manage` | Reports | Manage report profiles and export settings |
 | `reports.trends` | Reports | View cross-engagement trend reporting (severity over time, mean time to remediate, repeat findings by client) |
@@ -29,6 +31,7 @@ which has the narrative explanation. This page is just the tables.
 | `findings.qa_own` | Finding Review | QA findings authored by yourself |
 | `findings.act_any_assignment` | Finding Review | Submit any finding's review/QA decision, regardless of who it's assigned to |
 | `clients.manage` | Client Portal | Manage client-portal companies and accounts |
+| `clients.erase_user` | Client Portal | ⚠️ Erase a client user's personal data (irreversible) |
 | `users.manage` | Administration | ⚠️ Manage user accounts (create, deactivate, change roles) |
 | `roles.manage` | Administration | ⚠️ Manage roles and permissions, including this list |
 | `feature_flags.manage` | Administration | Manage feature flags |
@@ -59,6 +62,8 @@ means the role doesn't hold that permission by default.
 | `engagements.manage` | ✅ | | |
 | `engagements.view_all` | ✅ | | |
 | `engagements.release_to_client` | ✅ | | |
+| `engagements.access_archived` | | | |
+| `engagements.delete_permanent` | | | |
 | `catalogue.manage` | ✅ | | |
 | `catalogue.approve` | ✅ | ✅ | |
 | `catalogue.delete_any` | ✅ | | |
@@ -72,6 +77,7 @@ means the role doesn't hold that permission by default.
 | `findings.qa_own` | ✅ | | |
 | `findings.act_any_assignment` | | | |
 | `clients.manage` | ✅ | | |
+| `clients.erase_user` | | | |
 | `users.manage` | | | |
 | `roles.manage` | | | |
 | `feature_flags.manage` | | | |

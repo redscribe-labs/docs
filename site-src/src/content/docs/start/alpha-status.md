@@ -3,7 +3,7 @@ title: Alpha status & versioning
 description: What "early alpha" means for RedScribe, current known limitations, and how versioning and releases work.
 ---
 
-RedScribe is early alpha (`0.6.0-alpha` as of this writing). Expect rough
+RedScribe is early alpha (`0.7.0-alpha` as of this writing). Expect rough
 edges and breaking changes between releases, and read this page before
 relying on it for a real client engagement.
 
@@ -49,6 +49,6 @@ the current history.
 ```
 # 1. Update VERSION and move [Unreleased] CHANGELOG entries into a new dated section.
 # 2. Commit, then tag:
-git tag -a v0.6.0-alpha -m "v0.6.0-alpha"
-git push origin v0.6.0-alpha
+git tag -a v0.7.0-alpha -m "v0.7.0-alpha"
+git push origin v0.7.0-alpha
 ```

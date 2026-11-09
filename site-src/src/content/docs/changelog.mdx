@@ -13,6 +13,51 @@ a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows
 versioning](/start/alpha-status/) for how that's applied pre-1.0.
 </Aside>
 
+## [0.7.0-alpha] - 2026-11-06
+
+### Security
+
+- Login throttling now also blocks by IP address, with an escalating lockout.
+
+### Added
+
+- Archive findings, with Active and Archived tabs. Archived findings stay out
+  of reports and the client portal.
+- Add a comment by selecting text in a finding; hover or tap to read comments.
+- Retests now close, reopen, or leave a finding based on the outcome.
+- New grantable permissions: access archived engagements, permanently delete an
+  engagement, and erase a client user.
+- Active and Deactivated tabs in User Management, and erasing a deactivated
+  person's details (their work stays as "Erased user").
+
+### Changed
+
+- "Vulnerability" is now "finding" throughout.
+- Reviewer and QA independence is enforced unless a role allows reviewing or
+  QA'ing its own work.
+- Engagements can't reach Approved or Delivered until all active findings are
+  QA-approved.
+- CVSS score, vector, and severity are checked for consistency.
+- Archiving now confirms in a pop-up instead of a separate page.
+- Page alignment and widths made consistent, and help text shortened.
+- Removing an engagement member clears their assignments there.
+- Deactivating a client also deactivates its portal users.
+- The Retest workflow setting is gone; engagement status decides retesting.
+- Clearing the audit log no longer needs a second Superadmin.
+- Classifications are optional on findings and templates.
+- Signing out only works from the sign-out button.
+
+### Fixed
+
+- Severity labels are now readable on closed findings in dark mode.
+- Clicks that occasionally missed, and an error when deleting a report text block.
+- Classifications typed but not added were lost on save.
+- Portal users of an inactive client couldn't be edited.
+- Forms could clear a deactivated person or inactive client.
+- Deactivated people could still be assigned findings to review.
+- The export page now warns when a report has no layout.
+- Various phone, keyboard, and screen-reader fixes.
+
 ## [0.6.0-alpha] - 2026-10-22
 
 A redesign of the whole app, with a new checklist workflow. The database

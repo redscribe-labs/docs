@@ -11,7 +11,6 @@ instance; there's no per-user or per-engagement version of any of them.
 
 | Flag | Controls | Default |
 |---|---|---|
-| Retest workflow | Retest and remediation tracking on findings (Fixed, Not Fixed, Partially Fixed, Risk Accepted, plus history) | On |
 | Notifications | Reviewer and QA assignment notifications, both in-app and email. A user's own email opt-out (see [Notifications & profile](/user-guide/notifications-and-profile/)) still applies on top of this | On |
 | Recurrence & trends | Recurring-vulnerability detection on the finding page, and the cross-engagement [Trends](/user-guide/trends-and-search/) page | On |
 | CVSS calculator | The **Open CVSS calculator** button and its v3.1/v4.0 calculator on the finding and catalogue create/edit forms | On |
@@ -61,10 +60,6 @@ hide the way into it:
 - **Scan import off** removes the **Import scan** button from the findings list, and
   blocks the import request directly if someone tries to reach it anyway.
 - **Global search off** removes **Search** from the sidebar and Home, and blocks the search page itself the same way.
-- **Retest workflow off** hides the retest logging UI on a finding's page,
-  and independently blocks logging a new retest result if something tries
-  anyway. Retest history already recorded on a finding stays visible
-  either way; this only blocks logging new results.
 - **Recurrence & trends off** hides the recurring-vulnerability panel on
   the finding page, hides the Trends link from the sidebar and Home
   (which also needs the trend reporting permission; both have to be true

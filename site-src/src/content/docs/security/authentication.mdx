@@ -141,6 +141,29 @@ that can fix things is itself an operational risk. The failure count only
 looks at attempts since the last successful login for that username, so a
 successful login resets the counter.
 
+### Per-IP lockout
+
+The per-username lockout above catches someone hammering a single account.
+A separate lockout keyed to the **source IP address** catches the other
+shape of attack: one address working through many different usernames. It's
+checked first, before the per-username rules, so a blocked address never
+reaches the username stage at all.
+
+By default an IP is locked once it reaches 20 failed attempts — deliberately
+higher than the per-username threshold, so a shared office connection or
+NAT'd network isn't locked out by a handful of people mistyping passwords.
+The window starts at one hour and **escalates**: each further block's worth
+of failures from that address doubles the window, up to a 24-hour cap, so a
+persistent attacker is held progressively longer while a one-off burst
+clears quickly. Unlike the per-username counter, a successful sign-in does
+*not* reset an IP's history — otherwise an attacker rotating usernames could
+slip in one valid login to wipe the slate. The block lifts on its own as
+the failures age out of the window. The threshold, base window, and cap are
+all configurable (see
+[`IP_LOCKOUT_THRESHOLD`](/reference/environment-variables/) and its
+companions). A locked-out address is told too many attempts have come from
+its network, rather than anything tied to a specific account.
+
 The moment a lockout or rate-limit actually triggers, every active
 Superadmin gets an email naming the affected username, how many attempts
 failed, and the source IP. That's an active alert, not something you'd

@@ -16,15 +16,15 @@ go.
   See [Engagements](/user-guide/engagements/).
 
 **Finding**
-: A single vulnerability or observation recorded against an engagement. Each
+: A single issue or observation recorded against an engagement. Each
   one has a severity, a CVSS score, classification tags, and a set of
   rich-text sections your admin configures, things like description,
   technical details, and business impact. See
   [Findings](/user-guide/findings/).
 
-**Vulnerability catalogue**
+**Finding catalogue**
 : A reusable, org-wide library of pre-written findings. Import one into any
-  engagement instead of writing it from scratch. See [Vulnerability
+  engagement instead of writing it from scratch. See [Finding
   catalogue](/user-guide/catalogue/).
 
 **Checklist / Checklist template**
@@ -71,7 +71,7 @@ Draft at either stage. Only a QA-approved finding is ever visible in the
 [Client Portal](/client-portal/for-clients/).
 
 **Finding status** (`Open` / `Closed`) is a third, separate axis: it tracks
-whether the underlying vulnerability is still present. That's set through
+whether the underlying issue is still present. That's set through
 **retest status** (`Not Retested`, `Fixed`, `Not Fixed`, `Partially Fixed`,
 `Risk Accepted`) once a remediation retest has been logged.
 

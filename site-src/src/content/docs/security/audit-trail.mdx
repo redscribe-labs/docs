@@ -21,13 +21,17 @@ Almost every request is logged, not just the ones that change data.
 Ordinary page views and API reads are recorded too. A small number of
 high-frequency or non-sensitive endpoints are excluded by design: the
 report live-preview endpoint (which would otherwise flood the log on every
-keystroke of report configuration), the health check, and the CSP
-violation-report endpoint. Every login attempt, successful or not, is
+keystroke of report configuration), the health check, the CSP
+violation-report endpoint, and the once-a-minute session check each open
+tab makes. Every login attempt, successful or not, is
 recorded separately; see [Authentication & sessions](/security/authentication/)
 for how that feeds into lockout.
 
 Each entry records who did it (user, username, and their role at the time,
-kept even if the user is later deleted), what they did (the action, HTTP
+kept even if the account is later deactivated, which the audit log
+marks with "(deactivated)" beside the name; an erased account's personal
+data is removed but the entries stay, with the username as it was then),
+what they did (the action, HTTP
 method, path, and status code), which engagement it touched, the client
 IP, query string, referer, user agent, and how long the request took.
 

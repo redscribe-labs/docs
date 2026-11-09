@@ -91,6 +91,9 @@ them very high to effectively remove the cap.
 | `SESSION_IDLE_TIMEOUT_SECONDS` | Signs a session out after this many seconds of no requests, automatic-logoff behavior, distinct from the session's fixed 4-hour cap (`SESSION_COOKIE_AGE`, not separately configurable). | `1800` (30 min) |
 | `LOCKOUT_THRESHOLD` | Failed login attempts before an account is locked out. | `5` |
 | `LOCKOUT_DURATION_SECONDS` | How long a lockout lasts, in seconds. | `86400` (24h) |
+| `IP_LOCKOUT_THRESHOLD` | Failed login attempts from one source IP before that address is locked out, independent of which usernames it tried. Higher than `LOCKOUT_THRESHOLD` so shared/NAT'd networks aren't locked out too easily. See [Per-IP lockout](/security/authentication/#per-ip-lockout). | `20` |
+| `IP_LOCKOUT_DURATION_SECONDS` | Base per-IP lockout window. Doubles with each further threshold's worth of failures from that address, up to the cap below. | `3600` (1h) |
+| `IP_LOCKOUT_MAX_DURATION_SECONDS` | Upper bound the escalating per-IP lockout window never exceeds. | `86400` (24h) |
 | `SUPERADMIN_RATE_LIMIT_WINDOW_SECONDS` | Rate-limit window for Superadmin-sensitive actions. | `60` |
 | `SUPERADMIN_RATE_LIMIT_MAX_ATTEMPTS` | Max attempts allowed within that window. | `10` |
 | `MFA_THROTTLE_MAX_ATTEMPTS` | Wrong TOTP codes allowed within the throttle window, separate from login lockout above. Not listed in `.env.example`, since the default rarely needs changing. See [Authentication & sessions](/security/authentication/#mfa-verification-throttling). | `5` |

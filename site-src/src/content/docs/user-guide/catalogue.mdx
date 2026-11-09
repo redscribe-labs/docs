@@ -1,5 +1,5 @@
 ---
-title: Vulnerability catalogue
+title: Finding catalogue
 description: The catalogue's draft, pending QA, and approved workflow, including how the approval snapshot and JSON import/export work.
 ---
 
@@ -8,7 +8,7 @@ import Screenshot from '../../../components/Screenshot.astro';
 import shotCatalogue from '../../../assets/screenshots/catalogue.png';
 import shotCatalogueEntry from '../../../assets/screenshots/catalogue-entry.png';
 
-The catalogue is a shared library of pre-written vulnerability templates your whole team draws from, so common findings don't get rewritten from scratch on every engagement.
+The catalogue is a shared library of pre-written finding templates your whole team draws from, so common findings don't get rewritten from scratch on every engagement.
 
 ## Who can do what
 
@@ -28,7 +28,7 @@ Only an entry that's currently **Approved**, or one that used to be approved and
 
 ### What a catalogue entry stores
 
-A title, a default severity, an optional default CVSS score and vector, one or more classification tags, and a block of rich text for each active [content section](/admin/finding-structure/) your instance uses (vulnerability description, business impact, and so on). There's no separate "notes" or "author" field beyond that. Whoever created the entry is tracked for permission purposes, but it isn't shown as a byline anywhere.
+A title, a default severity, an optional default CVSS score and vector, any classification tags (optional), and a block of rich text for each active [content section](/admin/finding-structure/) your instance uses (description, business impact, and so on). There's no separate "notes" or "author" field beyond that. Whoever created the entry is tracked for permission purposes, but it isn't shown as a byline anywhere.
 
 ## An entry's page
 

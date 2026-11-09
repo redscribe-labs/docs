@@ -105,7 +105,7 @@ export default defineConfig({
 						{ label: 'Home & navigation', slug: 'user-guide/dashboard' },
 						{ label: 'Engagements', slug: 'user-guide/engagements' },
 						{ label: 'Findings', slug: 'user-guide/findings' },
-						{ label: 'Vulnerability catalogue', slug: 'user-guide/catalogue' },
+						{ label: 'Finding catalogue', slug: 'user-guide/catalogue' },
 						{ label: 'Checklists', slug: 'user-guide/checklists' },
 						{ label: 'Scanner import', slug: 'user-guide/scanner-import' },
 						{ label: 'Reports & exports', slug: 'user-guide/reports' },

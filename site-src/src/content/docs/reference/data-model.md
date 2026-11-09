@@ -66,7 +66,7 @@ No default, it's required at creation.
 | `OPEN` | Open |
 | `CLOSED` | Closed |
 
-Default: `OPEN`. This tracks whether the underlying vulnerability is
+Default: `OPEN`. This tracks whether the underlying issue is
 currently present, independent of `workflow_status` below.
 
 ### `Finding.workflow_status`
@@ -108,7 +108,7 @@ entry doesn't change the finding (deleting it clears the link).
 | `PENDING_QA` | Pending QA |
 | `APPROVED` | Approved |
 
-Default: `DRAFT`. See [Vulnerability catalogue](/user-guide/catalogue/#the-workflow).
+Default: `DRAFT`. See [Finding catalogue](/user-guide/catalogue/#the-workflow).
 
 ## Checklist
 

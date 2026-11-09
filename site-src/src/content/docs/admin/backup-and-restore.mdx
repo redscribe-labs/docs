@@ -96,6 +96,14 @@ You'll see one of four things per affected account:
 | **Disappearing** | Created after the backup, so restoring removes it. |
 | **Reappearing** | Deleted since the backup, so restoring brings it back. |
 
+<Aside type="caution" title="Restoring can undo an erased account">
+The report doesn't flag [erased accounts](/admin/user-management/#erasing-a-deactivated-account).
+A backup taken before an account was erased still holds that person's name,
+email, and other personal data, and restoring it brings them back. After any
+restore, check which accounts were erased since the backup was taken and
+erase them again.
+</Aside>
+
 Nothing here is automatic. You still have to look at the list and decide,
 but it can no longer slip past unnoticed. Type `restore` at the prompt to
 proceed, anything else to abort with zero changes made. A flag is

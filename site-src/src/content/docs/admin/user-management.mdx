@@ -46,6 +46,52 @@ your instance handles login.
 A pending invite shows an amber "Invited — awaiting first login" badge
 until it's claimed.
 
+## Active and deactivated accounts
+
+The user list has two tabs: **Active** and **Deactivated**, each showing
+how many accounts it holds. Search and paging stay on the tab you're
+viewing. A deactivated account can be reopened from its tab and
+reactivated from its detail page.
+
+Accounts can't be deleted outright, on purpose. Everything a person did stays tied
+to them: the audit log, finding authorship, comments, and checklist
+history. Deactivating removes their access without breaking that record.
+Wherever a deactivated person still appears in the app, such as a finding's
+author or reviewer, a checklist assignee, or an audit log row, their name
+is followed by "(deactivated)". Reports, emails, and the audit CSV export
+use the plain name.
+
+### Erasing a deactivated account
+
+Erasing is a last resort, not the normal way to offboard someone.
+[Deactivating](#managing-an-existing-user) already removes all access while
+keeping the person's name on their work; reach for erasure only when the
+personal data itself has to go, such as a data-subject erasure request. It's
+irreversible and strips the name from everything they did.
+
+When someone's personal data has to go, open their deactivated account and
+choose **Erase account**. Only deactivated staff accounts can be erased, and
+you can't erase your own. Erasing:
+
+- removes their name, email address, password, two factor devices,
+  notifications, engagement memberships, and any linked OAuth sign-in;
+- frees their username and email for reuse;
+- keeps the account record itself, shown as "Erased user" followed by a short
+  code, so findings, comments, checklist history, and the audit log stay
+  attributed and the audit log's integrity check still passes.
+
+It can't be undone, and the account can never be reactivated or edited. To
+confirm, you type the account's exact username into the confirmation
+field — there's no second approver and no password step. The erasure is
+recorded in the audit log against whoever performed it.
+
+<Aside type="caution" title="The audit log keeps the old username">
+Audit entries already written keep the username as it was, because the log is
+tamper-evident and can't be rewritten. They disappear when they pass your
+[retention period](/admin/audit-log/). Erased accounts' sign-in attempt
+records are renamed, since those aren't part of the integrity chain.
+</Aside>
+
 ## Managing an existing user
 
 <Screenshot src={shotUserDetail} alt="A user's detail page showing their role, sign-in method, and MFA status, account dates, recent login attempts, and the Edit, Send password reset link, Clear MFA, and Deactivate account actions" caption="A user's detail page. Account actions sit on the right; which ones appear depends on the account." />

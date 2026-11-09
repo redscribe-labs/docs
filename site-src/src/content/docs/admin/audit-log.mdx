@@ -23,8 +23,9 @@ object, their IP address, query string, referring page, browser, and how
 long the request took.
 
 Almost everything is logged. The only exceptions are a short, fixed list
-of things that would just add noise: the health check endpoint and the CSP
-report endpoint, plus bare `HEAD`/`OPTIONS` requests. Two sensitive URLs,
+of things that would just add noise: the health check endpoint, the CSP
+report endpoint, and the background check each open tab makes every minute
+to notice an expired session, plus bare `HEAD`/`OPTIONS` requests. Two sensitive URLs,
 the password reset and account setup confirmation links, have their path
 redacted in the log, since the URL itself contains a single-use token
 that shouldn't sit around readable.
@@ -90,12 +91,10 @@ Separate from the age-based purge above, the Audit Log page also offers
 **Clear all logs**, an unconditional wipe of every audit log and
 login-attempt row, regardless of age. Because this is destructive,
 irreversible, and the one action that erases audit history outright, it
-needs two things, not one: the exact phrase `DELETE ALL LOGS` typed into a
-confirmation field, **and** a second, currently active Superadmin's own
-username and password entered on the same page. That second Superadmin
-has to be a genuinely different account from whoever is doing the
-clearing; nothing is deleted otherwise. There's no equivalent one-step
-shortcut for it.
+asks you to type the exact phrase `DELETE ALL LOGS` into a confirmation
+field; nothing is deleted if it doesn't match. The wipe itself is logged
+as the emptied log's first new entry, so it still opens with a record of
+who cleared it and when.
 
 ## Chain integrity
 
