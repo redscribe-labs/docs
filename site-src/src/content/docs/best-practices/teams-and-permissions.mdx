@@ -1,0 +1,45 @@
+---
+title: Teams & permissions
+description: Structuring roles and access in RedScribe — least privilege, reviewer/QA independence, and keeping Superadmin rare.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+RedScribe builds roles from individual permissions rather than a fixed Admin/Editor/Viewer ladder, so you can model the firm you actually have. Use that flexibility to grant the least access that lets each person do their job.
+
+## Build roles around real jobs
+
+Create roles that match your org — Tester, Senior, Reviewer, Team Lead, Client — and grant each only the permissions it needs. See [Roles & permissions](/admin/roles-and-permissions/) and the [Permissions reference](/reference/permissions/).
+
+- Start restrictive and add permissions when someone hits a wall, rather than starting broad.
+- Review roles whenever responsibilities change, not just at onboarding.
+
+## Keep Superadmin rare
+
+Superadmin and any role with instance-wide visibility can see and do nearly everything. That's necessary for setup and administration, but it shouldn't be how people do day-to-day work.
+
+<Aside type="caution">
+A Superadmin assigned nowhere still isn't on an engagement's **Assessment Team**, so they won't appear on report covers — but they can see everything. Keep the number of Superadmins to the few who genuinely administer the instance.
+</Aside>
+
+## Keep review and QA independent
+
+By default, a finding moves Draft → Review → QA with the expectation that the reviewer and QA aren't the author. That independence is the point of the workflow: it's what lets you tell a client nothing reached them unchecked.
+
+- Leave author-independence in place unless you have a specific reason not to.
+- The `review_own` / `qa_own` permissions exist for small teams where the same person sometimes has to sign off their own work. Grant them consciously, to the roles that need them, and know you're trading away a control when you do. See [Findings → who can review and QA](/user-guide/findings/#who-can-review-and-qa).
+
+## Set engagement defaults
+
+Assign a **default reviewer, QA, and approver** per engagement so findings route automatically as they move through the workflow. See [Engagements → membership](/user-guide/engagements/#membership).
+
+- Set these at engagement creation so nothing sits unassigned.
+- Membership also drives who appears on the report's Assessment Team, so keep it current — remove people who've left the engagement.
+
+## Give clients the narrowest door
+
+Client-portal users should see their own engagements, read-only, and nothing else. Manage them through [client management](/client-portal/managing-clients/).
+
+- Create client users against the right client company; don't share one login across a client's staff.
+- Deactivating a client cascades to its portal users — use it when an engagement relationship ends.
+- Decide up front what the client is allowed to see, and release to the portal [deliberately](/best-practices/reporting-and-delivery/#release-on-purpose).

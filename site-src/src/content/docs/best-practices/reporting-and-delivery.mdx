@@ -1,0 +1,47 @@
+---
+title: Reporting & delivery
+description: Getting the report right and handing it over safely — profiles per engagement type, release gating, export protection, and retention.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Everything in RedScribe builds toward one moment: handing a client a report. Set up the last mile so it's consistent and controlled.
+
+## Keep a profile per report type
+
+A [report profile](/admin/report-profiles/) drives layout, branding, labels, and the export formats. Maintain a small, deliberate set rather than editing one profile per job.
+
+- Keep at least a standard profile (single findings list) and a network profile that [splits findings by asset group](/admin/report-profiles/#splitting-findings-by-asset-group). Mark whichever you use most as the default so new engagements inherit it.
+- Settle your branding, cover title, classification label, and severity colours once, in the profile, so every report matches.
+- One shared model drives PDF, HTML, Markdown, and Word, so they stay in sync — you don't maintain separate templates per format. If you deliver Word, invest once in a good `.docx` template (see the [DOCX template guide](/reference/docx-template-guide/)).
+
+## Preview before you export
+
+The builder's preview renders the real report. Use it.
+
+- Check the preview after tagging and selecting findings, not after you've emailed the client.
+- On a grouped profile, export is blocked until every included finding has an asset group; the [export screen](/user-guide/reports/) names the untagged ones, so clear them there.
+
+## Protect the export
+
+- Password-protect PDFs you send over channels you don't fully trust. The password is applied as a separate pass over the finished file.
+- Deliver through a channel you control. The [client portal](/client-portal/for-clients/) is the tidiest option — the client pulls the report rather than it living in an inbox.
+
+## Release on purpose
+
+Releasing an engagement to the client portal is a deliberate action, not a side effect of finishing it.
+
+<Aside type="caution">
+Nothing is visible to a client until you **release** the engagement to the portal, and you can revoke that. Release when the report is genuinely final and QA-approved — not while findings are still in flight.
+</Aside>
+
+- Treat portal release as the equivalent of hitting send. Re-read what the client will see first.
+- Revoke access if you need to pull a report back, rather than leaving a superseded version live.
+
+## Decide retention before you need it
+
+Reports describe unfixed weaknesses in a client's infrastructure. Holding them forever is a liability.
+
+- Agree a retention period with each client and apply it consistently.
+- When a relationship ends, deactivating the client cascades to its portal users; use [account erasure](/admin/user-management/) for staff and client users whose personal data should go while the work stays attributed as "Erased user".
+- Keep your encrypted [backups](/admin/backup-and-restore/) within the same retention policy — a deleted report that lives on in year-old backups isn't really deleted.

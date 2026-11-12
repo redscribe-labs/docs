@@ -1,0 +1,49 @@
+---
+title: Running engagements
+description: Working an engagement well in RedScribe — scope discipline, the status lifecycle, checklist coverage, and asset-group splitting.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+An engagement is the unit of work in RedScribe: its scope, team, checklist, and findings all hang off it. A little discipline here pays off in a clean report at the end.
+
+## Define scope precisely, up front
+
+Scope is structured — typed assets under named [asset groups](/user-guide/engagements/#scope-and-asset-groups) — so use that structure instead of a vague sentence.
+
+- Enter each in-scope target as its own asset with the right type (URL, IP, subnet, FQDN). Use the notes field for caveats ("management interfaces only", "excludes staging").
+- For a network test, split scope into the groups you'll report on — typically **Internal** and **External** — from the start, so findings can be tagged as you go rather than retrofitted.
+- Keep scope and the engagement's test type honest; they drive the report's framing.
+
+## Change scope through the request, not around it
+
+When scope shifts mid-engagement, use the [scope-change request](/user-guide/engagements/#scope-changes) so there's a record of what was agreed.
+
+<Aside type="note">
+Approval records the decision and notifies — it doesn't edit the scope. A manager then applies the agreed change on **Manage scope**. That two-step is deliberate: the approval is your paper trail, the edit is the action.
+</Aside>
+
+## Let the lifecycle gate delivery
+
+The [status lifecycle](/user-guide/engagements/#status-lifecycle) exists to stop half-finished work reaching a client.
+
+- Move an engagement forward only when the stage is genuinely done; the buttons confirm before changing anything.
+- Don't fight the QA gate. An engagement can't reach Approved or Delivered until every active finding is QA-approved — that block is a feature, not an obstacle. Archive a finding you've deliberately set aside rather than leaving it to hold up delivery.
+
+## Treat checklist coverage as evidence
+
+Run a [checklist](/user-guide/checklists/) against the engagement and keep it current. The coverage view is part of your report's story.
+
+- Record an outcome for every check — tested, raised a finding, or blocked. A blocked check with its reason shows the client a limitation you hit, which is better than a silent gap.
+- Raise findings straight from a check so the link between what you tested and what you found is kept.
+
+## Split by asset group when it helps the reader
+
+Splitting a report into Internal and External sections is the right call for most network tests and the wrong call for a single-target web-app test.
+
+- Use a profile that [splits findings by asset group](/admin/report-profiles/#splitting-findings-by-asset-group) only when the engagement genuinely has distinct asset classes a reader will want separated.
+- When you do, tag every finding as you write it — grouped export is blocked until all are tagged, and tagging 40 findings at the end is nobody's idea of fun.
+
+## Close the loop on retests
+
+When remediation testing happens, record it. [Retest outcomes](/user-guide/findings/#retesting) close, reopen, or leave each finding automatically, which keeps the remediation report accurate without hand-editing statuses.

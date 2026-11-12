@@ -79,6 +79,22 @@ Both loop forms need their matching `endfor`. A missing one is the single
 most common template mistake, and is caught automatically when you upload
 (see [Validation](#validation-what-gets-caught-and-when) below).
 
+### Splitting the loop by asset group
+
+For a [network-penetration-test profile](/admin/report-profiles/#splitting-findings-by-asset-group) that splits findings by asset group, loop over `finding_groups` instead of `findings` — an outer loop over the groups (Internal, External, …), each with its own summary table and its own inner finding loop:
+
+```
+{%p for group in finding_groups %}
+{{ group.name }}                 ← the asset group's name, as a heading
+{{p group.summary_table }}       ← that group's findings summary table
+{%p for finding in group.findings %}
+... your per-finding layout, using finding.* tags below ...
+{%p endfor %}
+{%p endfor %}
+```
+
+Each `finding` inside the inner loop takes exactly the same `finding.*` tags as the normal loop below. Findings keep one global ID sequence (F001…) across every group. Pair this with `{{p scope_table }}` so the report's scope matches its grouping.
+
 ## Tag reference
 
 Everything below is also shown live on the profile's Word (.docx) tab, since
@@ -92,7 +108,7 @@ dynamic](#content-sections-are-dynamic) below).
 |---|---|
 | `{{ client_name }}` | Engagement's client name |
 | `{{ reference_number }}` | Engagement's reference/project number |
-| `{{ scope }}` | Engagement's recorded scope (free text) |
+| `{{ scope }}` | A one-line structured summary of the engagement's scope (asset groups and their typed assets). The former free-text scope field is gone; for a full per-group table use the rich `{{p scope_table }}` tag (below) |
 | `{{ start_date }}` | Engagement start date (ISO format), blank if unset |
 | `{{ end_date }}` | Engagement end date (ISO format), blank if unset |
 | `{{ report_date }}` | Today's date, computed at render time |
@@ -123,6 +139,7 @@ engagement's real status-change history.
 | `{{p checklist_coverage }}` | The engagement's checklist run(s), grouped by run then category, as headings + tables |
 | `{{p scan_imports }}` | A table documenting each scanner import on this engagement (tool, filename, date, imported by, findings produced). Metadata only, the original uploaded file itself isn't stored |
 | `{{p breakdown_table }}` | A severity/status bar chart, followed by the same counts as a table with each cell shaded using the profile's configured severity colors |
+| `{{p scope_table }}` | The engagement's structured scope as a table per asset group (type, value, notes) — the rich replacement for the old free-text `scope` |
 
 ### This profile's own text blocks
 

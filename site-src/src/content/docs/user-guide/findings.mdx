@@ -20,7 +20,9 @@ through, and what happens when you retest it later.
 ## The findings list
 
 An engagement's **Findings** tab lists its findings with severity, CVSS
-score, review stage, and the assigned reviewer and QA. Filter by
+score, review stage, and the assigned reviewer and QA. On engagements that
+[split findings by asset group](#asset-group), each row also shows the
+finding's group (Internal, External, …) as a badge. Filter by
 severity and review stage, search by title or CVE ID, or tick
 **Needs me** to see only the findings waiting on you.
 
@@ -78,7 +80,17 @@ right.
   them.
 - **Affected assets**, the hosts or URLs the finding applies to, one per
   line. [Scanner import](/user-guide/scanner-import/) fills this in
-  automatically when it creates a finding for you.
+  automatically when it creates a finding for you. When the engagement has
+  [scope assets](/user-guide/engagements/#scope-and-asset-groups), their
+  values are offered as autocomplete suggestions here — you can still type
+  anything, since a finding often affects one host inside a broader in-scope
+  range.
+
+### Asset group
+
+When the engagement's [report profile](/admin/report-profiles/#splitting-findings-by-asset-group) splits findings by asset group, the editor shows an **Asset group** field, and it's required. Pick the group (Internal, External, …) this finding belongs to; the report then places it in that group's section. On engagements whose profile doesn't split by group, the field isn't shown and findings aren't tagged.
+
+Grouped-report export is blocked until every included finding has a group, and the [export screen](/user-guide/reports/) names any that are still untagged.
 
 ### The CVSS calculator
 

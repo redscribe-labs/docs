@@ -42,6 +42,13 @@ it's already gone wrong.
    are already on the host. If you run the Tailscale profile, add
    `--profile tailscale` to the `pull` and `up` commands.
 
+   <Aside type="caution" title="Coming from PostgreSQL 17?">
+   One release moves the `db` service to PostgreSQL 18, which cannot start on
+   a 17 data directory — for that one upgrade, follow [Moving from PostgreSQL
+   17 to 18](#moving-from-postgresql-17-to-18) below instead of this plain
+   restart. Every other upgrade is just the steps here.
+   </Aside>
+
 3. **If something's broken**, roll the code back first:
 
    ```sh
@@ -69,6 +76,58 @@ retention, encryption, the account-reconciliation report `restore_backup`
 prints before it touches anything live, and the automatic safety snapshot
 it takes for you right before restoring, see [Backup &
 restore](/admin/backup-and-restore/).
+
+## Moving from PostgreSQL 17 to 18
+
+One release moves the `db` service from PostgreSQL 17 to 18. The 18 container
+image stores its cluster in a major-version subdirectory and mounts the
+volume one level higher (at `/var/lib/postgresql`, not `.../data`), and it
+**refuses to start on an existing 17 data directory**. So this one upgrade is
+a backup-and-restore, not the plain restart above. A fresh install has
+nothing to do here — it starts on 18 directly.
+
+Do this while the instance is still running on 17:
+
+<Steps>
+1. **Back up**, and note the file it writes and your
+   `BACKUP_ENCRYPTION_PASSPHRASE`:
+
+   ```sh
+   docker compose exec -T web python manage.py create_backup
+   ```
+
+2. **Stop the stack and pull the release that moves to 18:**
+
+   ```sh
+   docker compose down
+   git pull
+   ```
+
+3. **Remove the old 17 data volume** so the 18 image initialises a fresh
+   cluster (confirm the name first with `docker volume ls`):
+
+   ```sh
+   docker volume rm redscribe_pgdata
+   ```
+
+4. **Start again** — the 18 server comes up empty and `web` applies every
+   migration (add `--profile tailscale` if that's how you run it):
+
+   ```sh
+   docker compose up -d --build
+   ```
+
+5. **Restore the step 1 backup** (it writes its own pre-restore safety
+   snapshot first):
+
+   ```sh
+   docker compose exec web python manage.py restore_backup /app/backups/redscribe-backup-<timestamp>.rsbk
+   ```
+</Steps>
+
+Removing the volume in step 3 deletes the 17 data for good, so the step 1
+backup is your only way back — keep it until you've confirmed the restored
+instance works.
 
 ## Version tags
 

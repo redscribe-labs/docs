@@ -68,11 +68,29 @@ without touching its content.
   report falls back to whatever font is installed wherever it's viewed,
   rather than the export breaking.
 - **Severity colors**, one open and one closed shade per severity level,
-  used for per severity table theming across every export format.
+  used for per-severity table theming across every export format and for the
+  stacked bars in the breakdown-of-findings chart — open findings in the full
+  shade, closed in the lighter one.
 - **Table header color** and **empty cell background color**.
 - **Finding table layout**, whether findings render as a table or as
   stacked blocks.
+- **Split findings by asset group**, the network-penetration-test toggle
+  described just below.
 - **Bullet character**, for bullet lists inside rich content.
+
+### Splitting findings by asset group
+
+Turn this on to make a profile a network-penetration-test report. It makes the profile treat findings as belonging to [asset groups](/user-guide/engagements/#scope-and-asset-groups), and changes three things:
+
+- Every finding must be tagged with an asset group: the **Asset group** field appears and is required in the finding editor, and the findings list shows each finding's group as a badge.
+- The report produces one findings section per group (Internal, External, …), each with its own summary table, over a single combined severity chart across all findings. Place the split with the `grouped_findings` and `scope_table` tags in the [Document template](#document-template).
+- Grouped-report export is blocked until every included finding has a group.
+
+Leave it off for a standard report: findings are a single list, the asset-group field is hidden, and nothing is required — exactly as before. An engagement follows whichever profile its report is configured to use, so only engagements on a splitting profile are affected.
+
+<Aside type="tip">
+If most of your work is network tests, mark the splitting profile as the [default](#the-profile-list) so new engagements pick it up automatically.
+</Aside>
 
 ### Labels
 

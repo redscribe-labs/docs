@@ -1,0 +1,42 @@
+---
+title: Finding quality
+description: Writing findings that hold up — catalogue reuse, consistent CVSS, complete sections, and what's safe to put in client-visible text.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The findings *are* the product you deliver. Consistency across them — and across reports — is something clients notice, and it's cheaper to build in than to fix later.
+
+## Write once, reuse from the catalogue
+
+The [finding catalogue](/user-guide/catalogue/) is a shared library of QA-approved write-ups. Lean on it.
+
+- Start a finding from a catalogue entry instead of a blank page whenever one fits. You get a consistent description, impact, and remediation for free, and only tailor the specifics.
+- When you write a genuinely new finding, consider promoting a cleaned-up version back into the catalogue so the next person benefits.
+- Keep the catalogue curated: retire entries that are out of date rather than letting stale advice get reused.
+
+## Score CVSS consistently
+
+RedScribe cross-checks the CVSS score, vector, and severity on save, so they can't drift apart silently. Work *with* that.
+
+- Use the built-in [CVSS calculator](/user-guide/findings/#the-cvss-calculator) rather than guessing a score — it produces a vector you can defend, in v3.1 or v4.0.
+- Pick one CVSS version as your house standard and stick to it within a report, so a client isn't comparing v3.1 and v4.0 scores side by side.
+
+## Fill the sections that matter
+
+Content sections are configured per instance. Decide which are mandatory for your firm and hold the line.
+
+- Every finding a client reads should answer: what is it, what's the impact, how do we reproduce it, and how do we fix it.
+- Record affected assets precisely — one host or URL per line. When scope assets exist, the editor autocompletes from them, but still name the specific endpoint rather than the whole subnet.
+- Classify findings against the taxonomies you report on (e.g. OWASP Top 10). Consistent classification is what makes [trend reporting](/user-guide/trends-and-search/) across engagements meaningful.
+
+## Mind what the client will read
+
+Finding content, affected assets, and scope notes all surface to the client — in the report, and in the [client portal](/client-portal/for-clients/) once you release it.
+
+<Aside type="caution">
+Scope-asset **notes** and finding text are client-visible once released. Don't park internal-only commentary ("skip this, the POC flaked", "client's security lead is difficult") in those fields. Keep internal notes in your own tooling, not in anything that renders into a report or the portal.
+</Aside>
+
+- Archive a finding you don't want in the report or portal rather than deleting its content — archived findings stay out of both but keep their history.
+- Nothing reaches the client until QA approves it; don't short-circuit that by releasing drafts.

@@ -26,7 +26,7 @@ any finding section, retest notes, observations, and testing-phase entries.
 |---|---|
 | `{{ client_name }}` | `Engagement.client_name` |
 | `{{ reference_number }}` | `Engagement.reference_number` |
-| `{{ scope }}` | `Engagement.scope` (free text) |
+| `{{ scope }}` | A structured summary of the engagement's scope — its asset groups and their typed assets. Replaces the former free-text scope field; for a full per-group table use `{{ scope_table }}` (below) |
 | `{{ start_date }}` | `Engagement.start_date`, ISO format, or empty if unset |
 | `{{ end_date }}` | `Engagement.end_date`, ISO format, or empty if unset |
 | `{{ report_date }}` | Today's date (ISO format), computed at render time |
@@ -49,8 +49,10 @@ anywhere else, only in the Document body itself.
 | `{{ cover_page }}` | The report's own cover page, built from the Report Profile's Appearance settings and the engagement's own fields (cover title, client, reference number, dates, classification label) | Not automatic: a template with no `{{ cover_page }}` tag gets no cover page at all, the same as any other structural tag |
 | `{{ table_of_contents }}` | A table of contents, using the section numbers computed from your template's own heading structure | Placement matters: sections above this tag in the template won't be numbered relative to it, since numbering is computed by walking the template top to bottom |
 | `{{ document_control }}` | A table of the engagement's status history (stage / date / changed by) | Same content as `{{p document_control }}` in a [DOCX template](/reference/docx-template-guide/#anywhere-in-the-document--rich-content) |
-| `{{ breakdown_of_findings }}` | Severity/status bar chart (with a table fallback) plus a findings summary table (ID, severity, title, status) | |
+| `{{ breakdown_of_findings }}` | A severity bar chart — one stacked bar per severity, open findings in the full shade and closed in a lighter one (with a table fallback) — plus a findings summary table (ID, severity, title, status) | With `{{ grouped_findings }}` in the same template, the summary table is dropped and only the combined chart is shown, so findings aren't listed twice |
 | `{{ finding_details }}` | The full write-up for every included finding: metadata table, then each active finding section in its configured order (see [Finding sections](#finding-sections-inside--finding_details-) below, which includes Affected Assets), and (on a remediation report) retest history | This is the main body of the report, and it's almost always required |
+| `{{ grouped_findings }}` | Like `{{ finding_details }}`, but split into one section per [asset group](/user-guide/engagements/#scope-and-asset-groups) (Internal, External, …): each group gets a heading, its own summary table, and its findings' write-ups. Findings keep one global ID sequence (F001…) across all groups | Use in place of `{{ finding_details }}` on a profile that [splits findings by asset group](/admin/report-profiles/#splitting-findings-by-asset-group). Export is blocked if any included finding has no group |
+| `{{ scope_table }}` | The engagement's structured scope as a table per asset group (type, value, notes) | The structured replacement for the old free-text `{{ scope }}` in new templates |
 | `{{ observations }}` | Free-form dynamic entries configured per-engagement (title + rich content), each as its own subsection | Empty/omitted entirely if none are configured, with no placeholder text shown |
 | `{{ testing_phases }}` | Same pattern as observations, free-form per-engagement phase entries | Empty/omitted if none are configured |
 | `{{ assessment_team }}` | One subsection per user actually assigned to the engagement, showing their bio and qualifications | Omitted entirely if no one is assigned. Superadmins and anyone else with blanket instance-wide access are excluded unless they're specifically assigned to this engagement |

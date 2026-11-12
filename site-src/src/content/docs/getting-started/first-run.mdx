@@ -20,7 +20,12 @@ those steps are already built into it.
    part of whichever installation method you followed):
 
    ```sh
-   docker compose up -d --build          # or: docker compose --profile tailscale up -d --build
+   # Method 1 (Tailscale TLS):
+   docker compose --profile tailscale up -d --build
+   # Method 2 (your own certificate):
+   docker compose up -d --build
+   # Method 3 (plain HTTP, no reverse proxy):
+   docker compose up -d --build db web
    ```
 
 2. **Generate the instance's root key**, the one master key that protects

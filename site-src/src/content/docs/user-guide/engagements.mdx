@@ -8,6 +8,7 @@ import Screenshot from '../../../components/Screenshot.astro';
 import shotEngagementCreate from '../../../assets/screenshots/engagement-create.png';
 import shotEngagementDetail from '../../../assets/screenshots/engagement-detail.png';
 import shotEngagementScopeChange from '../../../assets/screenshots/engagement-scope-change.png';
+import shotManageScope from '../../../assets/screenshots/manage-scope.png';
 
 An engagement is the container for one client project, a web application pentest, a network assessment, a vulnerability scan, or a remediation retest. Everything else in RedScribe (findings, checklist runs, scanner imports, the report) hangs off one engagement.
 
@@ -19,13 +20,12 @@ An engagement is the container for one client project, a web application pentest
 
 From **Engagements**, select **New engagement**. You'll need the right permission to create one; see the [Permissions reference](/reference/permissions/) if you're setting up roles.
 
-<Screenshot src={shotEngagementCreate} alt="The new engagement form with client, reference number, test type, scope, dates, default reviewer, QA and approver" />
+<Screenshot src={shotEngagementCreate} alt="The new engagement form with client, reference number, test type, dates, default reviewer, QA and approver" />
 
 You'll fill in:
 
 - **Client**, which must already exist as a [client company](/client-portal/managing-clients/). You can't create an engagement against a free-typed client name.
 - **Reference or project number**.
-- **Scope**, as free text.
 - **Start and end dates**.
 - **Test type**: Web Application, Network, or Vulnerability Scan.
 - **Default reviewer, QA, and approver** (optional), assigned automatically as findings move through review.
@@ -37,9 +37,32 @@ Everything except the client can be changed later on the engagement's **Settings
 Linking to a real client company, rather than just typing a name, is what makes [client portal](/client-portal/for-clients/) access and cross-engagement [trend reporting](/user-guide/trends-and-search/) by client possible.
 </Aside>
 
+## Scope and asset groups
+
+Scope is structured, not free text. You define it after creating the engagement, from **Manage scope** on the overview (managers only — the same permission that edits the engagement).
+
+Scope has two levels:
+
+- **Asset groups** — named buckets you order yourself, typically **Internal** and **External**, but name them to match the job. A group is what a network-penetration-test report splits its findings on (see below).
+- **Scope assets** — the in-scope targets under a group. Each has a **type** (URL, IP, subnet, or FQDN), the **value** itself, and an optional **notes** field for inclusion caveats.
+
+<Steps>
+1. Open **Manage scope**, add one or more asset groups (for example `Internal` and `External`).
+2. Add scope assets under each group, choosing a type and entering the value.
+3. The engagement overview and the [client portal](/client-portal/for-clients/) then show scope as a table per group, and reports can render it with the `scope_table` tag.
+</Steps>
+
+<Screenshot src={shotManageScope} alt="The Manage scope page: a Scope assets table with Group, Type, Asset, and Notes columns listing Internal and External assets, an Add an asset form below, and an Asset groups panel on the right for adding or removing groups" caption="Manage scope: asset groups on the right, the typed scope assets under them on the left." />
+
+Asset groups do two jobs beyond documenting scope. When the engagement's [report profile](/admin/report-profiles/#splitting-findings-by-asset-group) is set to **split findings by asset group**, every [finding](/user-guide/findings/#asset-group) is tagged with one, and the report produces a separate findings section per group (Internal, External, …) over a single combined severity chart. On any other profile, asset groups are just scope documentation and findings aren't tagged.
+
+<Aside type="note">
+The free-text scope field from earlier versions is gone. Existing scope text is migrated into a single **In Scope** asset group on upgrade, which you can then split up. See the [0.8.0-alpha changelog](/changelog/) for the breaking-change details.
+</Aside>
+
 ## Status lifecycle
 
-<Screenshot src={shotEngagementDetail} alt="An engagement's overview: a status bar across every stage, the next status changes as buttons, a Ready to publish checklist, coverage figures, scope, team, who has access, and the client portal card" caption="The overview shows where the engagement is in its lifecycle and what's left before it can be published." />
+<Screenshot src={shotEngagementDetail} alt="An engagement's overview: a status bar across every stage, the next status changes as buttons, a Ready to publish checklist, coverage figures, the structured scope by asset group, team, who has access, and the client portal card" caption="The overview shows where the engagement is in its lifecycle and what's left before it can be published." />
 
 An engagement moves through a fixed sequence of statuses. The overview shows them as a bar with the current stage highlighted, and offers the next status changes as buttons at the top; each asks you to confirm before it changes anything:
 
@@ -66,15 +89,15 @@ RedScribe is built around at most two people actively working on the same engage
 
 ## Scope changes
 
-Scope changes go through an approval step rather than silently editing the recorded scope in place. That gives you a defensible record of what was actually agreed to mid-engagement.
+Scope changes go through an approval step, so there's a defensible record of what was actually agreed to mid-engagement before anyone edits the live scope.
 
 <Steps>
-1. On the engagement's overview, under **Scope**, open **Propose a scope change**, enter the new scope, and select **Submit for Team Lead approval**.
-2. Someone with the right permission **approves** or **rejects** it.
-3. An approved request updates the engagement's recorded scope and stays part of its history. A rejected one is kept too, as a record that it was considered and declined.
+1. On the engagement's overview, under **Scope**, open **Propose a scope change**, describe the change, and select **Submit for Team Lead approval**.
+2. Someone with the right permission **approves** or **rejects** it. Both outcomes are kept as part of the engagement's history.
+3. Approval records the decision and notifies — it does not edit the scope itself. A manager then applies the agreed change on [**Manage scope**](#scope-and-asset-groups), adding or removing asset groups and assets to match.
 </Steps>
 
-<Screenshot src={shotEngagementScopeChange} alt="The Scope card: the current scope, the Propose a scope change form, and a pending request from Robin Chen listing the proposed scope" caption="The Scope card, with a pending request underneath. Someone who can approve it sees Approve and Reject buttons on it." />
+<Screenshot src={shotEngagementScopeChange} alt="The Scope card: the engagement's scope as per-group tables (External and Internal, each with typed assets and notes), the Propose a scope change form, and a pending request from Robin Chen describing a proposed change" caption="The Scope card, with a pending request underneath. Someone who can approve it sees Approve and Reject buttons; a manager then applies the agreed change on Manage scope." />
 
 ## Archiving and deletion
 

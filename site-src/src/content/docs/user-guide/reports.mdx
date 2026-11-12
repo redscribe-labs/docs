@@ -37,6 +37,10 @@ From an engagement, open **Report**.
    | Word (.docx) | Fills in the profile's uploaded Word template, only offered if one is uploaded |
 </Steps>
 
+<Aside type="caution" title="Splitting profiles need every finding tagged">
+If the engagement's profile [splits findings by asset group](/admin/report-profiles/#splitting-findings-by-asset-group), export is blocked until every included finding has a group. The Export page flags how many are still untagged and links to the Findings list; attempting the export anyway names the offenders. See [Asset group](/user-guide/findings/#asset-group) on a finding.
+</Aside>
+
 <Screenshot src={shotReportConfigure} alt="The Configure report page with per-report overrides and a live preview of the PDF" caption="Configure report: edit on the left, live preview on the right." />
 
 ### PDF password protection

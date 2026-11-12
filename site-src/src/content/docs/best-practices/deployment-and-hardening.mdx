@@ -1,0 +1,60 @@
+---
+title: Deployment & hardening
+description: How to deploy RedScribe so it stays private, recoverable, and patched — TLS, root-key custody, backups, MFA, and updates.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+RedScribe holds some of the most sensitive data a security firm has: live findings against client infrastructure, before the client has fixed them. Treat the instance accordingly.
+
+## Put TLS in front of it
+
+RedScribe serves plain HTTP from the application process and expects a reverse proxy to terminate TLS. Don't expose it on plain HTTP, even internally.
+
+- Terminate HTTPS at a reverse proxy (or load balancer) and forward to the app. See [Network & TLS](/security/network-and-tls/).
+- Scope network access to the people who need it — a VPN or an allow-list in front of the proxy is cheap and removes the whole internet as an attacker.
+- Keep the app and database on an isolated network; only the proxy should reach the app, and only the app should reach the database.
+
+## Guard the root key
+
+Every engagement's sensitive data is encrypted with AES-256-GCM under a per-engagement key, and those keys are wrapped by your instance's **root key**. The root key is the single thing that makes the data readable. See the [Encryption model](/security/encryption/).
+
+<Aside type="danger">
+If you lose the root key, the encrypted data is **gone** — there is no recovery path, by design. If the root key leaks, all of it is exposed. Back it up separately from the database, store it somewhere only a couple of trusted people can reach, and never commit it to a repo or bake it into an image.
+</Aside>
+
+- Supply the root key from a secret store or an injected environment secret, not a file sitting next to the compose project.
+- Keep an offline copy of the root key somewhere you'd trust to survive the loss of the whole host.
+
+## Back up, and actually restore
+
+A backup you've never restored is a hope, not a backup.
+
+<Steps>
+1. Schedule encrypted, server-side [backups](/admin/backup-and-restore/) on a cadence that matches how much work you're willing to lose.
+2. Store at least one copy off the host.
+3. **Periodically restore into a throwaway instance** and confirm it comes up and the data is intact. Restore shows you an account-state diff before it overwrites anything live — read it.
+</Steps>
+
+## Make MFA non-optional
+
+TOTP enrolment is on by default for local accounts. Keep it that way.
+
+- Require MFA for every role that can see engagement data, via [Roles & permissions](/admin/roles-and-permissions/). Don't carve out exceptions for convenience.
+- If you use Google or Microsoft sign-in, rely on the identity provider's own MFA and conditional-access policies too.
+- Review [Authentication & sessions](/security/authentication/) for session lifetime and the login throttle.
+
+## Watch the audit log
+
+The [audit log](/admin/audit-log/) is append-only and hash-chained, so tampering is detectable — but only if someone looks.
+
+- Decide who reviews it and how often. Failed logins, permission changes, and exports are the high-signal entries.
+- Don't clear it casually; it's your tamper-evidence record.
+
+## Stay current
+
+Running months-behind is its own risk. Patch on a predictable cadence.
+
+- Follow [Upgrading & rolling back](/deployment/upgrading/) and rebuild so base-image security patches come down with each update.
+- Apply patch and minor dependency updates promptly; plan major platform upgrades (database, language runtime) deliberately, with a test restore first.
+- Read the [changelog](/changelog/) before each upgrade — breaking changes are called out there.

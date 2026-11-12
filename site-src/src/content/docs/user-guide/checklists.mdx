@@ -8,6 +8,7 @@ import Screenshot from '../../../components/Screenshot.astro';
 import shotChecklistRun from '../../../assets/screenshots/checklist-run.png';
 import shotChecklistItem from '../../../assets/screenshots/checklist-item.png';
 import shotChecklistTemplate from '../../../assets/screenshots/checklist-template.png';
+import shotChecklistTemplates from '../../../assets/screenshots/checklist-templates.png';
 
 RedScribe separates **templates**, reusable test lists you manage once, from **runs**, one working copy of a template against a specific engagement.
 
@@ -25,6 +26,20 @@ Anyone can view the template library (**Library → Checklist templates**). Crea
 <Aside type="tip">
 A fresh instance ships with zero templates. The RedScribe repository includes a ready-to-import template covering the full official OWASP Web Security Testing Guide, with each item's objectives and a link back to the official page. See the [checklist template format](/reference/checklist-template-format/) reference to build your own.
 </Aside>
+
+### Archiving a template
+
+Retire a template from new work without deleting it or disturbing history. **Archive** it from its card or its page; the library splits into **Active** and **Archived** tabs.
+
+<Screenshot src={shotChecklistTemplates} alt="The checklist template library with Active and Archived tabs, a template card showing its check count, and actions including Make default and Archive" />
+
+An archived template:
+
+- is removed from the picker when [starting a run](#starting-a-run), so new engagements can't start a run from it;
+- can't be the default;
+- stays under the **Archived** tab, where **Restore** brings it back.
+
+Runs already started are unaffected. A run copies its template's items when it starts, so archiving — or later deleting — a template never changes a run in progress.
 
 ## Starting a run
 

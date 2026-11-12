@@ -138,13 +138,18 @@ No TLS at all. Fine for trying things out locally or on a private network
 you already trust. **Not fine for anything reachable beyond that.**
 
 ```sh
-docker compose up -d --build
+docker compose up -d --build db web
 ```
 
+Naming `db web` starts only the application and its database. The nginx
+reverse proxy and the Tailscale certificate service that Methods 1 and 2 use
+are left out: they exist only to terminate TLS, which this setup does not
+use, and nginx would otherwise bind host ports 80 and 443 for nothing.
+
 Leave `DJANGO_SETTINGS_MODULE` at its `.env.example` default
-(`config.settings.dev`). Skip straight to `http://localhost:8000/`, which
-is bound to the host machine only, rather than going through the web
-server at all. Continue at [First run](/getting-started/first-run/).
+(`config.settings.dev`). The application serves its own static files and is
+bound to the host at `http://localhost:8000/`; open that directly. Continue
+at [First run](/getting-started/first-run/).
 
 ## Method 4: Local development without Docker
 

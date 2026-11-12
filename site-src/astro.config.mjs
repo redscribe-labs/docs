@@ -115,6 +115,18 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Best Practices',
+					collapsed: true,
+					items: [
+						{ label: 'Overview', slug: 'best-practices' },
+						{ label: 'Deployment & hardening', slug: 'best-practices/deployment-and-hardening' },
+						{ label: 'Teams & permissions', slug: 'best-practices/teams-and-permissions' },
+						{ label: 'Running engagements', slug: 'best-practices/running-engagements' },
+						{ label: 'Finding quality', slug: 'best-practices/finding-quality' },
+						{ label: 'Reporting & delivery', slug: 'best-practices/reporting-and-delivery' },
+					],
+				},
+				{
 					label: 'Client Portal',
 					collapsed: true,
 					items: [

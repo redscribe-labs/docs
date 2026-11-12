@@ -15,10 +15,15 @@ no TLS certificate, no domain, nothing to configure beyond three secrets.
 1. Get the code and set up your environment file:
 
    ```sh
-   git clone https://github.com/redscribe-labs/redscribe.git
+   git clone --depth 1 https://github.com/redscribe-labs/redscribe.git
    cd redscribe
    cp .env.example .env
    ```
+
+   `--depth 1` grabs just the latest commit — a smaller download, and all
+   you need to try things out. For a real deployment, clone without it: the
+   [upgrade and rollback steps](/deployment/upgrading/) use the repo's
+   history and release tags.
 2. Create the two secrets Django and Postgres need. These are file-based
    Docker secrets (see [Environment
    variables](/reference/environment-variables/#encryption)), not `.env`
@@ -29,10 +34,11 @@ no TLS certificate, no domain, nothing to configure beyond three secrets.
    openssl rand -base64 32 > secrets/postgres_password.txt
    touch secrets/root_key.txt  # filled in below, once the app is up
    ```
-3. Build and start everything:
+3. Build and start the app and its database (`db web` leaves out the nginx
+   reverse proxy, which this no-TLS setup doesn't need):
 
    ```sh
-   docker compose up -d --build
+   docker compose up -d --build db web
    ```
 4. Generate the instance's encryption key, and restart to pick it up:
 

@@ -1,0 +1,32 @@
+---
+title: Best practices
+description: How RedScribe Labs recommends you run RedScribe — hardening, team structure, engagement discipline, finding quality, and delivery.
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The rest of the documentation tells you **how** each feature works. This section is our opinion, as the vendor, on **how to use them well** — the defaults and habits we'd set up for a firm running RedScribe in production.
+
+None of this is enforced by the software. It's guidance drawn from how the product is designed to be used, so you can adopt it wholesale or cherry-pick.
+
+<Aside type="note">
+These pages assume you've read the relevant [User Guide](/user-guide/dashboard/) and [Administration](/admin/roles-and-permissions/) pages. They point back to the mechanism each recommendation relies on rather than re-explaining it.
+</Aside>
+
+<CardGrid>
+	<LinkCard title="Deployment & hardening" href="/best-practices/deployment-and-hardening/" description="TLS, key custody, backups you've actually restored, MFA, and a patch cadence." />
+	<LinkCard title="Teams & permissions" href="/best-practices/teams-and-permissions/" description="Least privilege, reviewer/QA independence, and keeping Superadmin rare." />
+	<LinkCard title="Running engagements" href="/best-practices/running-engagements/" description="Scope discipline, the status lifecycle, and when to split a report by asset group." />
+	<LinkCard title="Finding quality" href="/best-practices/finding-quality/" description="A healthy catalogue, consistent CVSS, and what belongs in client-visible text." />
+	<LinkCard title="Reporting & delivery" href="/best-practices/reporting-and-delivery/" description="Profiles per engagement type, release gating, and data retention." />
+</CardGrid>
+
+## The short version
+
+If you read nothing else:
+
+- **Terminate TLS in front of RedScribe, and treat the root key like a crown jewel** — without it, encrypted data is unrecoverable. [Deployment & hardening](/best-practices/deployment-and-hardening/).
+- **Give people the narrowest role that lets them work, and keep review and QA independent of the author** unless you've consciously decided otherwise. [Teams & permissions](/best-practices/teams-and-permissions/).
+- **Let the status lifecycle and QA gate do their job** — nothing reaches a client that hasn't been through review and QA. [Running engagements](/best-practices/running-engagements/).
+- **Write findings once, in the catalogue, and reuse them** — consistency across reports is a quality signal clients notice. [Finding quality](/best-practices/finding-quality/).
+- **Release to the client portal deliberately, not by default**, and decide your retention policy before you need it. [Reporting & delivery](/best-practices/reporting-and-delivery/).
